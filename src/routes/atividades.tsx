@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils";
 import { useActivities, useRotinaRealtime, useTeamMembers } from "@/lib/useRotina";
 import {
   PRIORITY_LABEL,
-  RECURRENCE_LABEL,
   WEEKDAY_LABEL,
   WEEKDAY_LONG,
   ymd,
