@@ -485,6 +485,3 @@ function OccurrenceCard({
     </li>
   );
 }
-
-// helper unused import silencer
-void parseISO;
