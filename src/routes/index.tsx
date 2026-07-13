@@ -371,18 +371,40 @@ function OccurrenceCard({
     else toast.success("Conclusão desfeita");
   }
 
-  async function reschedule(newDate: Date) {
+  async function reschedule() {
+    if (!rescheduleDate) {
+      toast.error("Selecione a nova data");
+      return;
+    }
+    const reason = justification.trim();
+    if (reason.length < 3) {
+      toast.error("Informe uma justificativa (mínimo 3 caracteres)");
+      return;
+    }
     setBusy(true);
-    setPickerOpen(false);
-    const newDateStr = ymd(newDate);
+    const newDateStr = ymd(rescheduleDate);
     if (occ.activity.recurrence_type === "unica") {
+      // Registra a justificativa mesmo para atividades únicas
+      await supabase.from("reschedules").upsert(
+        {
+          activity_id: occ.activity.id,
+          original_occurrence_key: occ.originalKey,
+          new_date: newDateStr,
+          justification: reason,
+        },
+        { onConflict: "activity_id,original_occurrence_key" },
+      );
       const { error } = await supabase
         .from("activities")
         .update({ due_date: newDateStr })
         .eq("id", occ.activity.id);
       setBusy(false);
       if (error) toast.error("Erro: " + error.message);
-      else toast.success("Atividade reprogramada");
+      else {
+        toast.success("Atividade reprogramada");
+        setDialogOpen(false);
+        setJustification("");
+      }
       return;
     }
     const { error } = await supabase.from("reschedules").upsert(
@@ -390,12 +412,23 @@ function OccurrenceCard({
         activity_id: occ.activity.id,
         original_occurrence_key: occ.originalKey,
         new_date: newDateStr,
+        justification: reason,
       },
       { onConflict: "activity_id,original_occurrence_key" },
     );
     setBusy(false);
     if (error) toast.error("Erro: " + error.message);
-    else toast.success("Ocorrência reprogramada");
+    else {
+      toast.success("Ocorrência reprogramada");
+      setDialogOpen(false);
+      setJustification("");
+    }
+  }
+
+  function openRescheduleDialog() {
+    setRescheduleDate(occ.effectiveDate);
+    setJustification("");
+    setDialogOpen(true);
   }
 
   const dateLabel = format(occ.effectiveDate, "EEE, d MMM", { locale: ptBR });
