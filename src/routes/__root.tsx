@@ -86,10 +86,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Rotina da Equipe" },
       {
         property: "og:description",
-        content: "Dashboard em tempo real de atividades atrasadas, para hoje e próximas.",
+        content: "Painel em tempo real para gestão da rotina da equipe: atividades diárias, semanais e mensais com prioridade e responsável claros.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Rotina da Equipe" },
+      { name: "twitter:description", content: "Painel em tempo real para gestão da rotina da equipe: atividades diárias, semanais e mensais com prioridade e responsável claros." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6aa92ae4-b26f-4b77-ba63-d190fe2ce391/id-preview-6168e772--4ca07aa6-4085-41b1-b575-23312d5acabc.lovable.app-1783976420681.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6aa92ae4-b26f-4b77-ba63-d190fe2ce391/id-preview-6168e772--4ca07aa6-4085-41b1-b575-23312d5acabc.lovable.app-1783976420681.png" },
     ],
     links: [
       {
