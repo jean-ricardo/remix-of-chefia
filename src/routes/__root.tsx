@@ -137,8 +137,59 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AppShell />
     </QueryClientProvider>
   );
 }
+
+function AppShell() {
+  return (
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <main className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+function SiteHeader() {
+  return (
+    <header className="sticky top-0 z-30 border-b border-border/60 bg-navy text-navy-foreground shadow-sm">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-8">
+        <Link to="/" className="flex items-center gap-3 group">
+          <span
+            aria-hidden
+            className="hexagon flex h-9 w-9 items-center justify-center bg-amber text-amber-foreground font-bold"
+          >
+            R
+          </span>
+          <div className="leading-tight">
+            <div className="text-sm font-semibold tracking-wide uppercase text-amber">
+              Rotina
+            </div>
+            <div className="text-xs text-navy-foreground/70">Gestão da equipe</div>
+          </div>
+        </Link>
+        <nav className="flex items-center gap-1 text-sm">
+          <NavItem to="/">Painel</NavItem>
+          <NavItem to="/atividades">Atividades</NavItem>
+          <NavItem to="/equipe">Equipe</NavItem>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+function NavItem({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link
+      to={to}
+      activeOptions={{ exact: true }}
+      className="rounded-md px-3 py-1.5 font-medium text-navy-foreground/80 transition-colors hover:bg-white/10 hover:text-navy-foreground [&.active]:bg-white/15 [&.active]:text-amber"
+    >
+      {children}
+    </Link>
+  );
+}
+
