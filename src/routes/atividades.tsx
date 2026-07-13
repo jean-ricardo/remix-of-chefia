@@ -306,5 +306,3 @@ function AtividadesPage() {
     </>
   );
 }
-
-void RECURRENCE_LABEL;
