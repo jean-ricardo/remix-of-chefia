@@ -24,6 +24,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   useActivities,
@@ -313,7 +323,9 @@ function OccurrenceCard({
   completed: boolean;
 }) {
   const [busy, setBusy] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>(undefined);
+  const [justification, setJustification] = useState("");
 
   const member = occ.activity.assigned_user_id
     ? memberById.get(occ.activity.assigned_user_id)
@@ -359,18 +371,40 @@ function OccurrenceCard({
     else toast.success("Conclusão desfeita");
   }
 
-  async function reschedule(newDate: Date) {
+  async function reschedule() {
+    if (!rescheduleDate) {
+      toast.error("Selecione a nova data");
+      return;
+    }
+    const reason = justification.trim();
+    if (reason.length < 3) {
+      toast.error("Informe uma justificativa (mínimo 3 caracteres)");
+      return;
+    }
     setBusy(true);
-    setPickerOpen(false);
-    const newDateStr = ymd(newDate);
+    const newDateStr = ymd(rescheduleDate);
     if (occ.activity.recurrence_type === "unica") {
+      // Registra a justificativa mesmo para atividades únicas
+      await supabase.from("reschedules").upsert(
+        {
+          activity_id: occ.activity.id,
+          original_occurrence_key: occ.originalKey,
+          new_date: newDateStr,
+          justification: reason,
+        },
+        { onConflict: "activity_id,original_occurrence_key" },
+      );
       const { error } = await supabase
         .from("activities")
         .update({ due_date: newDateStr })
         .eq("id", occ.activity.id);
       setBusy(false);
       if (error) toast.error("Erro: " + error.message);
-      else toast.success("Atividade reprogramada");
+      else {
+        toast.success("Atividade reprogramada");
+        setDialogOpen(false);
+        setJustification("");
+      }
       return;
     }
     const { error } = await supabase.from("reschedules").upsert(
@@ -378,12 +412,23 @@ function OccurrenceCard({
         activity_id: occ.activity.id,
         original_occurrence_key: occ.originalKey,
         new_date: newDateStr,
+        justification: reason,
       },
       { onConflict: "activity_id,original_occurrence_key" },
     );
     setBusy(false);
     if (error) toast.error("Erro: " + error.message);
-    else toast.success("Ocorrência reprogramada");
+    else {
+      toast.success("Ocorrência reprogramada");
+      setDialogOpen(false);
+      setJustification("");
+    }
+  }
+
+  function openRescheduleDialog() {
+    setRescheduleDate(occ.effectiveDate);
+    setJustification("");
+    setDialogOpen(true);
   }
 
   const dateLabel = format(occ.effectiveDate, "EEE, d MMM", { locale: ptBR });
@@ -459,28 +504,73 @@ function OccurrenceCard({
             Concluir
           </Button>
         )}
-        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              className="h-8"
-            >
-              <RotateCw className="h-4 w-4" />
-              Reprogramar
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={occ.effectiveDate}
-              onSelect={(d) => d && reschedule(d)}
-              locale={ptBR}
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          className="h-8"
+          onClick={openRescheduleDialog}
+        >
+          <RotateCw className="h-4 w-4" />
+          Reprogramar
+        </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reprogramar atividade</DialogTitle>
+              <DialogDescription>
+                Escolha a nova data e descreva o motivo da reprogramação.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Nova data
+                </Label>
+                <div className="rounded-md border">
+                  <Calendar
+                    mode="single"
+                    selected={rescheduleDate}
+                    onSelect={setRescheduleDate}
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label
+                  htmlFor="justification"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  Justificativa <span className="text-danger">*</span>
+                </Label>
+                <Textarea
+                  id="justification"
+                  value={justification}
+                  onChange={(e) => setJustification(e.target.value)}
+                  placeholder="Explique por que a atividade precisa ser reprogramada…"
+                  rows={4}
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                disabled={busy}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={reschedule}
+                disabled={busy || !rescheduleDate || justification.trim().length < 3}
+              >
+                Confirmar reprogramação
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </li>
   );
