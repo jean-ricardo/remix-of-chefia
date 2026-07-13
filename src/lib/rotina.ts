@@ -44,7 +44,7 @@ export const PRIORITY_ORDER: Record<Priority, number> = {
 };
 
 export const RECURRENCE_LABEL: Record<RecurrenceType, string> = {
-  diaria: "Diária",
+  diaria: "Diária (seg–sex)",
   semanal: "Semanal",
   mensal: "Mensal",
   unica: "Única",
@@ -75,8 +75,14 @@ export function ymd(date: Date): string {
 export function currentOccurrenceDate(activity: Activity, today: Date): Date | null {
   const base = startOfDay(today);
   switch (activity.recurrence_type) {
-    case "diaria":
+    case "diaria": {
+      // Diária = dias úteis (seg a sex). Se hoje for fim de semana,
+      // a ocorrência "atual" é a última sexta-feira (pendente/atrasada).
+      const dow = base.getDay();
+      if (dow === 0) return addDays(base, -2); // domingo -> sexta
+      if (dow === 6) return addDays(base, -1); // sábado -> sexta
       return base;
+    }
     case "semanal": {
       if (activity.weekday == null) return null;
       const diff = activity.weekday - base.getDay();
@@ -99,8 +105,12 @@ export function currentOccurrenceDate(activity: Activity, today: Date): Date | n
 export function nextOccurrenceDate(activity: Activity, today: Date): Date | null {
   const base = startOfDay(today);
   switch (activity.recurrence_type) {
-    case "diaria":
-      return addDays(base, 1);
+    case "diaria": {
+      // Próximo dia útil (seg a sex)
+      let d = addDays(base, 1);
+      while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+      return d;
+    }
     case "semanal": {
       if (activity.weekday == null) return null;
       let diff = activity.weekday - base.getDay();

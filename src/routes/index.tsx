@@ -335,7 +335,7 @@ function OccurrenceCard({
     const a = occ.activity;
     switch (a.recurrence_type) {
       case "diaria":
-        return "Diária";
+        return "Diária (seg–sex)";
       case "semanal":
         return a.weekday != null ? `Semanal · ${WEEKDAY_LONG[a.weekday]}` : "Semanal";
       case "mensal":
