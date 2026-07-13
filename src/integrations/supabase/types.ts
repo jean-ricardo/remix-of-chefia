@@ -92,6 +92,7 @@ export type Database = {
           activity_id: string
           created_at: string
           id: string
+          justification: string
           new_date: string
           original_occurrence_key: string
         }
@@ -99,6 +100,7 @@ export type Database = {
           activity_id: string
           created_at?: string
           id?: string
+          justification?: string
           new_date: string
           original_occurrence_key: string
         }
@@ -106,6 +108,7 @@ export type Database = {
           activity_id?: string
           created_at?: string
           id?: string
+          justification?: string
           new_date?: string
           original_occurrence_key?: string
         }

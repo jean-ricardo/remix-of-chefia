@@ -1,0 +1,1 @@
+ALTER TABLE public.reschedules ADD COLUMN IF NOT EXISTS justification text NOT NULL DEFAULT '';
