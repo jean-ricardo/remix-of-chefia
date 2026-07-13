@@ -105,8 +105,12 @@ export function currentOccurrenceDate(activity: Activity, today: Date): Date | n
 export function nextOccurrenceDate(activity: Activity, today: Date): Date | null {
   const base = startOfDay(today);
   switch (activity.recurrence_type) {
-    case "diaria":
-      return addDays(base, 1);
+    case "diaria": {
+      // Próximo dia útil (seg a sex)
+      let d = addDays(base, 1);
+      while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+      return d;
+    }
     case "semanal": {
       if (activity.weekday == null) return null;
       let diff = activity.weekday - base.getDay();
