@@ -504,28 +504,73 @@ function OccurrenceCard({
             Concluir
           </Button>
         )}
-        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              className="h-8"
-            >
-              <RotateCw className="h-4 w-4" />
-              Reprogramar
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={occ.effectiveDate}
-              onSelect={(d) => d && reschedule(d)}
-              locale={ptBR}
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          className="h-8"
+          onClick={openRescheduleDialog}
+        >
+          <RotateCw className="h-4 w-4" />
+          Reprogramar
+        </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reprogramar atividade</DialogTitle>
+              <DialogDescription>
+                Escolha a nova data e descreva o motivo da reprogramação.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Nova data
+                </Label>
+                <div className="rounded-md border">
+                  <Calendar
+                    mode="single"
+                    selected={rescheduleDate}
+                    onSelect={setRescheduleDate}
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label
+                  htmlFor="justification"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  Justificativa <span className="text-danger">*</span>
+                </Label>
+                <Textarea
+                  id="justification"
+                  value={justification}
+                  onChange={(e) => setJustification(e.target.value)}
+                  placeholder="Explique por que a atividade precisa ser reprogramada…"
+                  rows={4}
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                disabled={busy}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={reschedule}
+                disabled={busy || !rescheduleDate || justification.trim().length < 3}
+              >
+                Confirmar reprogramação
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </li>
   );
