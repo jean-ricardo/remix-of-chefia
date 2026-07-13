@@ -75,8 +75,14 @@ export function ymd(date: Date): string {
 export function currentOccurrenceDate(activity: Activity, today: Date): Date | null {
   const base = startOfDay(today);
   switch (activity.recurrence_type) {
-    case "diaria":
+    case "diaria": {
+      // Diária = dias úteis (seg a sex). Se hoje for fim de semana,
+      // a ocorrência "atual" é a última sexta-feira (pendente/atrasada).
+      const dow = base.getDay();
+      if (dow === 0) return addDays(base, -2); // domingo -> sexta
+      if (dow === 6) return addDays(base, -1); // sábado -> sexta
       return base;
+    }
     case "semanal": {
       if (activity.weekday == null) return null;
       const diff = activity.weekday - base.getDay();
