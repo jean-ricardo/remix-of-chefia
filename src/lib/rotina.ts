@@ -44,7 +44,7 @@ export const PRIORITY_ORDER: Record<Priority, number> = {
 };
 
 export const RECURRENCE_LABEL: Record<RecurrenceType, string> = {
-  diaria: "Diária",
+  diaria: "Diária (seg–sex)",
   semanal: "Semanal",
   mensal: "Mensal",
   unica: "Única",
