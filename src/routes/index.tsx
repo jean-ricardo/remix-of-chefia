@@ -323,7 +323,9 @@ function OccurrenceCard({
   completed: boolean;
 }) {
   const [busy, setBusy] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>(undefined);
+  const [justification, setJustification] = useState("");
 
   const member = occ.activity.assigned_user_id
     ? memberById.get(occ.activity.assigned_user_id)
