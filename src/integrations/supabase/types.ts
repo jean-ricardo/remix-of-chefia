@@ -14,7 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          assigned_user_id: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          month_day: number | null
+          priority: Database["public"]["Enums"]["activity_priority"]
+          recurrence_type: Database["public"]["Enums"]["recurrence_type"]
+          title: string
+          weekday: number | null
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          month_day?: number | null
+          priority?: Database["public"]["Enums"]["activity_priority"]
+          recurrence_type: Database["public"]["Enums"]["recurrence_type"]
+          title: string
+          weekday?: number | null
+        }
+        Update: {
+          assigned_user_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          month_day?: number | null
+          priority?: Database["public"]["Enums"]["activity_priority"]
+          recurrence_type?: Database["public"]["Enums"]["recurrence_type"]
+          title?: string
+          weekday?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      completions: {
+        Row: {
+          activity_id: string
+          completed_at: string
+          id: string
+          occurrence_key: string
+        }
+        Insert: {
+          activity_id: string
+          completed_at?: string
+          id?: string
+          occurrence_key: string
+        }
+        Update: {
+          activity_id?: string
+          completed_at?: string
+          id?: string
+          occurrence_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "completions_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reschedules: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          new_date: string
+          original_occurrence_key: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          new_date: string
+          original_occurrence_key: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          new_date?: string
+          original_occurrence_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reschedules_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          role: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          role?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +148,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      activity_priority: "alta" | "media" | "baixa"
+      recurrence_type: "diaria" | "semanal" | "mensal" | "unica"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +276,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      activity_priority: ["alta", "media", "baixa"],
+      recurrence_type: ["diaria", "semanal", "mensal", "unica"],
+    },
   },
 } as const
