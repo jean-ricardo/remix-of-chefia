@@ -136,6 +136,7 @@ export interface OccurrenceView {
   originalKey: string; // YYYY-MM-DD of the original computed occurrence (unshifted)
   effectiveDate: Date; // possibly shifted by reschedule
   isRescheduled: boolean;
+  rescheduleJustification: string | null;
   status: OccurrenceStatus;
   completed: boolean;
 }
@@ -144,7 +145,7 @@ export function buildOccurrence(
   activity: Activity,
   today: Date,
   completions: Set<string>, // key = activityId + "|" + occurrence_key
-  reschedules: Map<string, string>, // key = activityId + "|" + occurrence_key -> new_date
+  reschedules: Map<string, { new_date: string; justification: string }>,
 ): OccurrenceView | null {
   const base = startOfDay(today);
   let occ = currentOccurrenceDate(activity, base);
