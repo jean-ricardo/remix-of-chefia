@@ -29,6 +29,7 @@ export interface Reschedule {
   activity_id: string;
   original_occurrence_key: string;
   new_date: string;
+  justification: string;
 }
 
 export const PRIORITY_LABEL: Record<Priority, string> = {
@@ -135,6 +136,7 @@ export interface OccurrenceView {
   originalKey: string; // YYYY-MM-DD of the original computed occurrence (unshifted)
   effectiveDate: Date; // possibly shifted by reschedule
   isRescheduled: boolean;
+  rescheduleJustification: string | null;
   status: OccurrenceStatus;
   completed: boolean;
 }
@@ -143,7 +145,7 @@ export function buildOccurrence(
   activity: Activity,
   today: Date,
   completions: Set<string>, // key = activityId + "|" + occurrence_key
-  reschedules: Map<string, string>, // key = activityId + "|" + occurrence_key -> new_date
+  reschedules: Map<string, { new_date: string; justification: string }>,
 ): OccurrenceView | null {
   const base = startOfDay(today);
   let occ = currentOccurrenceDate(activity, base);
@@ -152,11 +154,17 @@ export function buildOccurrence(
   // For "unica", due_date already reflects reschedule (per spec). No reschedule row expected.
   const originalKey = ymd(occ);
   const rescheduleKey = `${activity.id}|${originalKey}`;
-  const newDateStr = reschedules.get(rescheduleKey);
+  const rescheduleEntry = reschedules.get(rescheduleKey);
   let effectiveDate = occ;
   let isRescheduled = false;
-  if (newDateStr && activity.recurrence_type !== "unica") {
-    effectiveDate = parseISO(newDateStr);
+  let rescheduleJustification: string | null = null;
+  if (rescheduleEntry && activity.recurrence_type !== "unica") {
+    effectiveDate = parseISO(rescheduleEntry.new_date);
+    isRescheduled = true;
+    rescheduleJustification = rescheduleEntry.justification || null;
+  } else if (rescheduleEntry && activity.recurrence_type === "unica") {
+    // For "unica" the due_date already carries the new date, but still show the justification.
+    rescheduleJustification = rescheduleEntry.justification || null;
     isRescheduled = true;
   }
 
@@ -182,15 +190,16 @@ export function buildOccurrence(
         if (!next) return null;
         const nextKey = ymd(next);
         const nextRescheduleKey = `${activity.id}|${nextKey}`;
-        const nextNew = reschedules.get(nextRescheduleKey);
-        const nextEffective = nextNew ? parseISO(nextNew) : next;
+        const nextEntry = reschedules.get(nextRescheduleKey);
+        const nextEffective = nextEntry ? parseISO(nextEntry.new_date) : next;
         const nextCompleted = completions.has(`${activity.id}|${nextKey}`);
         const nextDiff = differenceInCalendarDays(startOfDay(nextEffective), base);
         return {
           activity,
           originalKey: nextKey,
           effectiveDate: nextEffective,
-          isRescheduled: !!nextNew,
+          isRescheduled: !!nextEntry,
+          rescheduleJustification: nextEntry?.justification || null,
           completed: nextCompleted,
           status: nextCompleted
             ? "concluida"
@@ -211,7 +220,7 @@ export function buildOccurrence(
     else status = "fora";
   }
 
-  return { activity, originalKey, effectiveDate, isRescheduled, completed, status };
+  return { activity, originalKey, effectiveDate, isRescheduled, rescheduleJustification, completed, status };
 }
 
 export function sortOccurrences(a: OccurrenceView, b: OccurrenceView): number {
