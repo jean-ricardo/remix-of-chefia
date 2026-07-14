@@ -479,6 +479,17 @@ function OccurrenceCard({
             </span>
             <span>{recurrenceDetail}</span>
           </div>
+          {occ.isRescheduled && occ.rescheduleJustification && (
+            <div className="mt-2 rounded-md border border-navy/20 bg-navy/5 p-2 text-xs text-navy">
+              <div className="mb-0.5 flex items-center gap-1 font-semibold uppercase tracking-wide text-[10px] text-navy/80">
+                <RotateCw className="h-3 w-3" />
+                Justificativa da reprogramação
+              </div>
+              <p className="whitespace-pre-wrap text-navy/90">
+                {occ.rescheduleJustification}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
