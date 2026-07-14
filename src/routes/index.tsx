@@ -77,7 +77,7 @@ function DashboardPage() {
     const reMap = new Map(
       (reschedules.data ?? []).map((r) => [
         `${r.activity_id}|${r.original_occurrence_key}`,
-        r.new_date,
+        { new_date: r.new_date, justification: r.justification ?? "" },
       ]),
     );
 
