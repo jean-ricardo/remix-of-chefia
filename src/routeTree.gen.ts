@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ReprogramadasRouteImport } from './routes/reprogramadas'
 import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as AtividadesRouteImport } from './routes/atividades'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ReprogramadasRoute = ReprogramadasRouteImport.update({
+  id: '/reprogramadas',
+  path: '/reprogramadas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EquipeRoute = EquipeRouteImport.update({
   id: '/equipe',
   path: '/equipe',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/atividades': typeof AtividadesRoute
   '/equipe': typeof EquipeRoute
+  '/reprogramadas': typeof ReprogramadasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/atividades': typeof AtividadesRoute
   '/equipe': typeof EquipeRoute
+  '/reprogramadas': typeof ReprogramadasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/atividades': typeof AtividadesRoute
   '/equipe': typeof EquipeRoute
+  '/reprogramadas': typeof ReprogramadasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/atividades' | '/equipe'
+  fullPaths: '/' | '/atividades' | '/equipe' | '/reprogramadas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/atividades' | '/equipe'
-  id: '__root__' | '/' | '/atividades' | '/equipe'
+  to: '/' | '/atividades' | '/equipe' | '/reprogramadas'
+  id: '__root__' | '/' | '/atividades' | '/equipe' | '/reprogramadas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtividadesRoute: typeof AtividadesRoute
   EquipeRoute: typeof EquipeRoute
+  ReprogramadasRoute: typeof ReprogramadasRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reprogramadas': {
+      id: '/reprogramadas'
+      path: '/reprogramadas'
+      fullPath: '/reprogramadas'
+      preLoaderRoute: typeof ReprogramadasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/equipe': {
       id: '/equipe'
       path: '/equipe'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtividadesRoute: AtividadesRoute,
   EquipeRoute: EquipeRoute,
+  ReprogramadasRoute: ReprogramadasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
