@@ -178,6 +178,7 @@ function SiteHeader() {
         <nav className="flex items-center gap-1 text-sm">
           <NavItem to="/">Painel</NavItem>
           <NavItem to="/atividades">Atividades</NavItem>
+          <NavItem to="/reprogramadas">Reprogramadas</NavItem>
           <NavItem to="/equipe">Equipe</NavItem>
         </nav>
       </div>
