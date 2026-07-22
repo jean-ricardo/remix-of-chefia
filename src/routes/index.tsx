@@ -414,24 +414,6 @@ function PaginatedTaskList({
   );
 }
 
-function priorityChip(p: Priority) {
-  const cls = {
-    alta: "bg-danger/10 text-danger border-danger/25",
-    media: "bg-amber/25 text-amber-foreground border-amber/40",
-    baixa: "bg-navy/8 text-navy border-navy/20",
-  }[p];
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-        cls,
-      )}
-    >
-      <Flag className="h-3 w-3" />
-      {PRIORITY_LABEL[p]}
-    </span>
-  );
-}
 
 function OccurrenceCard({
   occ,
