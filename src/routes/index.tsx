@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -14,6 +14,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { NewActivitySheet } from "@/components/activities/NewActivitySheet";
+import { EditActivitySheet, type EditMode } from "@/components/activities/EditActivitySheet";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -25,17 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   useActivities,
@@ -49,7 +39,6 @@ import {
   PRIORITY_LABEL,
   sortOccurrences,
   WEEKDAY_LONG,
-  ymd,
   type OccurrenceStatus,
   type OccurrenceView,
   type Priority,
@@ -394,9 +383,9 @@ function OccurrenceCard({
   currentUser: ReturnType<typeof useMockUser>;
 }) {
   const [busy, setBusy] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>(undefined);
-  const [justification, setJustification] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editMode, setEditMode] = useState<EditMode>("edit");
+  const pointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const member = occ.activity.assigned_user_id
     ? memberById.get(occ.activity.assigned_user_id)
@@ -448,64 +437,28 @@ function OccurrenceCard({
     else toast.success("Conclusão desfeita");
   }
 
-  async function reschedule() {
-    if (!rescheduleDate) {
-      toast.error("Selecione a nova data");
-      return;
-    }
-    const reason = justification.trim();
-    if (reason.length < 3) {
-      toast.error("Informe uma justificativa (mínimo 3 caracteres)");
-      return;
-    }
-    setBusy(true);
-    const newDateStr = ymd(rescheduleDate);
-    if (occ.activity.recurrence_type === "unica") {
-      await supabase.from("reschedules").upsert(
-        {
-          activity_id: occ.activity.id,
-          original_occurrence_key: occ.originalKey,
-          new_date: newDateStr,
-          justification: reason,
-        },
-        { onConflict: "activity_id,original_occurrence_key" },
-      );
-      const { error } = await supabase
-        .from("activities")
-        .update({ due_date: newDateStr })
-        .eq("id", occ.activity.id);
-      setBusy(false);
-      if (error) toast.error("Erro: " + error.message);
-      else {
-        toast.success("Atividade reprogramada");
-        setDialogOpen(false);
-        setJustification("");
-      }
-      return;
-    }
-    const { error } = await supabase.from("reschedules").upsert(
-      {
-        activity_id: occ.activity.id,
-        original_occurrence_key: occ.originalKey,
-        new_date: newDateStr,
-        justification: reason,
-      },
-      { onConflict: "activity_id,original_occurrence_key" },
-    );
-    setBusy(false);
-    if (error) toast.error("Erro: " + error.message);
-    else {
-      toast.success("Ocorrência reprogramada");
-      setDialogOpen(false);
-      setJustification("");
-    }
+  function openEdit(mode: EditMode) {
+    setEditMode(mode);
+    setEditOpen(true);
   }
 
-  function openRescheduleDialog() {
-    setRescheduleDate(occ.effectiveDate);
-    setJustification("");
-    setDialogOpen(true);
+  // Mobile-safe click: ignore when the pointer moved (scroll gesture).
+  function handleCardPointerDown(e: React.PointerEvent) {
+    pointerRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
   }
+  function handleCardClick(e: React.MouseEvent) {
+    // Ignore clicks originating from interactive children (buttons, links).
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a, [role='button']")) return;
+    const p = pointerRef.current;
+    if (p) {
+      const dx = Math.abs(e.clientX - p.x);
+      const dy = Math.abs(e.clientY - p.y);
+      if (dx > 8 || dy > 8) return; // treated as scroll/swipe
+    }
+    openEdit("edit");
+  }
+
 
   const dateLabel = format(occ.effectiveDate, "EEE, d MMM", { locale: ptBR });
 
@@ -519,8 +472,10 @@ function OccurrenceCard({
 
   return (
     <li
+      onPointerDown={handleCardPointerDown}
+      onClick={handleCardClick}
       className={cn(
-        "group rounded-2xl border bg-card p-3.5 shadow-sm transition-all md:p-4 md:hover:shadow-md md:hover:border-navy/25",
+        "group cursor-pointer rounded-2xl border bg-card p-3.5 shadow-sm transition-all md:p-4 md:hover:shadow-md md:hover:border-navy/25",
         borderTone,
         completed && "bg-success/5",
       )}
@@ -614,70 +569,21 @@ function OccurrenceCard({
             variant="outline"
             disabled={busy}
             className="h-11 min-w-[44px] md:h-9"
-            onClick={openRescheduleDialog}
+            onClick={() => openEdit("reschedule")}
           >
             <RotateCw className="h-4 w-4" />
             Reprogramar
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Reprogramar atividade</DialogTitle>
-                <DialogDescription>
-                  Escolha a nova data e descreva o motivo da reprogramação.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Nova data
-                  </Label>
-                  <div className="rounded-md border">
-                    <Calendar
-                      mode="single"
-                      selected={rescheduleDate}
-                      onSelect={setRescheduleDate}
-                      locale={ptBR}
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label
-                    htmlFor="justification"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    Justificativa <span className="text-danger">*</span>
-                  </Label>
-                  <Textarea
-                    id="justification"
-                    value={justification}
-                    onChange={(e) => setJustification(e.target.value)}
-                    placeholder="Explique por que a atividade precisa ser reprogramada…"
-                    rows={4}
-                    required
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                  disabled={busy}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={reschedule}
-                  disabled={busy || !rescheduleDate || justification.trim().length < 3}
-                >
-                  Confirmar reprogramação
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       )}
+
+      <EditActivitySheet
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        occurrence={occ}
+        mode={editMode}
+      />
     </li>
   );
 }
+
