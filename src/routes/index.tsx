@@ -414,24 +414,6 @@ function PaginatedTaskList({
   );
 }
 
-function priorityChip(p: Priority) {
-  const cls = {
-    alta: "bg-danger/10 text-danger border-danger/25",
-    media: "bg-amber/25 text-amber-foreground border-amber/40",
-    baixa: "bg-navy/8 text-navy border-navy/20",
-  }[p];
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-        cls,
-      )}
-    >
-      <Flag className="h-3 w-3" />
-      {PRIORITY_LABEL[p]}
-    </span>
-  );
-}
 
 function OccurrenceCard({
   occ,
@@ -524,118 +506,114 @@ function OccurrenceCard({
 
   const dateLabel = format(occ.effectiveDate, "EEE, d MMM", { locale: ptBR });
 
-  const borderTone = completed
-    ? "border-success/25"
-    : occ.status === "atrasada"
-      ? "border-danger/25"
-      : occ.status === "hoje"
-        ? "border-amber/40"
-        : "border-border/60";
-
   return (
     <li
       onPointerDown={handleCardPointerDown}
       onClick={handleCardClick}
       className={cn(
-        "group cursor-pointer rounded-2xl border bg-card p-3.5 shadow-sm transition-all md:p-4 md:hover:shadow-md md:hover:border-navy/25",
-        borderTone,
+        "group flex cursor-pointer flex-col justify-between rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow duration-200 md:p-5 md:hover:shadow-md",
         completed && "bg-success/5",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {priorityChip(occ.activity.priority)}
-            {occ.isRescheduled && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-navy/20 bg-navy/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy">
-                <RotateCw className="h-3 w-3" />
-                Reprogramada
-              </span>
-            )}
-            {!canAct && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-muted-foreground/25 bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <Eye className="h-3 w-3" />
-                Somente leitura
-              </span>
-            )}
-          </div>
-
-          {clientName && (
-            <div className="mt-2 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              {clientName}
-            </div>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <PriorityPill priority={occ.activity.priority} />
+          {occ.isRescheduled && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-navy/20 bg-navy/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy">
+              <RotateCw className="h-3 w-3" />
+              Reprogramada
+            </span>
           )}
-          <h3
-            className={cn(
-              "mt-1 text-[15px] font-semibold leading-snug text-navy md:text-base",
-              completed && "line-through text-muted-foreground",
-            )}
-          >
-            {occ.activity.title}
-          </h3>
-
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground md:text-xs">
-            <span className="inline-flex items-center gap-1">
-              <UserIcon className="h-3 w-3" />
-              {member?.name ?? "Sem responsável"}
-              {member?.role ? (
-                <span className="text-muted-foreground/70">· {member.role}</span>
-              ) : null}
+          {!canAct && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-muted-foreground/25 bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <Eye className="h-3 w-3" />
+              Somente leitura
             </span>
-            <span className="inline-flex items-center gap-1">
-              <CalendarClock className="h-3 w-3" />
-              {dateLabel}
-            </span>
-            <span>{recurrenceDetail}</span>
-          </div>
-
-          {occ.isRescheduled && occ.rescheduleJustification && (
-            <div className="mt-2.5 rounded-lg border border-navy/15 bg-navy/5 p-2.5 text-xs text-navy">
-              <div className="mb-0.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-navy/70">
-                <RotateCw className="h-3 w-3" />
-                Justificativa da reprogramação
-              </div>
-              <p className="whitespace-pre-wrap text-navy/90">
-                {occ.rescheduleJustification}
-              </p>
-            </div>
           )}
         </div>
+
+        {clientName && (
+          <div className="mt-2 mb-1 truncate text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            {clientName}
+          </div>
+        )}
+        <h3
+          className={cn(
+            "mb-2 line-clamp-2 text-base font-semibold leading-tight text-[#042C53]",
+            completed && "text-muted-foreground line-through",
+          )}
+        >
+          {occ.activity.title}
+        </h3>
+
+        {occ.isRescheduled && occ.rescheduleJustification && (
+          <div className="mt-2.5 rounded-lg border border-navy/15 bg-navy/5 p-2.5 text-xs text-navy">
+            <div className="mb-0.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-navy/70">
+              <RotateCw className="h-3 w-3" />
+              Justificativa da reprogramação
+            </div>
+            <p className="whitespace-pre-wrap text-navy/90">
+              {occ.rescheduleJustification}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 pt-3 text-xs text-gray-500">
+        {member?.name && (
+          <span className="inline-flex items-center gap-1">
+            <UserIcon className="h-3 w-3" />
+            {member.name}
+            {member.role ? (
+              <span className="text-gray-400">· {member.role}</span>
+            ) : null}
+          </span>
+        )}
+        {dateLabel && (
+          <span className="inline-flex items-center gap-1">
+            <CalendarClock className="h-3 w-3" />
+            {dateLabel}
+          </span>
+        )}
+        {recurrenceDetail && (
+          <span className="inline-flex items-center gap-1">
+            <RotateCw className="h-3 w-3" />
+            {recurrenceDetail}
+          </span>
+        )}
       </div>
 
       {canAct && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex gap-2 border-t border-gray-50 pt-3">
           {completed ? (
-            <Button
-              size="sm"
-              variant="outline"
+            <button
+              type="button"
               onClick={reopen}
               disabled={busy}
-              className="h-11 min-w-[44px] md:h-9"
+              className="h-10 flex-1 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50"
             >
               Desfazer
-            </Button>
+            </button>
           ) : (
-            <Button
-              size="sm"
+            <button
+              type="button"
               onClick={complete}
               disabled={busy}
-              className="h-11 min-w-[44px] bg-success text-success-foreground hover:bg-success/90 md:h-9"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50"
             >
               <CheckCircle2 className="h-4 w-4" />
               Concluir
-            </Button>
+            </button>
           )}
-          <Button
-            size="sm"
-            variant="outline"
+          <button
+            type="button"
             disabled={busy}
-            className="h-11 min-w-[44px] md:h-9"
             onClick={() => openEdit("reschedule")}
+            className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-[#185FA5]/30 hover:bg-[#185FA5]/10 hover:text-[#185FA5] disabled:opacity-50"
           >
             <RotateCw className="h-4 w-4" />
             Reprogramar
-          </Button>
+          </button>
         </div>
       )}
 
@@ -646,6 +624,25 @@ function OccurrenceCard({
         mode={editMode}
       />
     </li>
+  );
+}
+
+function PriorityPill({ priority }: { priority: Priority }) {
+  const cls = {
+    alta: "bg-red-50 text-red-600",
+    media: "bg-yellow-50 text-yellow-600",
+    baixa: "bg-blue-50 text-[#185FA5]",
+  }[priority];
+  return (
+    <span
+      className={cn(
+        "inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+        cls,
+      )}
+    >
+      <Flag className="h-3 w-3" />
+      {PRIORITY_LABEL[priority]}
+    </span>
   );
 }
 
