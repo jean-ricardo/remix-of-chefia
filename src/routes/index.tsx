@@ -449,64 +449,28 @@ function OccurrenceCard({
     else toast.success("Conclusão desfeita");
   }
 
-  async function reschedule() {
-    if (!rescheduleDate) {
-      toast.error("Selecione a nova data");
-      return;
-    }
-    const reason = justification.trim();
-    if (reason.length < 3) {
-      toast.error("Informe uma justificativa (mínimo 3 caracteres)");
-      return;
-    }
-    setBusy(true);
-    const newDateStr = ymd(rescheduleDate);
-    if (occ.activity.recurrence_type === "unica") {
-      await supabase.from("reschedules").upsert(
-        {
-          activity_id: occ.activity.id,
-          original_occurrence_key: occ.originalKey,
-          new_date: newDateStr,
-          justification: reason,
-        },
-        { onConflict: "activity_id,original_occurrence_key" },
-      );
-      const { error } = await supabase
-        .from("activities")
-        .update({ due_date: newDateStr })
-        .eq("id", occ.activity.id);
-      setBusy(false);
-      if (error) toast.error("Erro: " + error.message);
-      else {
-        toast.success("Atividade reprogramada");
-        setDialogOpen(false);
-        setJustification("");
-      }
-      return;
-    }
-    const { error } = await supabase.from("reschedules").upsert(
-      {
-        activity_id: occ.activity.id,
-        original_occurrence_key: occ.originalKey,
-        new_date: newDateStr,
-        justification: reason,
-      },
-      { onConflict: "activity_id,original_occurrence_key" },
-    );
-    setBusy(false);
-    if (error) toast.error("Erro: " + error.message);
-    else {
-      toast.success("Ocorrência reprogramada");
-      setDialogOpen(false);
-      setJustification("");
-    }
+  function openEdit(mode: EditMode) {
+    setEditMode(mode);
+    setEditOpen(true);
   }
 
-  function openRescheduleDialog() {
-    setRescheduleDate(occ.effectiveDate);
-    setJustification("");
-    setDialogOpen(true);
+  // Mobile-safe click: ignore when the pointer moved (scroll gesture).
+  function handleCardPointerDown(e: React.PointerEvent) {
+    pointerRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
   }
+  function handleCardClick(e: React.MouseEvent) {
+    // Ignore clicks originating from interactive children (buttons, links).
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a, [role='button']")) return;
+    const p = pointerRef.current;
+    if (p) {
+      const dx = Math.abs(e.clientX - p.x);
+      const dy = Math.abs(e.clientY - p.y);
+      if (dx > 8 || dy > 8) return; // treated as scroll/swipe
+    }
+    openEdit("edit");
+  }
+
 
   const dateLabel = format(occ.effectiveDate, "EEE, d MMM", { locale: ptBR });
 
