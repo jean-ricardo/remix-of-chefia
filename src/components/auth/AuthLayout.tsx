@@ -19,7 +19,7 @@ export function AuthLayout({
           <ChefiaLogo className="h-60 w-auto md:h-72" />
         </Link>
 
-        <div className="w-full rounded-2xl bg-white p-6 shadow-lg md:p-8">
+        <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 shadow-lg sm:p-8">
           <div className="mb-6 text-center">
             <h1 className="text-xl font-bold text-[#042C53] md:text-2xl">{title}</h1>
             {subtitle ? (
