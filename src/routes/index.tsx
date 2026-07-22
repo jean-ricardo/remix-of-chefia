@@ -395,9 +395,9 @@ function OccurrenceCard({
   currentUser: ReturnType<typeof useMockUser>;
 }) {
   const [busy, setBusy] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>(undefined);
-  const [justification, setJustification] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editMode, setEditMode] = useState<EditMode>("edit");
+  const pointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const member = occ.activity.assigned_user_id
     ? memberById.get(occ.activity.assigned_user_id)
