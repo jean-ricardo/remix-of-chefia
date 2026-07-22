@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Mail, Trash2, UserPlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Mail, Trash2, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useActivities, useRotinaRealtime, useTeamMembers } from "@/lib/useRotina";
-import { useMockUser } from "@/lib/mockUser";
+import { setMockRole, useMockUser } from "@/lib/mockUser";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/equipe")({
@@ -33,9 +33,23 @@ export const Route = createFileRoute("/equipe")({
 
 const LICENSE_CAP = 10;
 
-function initialsOf(name: string) {
+function initialsOf(name?: string | null) {
+  if (!name) return "?";
   const parts = name.trim().split(/\s+/).slice(0, 2);
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
+}
+
+interface MemberLike {
+  id: string;
+  name?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  avatar_url?: string | null;
+}
+
+function displayNameOf(m: MemberLike) {
+  return m?.full_name || m?.name || m?.email || "Membro";
 }
 
 function EquipePage() {
@@ -59,15 +73,14 @@ function EquipePage() {
     return c;
   }, [activities.data]);
 
-  const memberList = members.data ?? [];
+  const memberList = (members.data ?? []) as MemberLike[];
   const inUse = memberList.length;
 
   async function sendInvite(e: React.FormEvent) {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
     setInviteBusy(true);
-    // Mocked invite: simulate latency and show success toast (no backend change).
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 400));
     setInviteBusy(false);
     setInviteOpen(false);
     setInviteEmail("");
@@ -75,171 +88,141 @@ function EquipePage() {
     toast.success("Convite enviado com sucesso!");
   }
 
-  async function remove(id: string) {
+  function removeMock(e: React.MouseEvent, name: string) {
+    e.preventDefault();
+    e.stopPropagation();
     if (!isAdmin) return;
-    if (!confirm("Remover este membro? As atividades atribuídas ficarão sem responsável.")) return;
-    const { error } = await supabase.from("team_members").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else toast.success("Membro removido");
+    toast.success(`Membro removido (Mock)`, {
+      description: name ? `${name} foi removido apenas nesta simulação.` : undefined,
+    });
   }
 
   return (
     <>
       <Toaster position="top-right" richColors />
       <div className="space-y-8">
-        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:items-end sm:justify-between">
+        <header className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-widest text-amber">Equipe</p>
-            <h1 className="mt-1 truncate text-2xl font-bold text-navy sm:text-3xl">Membros</h1>
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber">
+              Equipe
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <h1 className="truncate text-2xl font-bold text-navy sm:text-3xl">
+                Membros
+              </h1>
+              {/* QA toggle */}
+              <label
+                className="inline-flex items-center gap-2 rounded-full border border-dashed border-navy/25 bg-surface px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-navy"
+                title="QA: alternar papel"
+              >
+                <span className={cn(!isAdmin && "opacity-50")}>Admin</span>
+                <Switch
+                  checked={!isAdmin}
+                  onCheckedChange={(checked) =>
+                    setMockRole(checked ? "member" : "admin")
+                  }
+                  aria-label="QA alternar Admin/Member"
+                />
+                <span className={cn(isAdmin && "opacity-50")}>Member</span>
+              </label>
+            </div>
             <p className="mt-2 text-sm text-muted-foreground">
               Gerencie as pessoas responsáveis pelas atividades da rotina.
             </p>
           </div>
 
-          {isAdmin && (
-            <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
-              <Badge
-                variant="outline"
-                className="h-8 gap-1.5 rounded-full border-navy/20 bg-surface px-3 text-[11px] font-semibold uppercase tracking-wide text-navy"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-amber" aria-hidden />
-                Licenças: {inUse}/{LICENSE_CAP} em uso
-              </Badge>
+          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
+            <Badge
+              variant="outline"
+              className="h-8 gap-1.5 rounded-full border-navy/20 bg-surface px-3 text-[11px] font-semibold uppercase tracking-wide text-navy"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-amber" aria-hidden />
+              Licenças: {inUse}/{LICENSE_CAP} em uso
+            </Badge>
+            {isAdmin && (
               <Button
                 onClick={() => setInviteOpen(true)}
-                className="h-11 min-w-[44px] bg-amber text-amber-foreground hover:bg-amber/90"
+                className="h-10 rounded-lg bg-[#D85A30] px-4 font-medium text-white hover:bg-[#c14e28]"
               >
                 <UserPlus className="h-4 w-4" />
                 Convidar Novo Membro
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </header>
 
-        {/* Desktop: table */}
-        <div className="hidden overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm md:block">
-          {members.isLoading ? (
-            <div className="p-6 text-sm text-muted-foreground">Carregando…</div>
-          ) : memberList.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">
+        {/* Responsive list — NO tables */}
+        {members.isLoading ? (
+          <div className="rounded-2xl border border-border/60 bg-card p-6 text-sm text-muted-foreground shadow-sm">
+            Carregando…
+          </div>
+        ) : memberList.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center shadow-sm">
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-surface text-navy">
+              <Users className="h-5 w-5" />
+            </div>
+            <p className="mt-3 text-sm font-medium text-navy">
               Nenhum membro cadastrado ainda.
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-surface-2/60 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="px-5 py-3">Membro</th>
-                  <th className="px-5 py-3">Papel</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Atividades</th>
-                  {isAdmin && <th className="px-5 py-3 text-right">Ações</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {memberList.map((m, idx) => {
-                  // Mock: first member marked as Pendente to showcase status.
-                  const status: "ativo" | "pendente" =
-                    idx === 0 && memberList.length > 1 ? "pendente" : "ativo";
-                  return (
-                    <tr
-                      key={m.id}
-                      className="group transition-colors hover:bg-surface/60"
-                    >
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={m.name} />
-                          <div className="min-w-0">
-                            <div className="truncate font-semibold text-navy">{m.name}</div>
-                            <div className="truncate text-xs text-muted-foreground">
-                              {m.role || "Sem função definida"}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <RoleBadge role="Membro" />
-                      </td>
-                      <td className="px-5 py-4">
-                        <StatusBadge status={status} />
-                      </td>
-                      <td className="px-5 py-4 text-right text-base font-bold tabular-nums text-navy">
-                        {counts.get(m.id) ?? 0}
-                      </td>
-                      {isAdmin && (
-                        <td className="px-5 py-4 text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(m.id)}
-                            className="h-11 w-11 text-danger hover:bg-danger/10 hover:text-danger"
-                            aria-label={`Remover ${m.name}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Mobile: card list */}
-        <div className="grid gap-3 md:hidden">
-          {members.isLoading ? (
-            <div className="rounded-2xl border border-border/60 bg-card p-6 text-sm text-muted-foreground shadow-sm">
-              Carregando…
-            </div>
-          ) : memberList.length === 0 ? (
-            <div className="rounded-2xl border border-border/60 bg-card p-8 text-center text-sm text-muted-foreground shadow-sm">
-              Nenhum membro cadastrado ainda.
-            </div>
-          ) : (
-            memberList.map((m, idx) => {
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Convide sua equipe para começar a distribuir a rotina.
+            </p>
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {memberList.map((m, idx) => {
+              const name = displayNameOf(m);
               const status: "ativo" | "pendente" =
                 idx === 0 && memberList.length > 1 ? "pendente" : "ativo";
+              const count = counts.get(m.id) ?? 0;
               return (
-                <article
-                  key={m.id}
-                  className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm"
-                >
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
-                    <Avatar name={m.name} />
-                    <div className="min-w-0">
-                      <div className="truncate font-semibold text-navy">{m.name}</div>
-                      <div className="truncate text-xs text-muted-foreground">
-                        {m.role || "Sem função definida"}
+                <li key={m.id}>
+                  <div
+                    className={cn(
+                      "rounded-lg bg-white p-4 shadow-sm ring-1 ring-border/60 transition-shadow hover:shadow-md",
+                      "flex flex-col items-start gap-3",
+                      "md:flex-row md:items-center md:justify-between md:gap-4",
+                    )}
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar name={name} src={m?.avatar_url ?? undefined} />
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold text-[#042C53]">
+                          {name}
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {m?.email || m?.role || "Sem função definida"}
+                        </div>
                       </div>
                     </div>
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => remove(m.id)}
-                        className="h-11 w-11 shrink-0 text-danger hover:bg-danger/10 hover:text-danger"
-                        aria-label={`Remover ${m.name}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+
+                    <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
+                      <RoleBadge role="Membro" />
+                      <StatusBadge status={status} />
+                      <span className="text-xs text-muted-foreground">
+                        <span className="font-bold tabular-nums text-navy">
+                          {count}
+                        </span>{" "}
+                        atividades
+                      </span>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => removeMock(e, name)}
+                          className="h-10 w-10 shrink-0 text-danger hover:bg-danger/10 hover:text-danger"
+                          aria-label={`Remover ${name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <RoleBadge role="Membro" />
-                    <StatusBadge status={status} />
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      <span className="font-bold tabular-nums text-navy">
-                        {counts.get(m.id) ?? 0}
-                      </span>{" "}
-                      atividades
-                    </span>
-                  </div>
-                </article>
+                </li>
               );
-            })
-          )}
-        </div>
+            })}
+          </ul>
+        )}
       </div>
 
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
@@ -252,7 +235,7 @@ function EquipePage() {
           </DialogHeader>
           <form onSubmit={sendInvite} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="invite-email">E-mail do colaborador</Label>
+              <Label htmlFor="invite-email">E-mail corporativo</Label>
               <Input
                 id="invite-email"
                 type="email"
@@ -264,7 +247,7 @@ function EquipePage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="invite-role">Papel na Conta</Label>
+              <Label htmlFor="invite-role">Nível de Acesso</Label>
               <Select
                 value={inviteRole}
                 onValueChange={(v) => setInviteRole(v as "member" | "admin")}
@@ -290,7 +273,7 @@ function EquipePage() {
               <Button
                 type="submit"
                 disabled={inviteBusy}
-                className="h-11 bg-amber text-amber-foreground hover:bg-amber/90"
+                className="h-11 rounded-lg bg-[#D85A30] font-medium text-white hover:bg-[#c14e28]"
               >
                 <Mail className="h-4 w-4" />
                 Enviar Convite
@@ -303,7 +286,18 @@ function EquipePage() {
   );
 }
 
-function Avatar({ name }: { name: string }) {
+function Avatar({ name, src }: { name: string; src?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (src && !failed) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        onError={() => setFailed(true)}
+        className="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-amber/30"
+      />
+    );
+  }
   return (
     <div
       aria-hidden
