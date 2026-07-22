@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
+import chefiaLogo from "@/assets/chefia-logo.png";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import {
   setMockMemberId,
@@ -33,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
 
 function NotFoundComponent() {
   return (
@@ -159,6 +162,16 @@ function RootComponent() {
 }
 
 function AppShell() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/accept-invite";
+
+  if (isAuthRoute) {
+    return <Outlet />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -222,16 +235,19 @@ function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-navy text-navy-foreground shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:px-8">
-        <Link to="/" className="flex min-w-0 items-center gap-2.5 group">
-          <span
-            aria-hidden
-            className="hexagon flex h-9 w-9 shrink-0 items-center justify-center bg-amber text-amber-foreground text-sm font-bold"
-          >
-            R
+        {/* Logo with generous safe area (equivalent to ring thickness) */}
+        <Link to="/" className="flex min-w-0 items-center gap-2 group p-2 -m-2" aria-label="Chef.IA">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white p-1.5 shadow-sm">
+            <img
+              src={chefiaLogo}
+              alt=""
+              aria-hidden
+              className="h-full w-full object-contain"
+            />
           </span>
           <div className="min-w-0 leading-tight">
-            <div className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-amber">
-              Rotina
+            <div className="truncate text-sm font-bold tracking-tight text-navy-foreground">
+              Chef.IA
             </div>
             <div className="truncate text-[11px] text-navy-foreground/60">
               Gestão da equipe
@@ -253,6 +269,7 @@ function SiteHeader() {
     </header>
   );
 }
+
 
 function NavItem({ to, children }: { to: string; children: ReactNode }) {
   return (
