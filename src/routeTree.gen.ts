@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ReprogramadasRouteImport } from './routes/reprogramadas'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as AtividadesRouteImport } from './routes/atividades'
@@ -25,6 +26,11 @@ const ReprogramadasRoute = ReprogramadasRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/atividades': typeof AtividadesRoute
   '/equipe': typeof EquipeRoute
   '/login': typeof LoginRoute
+  '/perfil': typeof PerfilRoute
   '/register': typeof RegisterRoute
   '/reprogramadas': typeof ReprogramadasRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/atividades': typeof AtividadesRoute
   '/equipe': typeof EquipeRoute
   '/login': typeof LoginRoute
+  '/perfil': typeof PerfilRoute
   '/register': typeof RegisterRoute
   '/reprogramadas': typeof ReprogramadasRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/atividades': typeof AtividadesRoute
   '/equipe': typeof EquipeRoute
   '/login': typeof LoginRoute
+  '/perfil': typeof PerfilRoute
   '/register': typeof RegisterRoute
   '/reprogramadas': typeof ReprogramadasRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/atividades'
     | '/equipe'
     | '/login'
+    | '/perfil'
     | '/register'
     | '/reprogramadas'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/atividades'
     | '/equipe'
     | '/login'
+    | '/perfil'
     | '/register'
     | '/reprogramadas'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/atividades'
     | '/equipe'
     | '/login'
+    | '/perfil'
     | '/register'
     | '/reprogramadas'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   AtividadesRoute: typeof AtividadesRoute
   EquipeRoute: typeof EquipeRoute
   LoginRoute: typeof LoginRoute
+  PerfilRoute: typeof PerfilRoute
   RegisterRoute: typeof RegisterRoute
   ReprogramadasRoute: typeof ReprogramadasRoute
 }
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -181,19 +201,10 @@ const rootRouteChildren: RootRouteChildren = {
   AtividadesRoute: AtividadesRoute,
   EquipeRoute: EquipeRoute,
   LoginRoute: LoginRoute,
+  PerfilRoute: PerfilRoute,
   RegisterRoute: RegisterRoute,
   ReprogramadasRoute: ReprogramadasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

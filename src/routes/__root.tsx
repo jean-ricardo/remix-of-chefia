@@ -16,7 +16,19 @@ import {
   Users,
   Shield,
   UserCircle2,
+  ChevronDown,
+  LogOut,
+  User as UserIcon,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
 import chefiaLogoAsset from "@/assets/chefia-logo.png.asset.json";
