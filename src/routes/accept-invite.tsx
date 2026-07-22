@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
+import { Lock } from "lucide-react";
 import { setMockRole } from "@/lib/mockUser";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 
@@ -21,32 +22,30 @@ export const Route = createFileRoute("/accept-invite")({
 function AcceptInvitePage() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
   const [password, setPassword] = useState("");
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setMockRole("admin");
+    setMockRole("member");
     navigate({ to: "/" });
   }
 
   return (
     <AuthLayout
-      title={`Você foi convidado para a equipe ${MOCK_COMPANY}`}
-      subtitle="Complete seu cadastro para acessar o painel da equipe."
+      title="Você foi convidado para o Chef.IA"
+      subtitle={`Complete seu cadastro para acessar a equipe ${MOCK_COMPANY}.`}
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <Field label="E-mail" htmlFor="email">
-          <input
-            id="email"
-            type="email"
-            value={MOCK_EMAIL}
-            readOnly
-            disabled
-            className="auth-input cursor-not-allowed bg-[#EFEEE8] text-[#6B6B67]"
-          />
+        <Field label="Empresa" htmlFor="company">
+          <LockedInput id="company" value={MOCK_COMPANY} />
         </Field>
 
-        <Field label="Seu Nome" htmlFor="name">
+        <Field label="E-mail" htmlFor="email">
+          <LockedInput id="email" type="email" value={MOCK_EMAIL} />
+        </Field>
+
+        <Field label="Nome Completo" htmlFor="name">
           <input
             id="name"
             required
@@ -54,11 +53,22 @@ function AcceptInvitePage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Como devemos te chamar?"
-            className="auth-input"
+            className="auth-input focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
           />
         </Field>
 
-        <Field label="Crie uma Senha" htmlFor="password">
+        <Field label="Cargo / Função" htmlFor="jobTitle">
+          <input
+            id="jobTitle"
+            required
+            value={jobTitle}
+            onChange={(e) => setJobTitle(e.target.value)}
+            placeholder="Ex.: Chef de Cozinha"
+            className="auth-input focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
+          />
+        </Field>
+
+        <Field label="Crie sua Senha" htmlFor="password">
           <input
             id="password"
             type="password"
@@ -67,7 +77,7 @@ function AcceptInvitePage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Mínimo 8 caracteres"
-            className="auth-input"
+            className="auth-input focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
           />
         </Field>
 
@@ -82,6 +92,33 @@ function AcceptInvitePage() {
   );
 }
 
+function LockedInput({
+  id,
+  value,
+  type = "text",
+}: {
+  id: string;
+  value: string;
+  type?: string;
+}) {
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        type={type}
+        value={value}
+        readOnly
+        disabled
+        className="auth-input cursor-not-allowed bg-gray-100 pr-10 text-gray-500"
+      />
+      <Lock
+        aria-hidden="true"
+        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+      />
+    </div>
+  );
+}
+
 function Field({
   label,
   htmlFor,
@@ -89,7 +126,7 @@ function Field({
 }: {
   label: string;
   htmlFor: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
