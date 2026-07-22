@@ -267,32 +267,29 @@ function StatCard({
   tone: "danger" | "warning" | "navy" | "success";
   icon: React.ReactNode;
 }) {
-  const toneClass = {
-    danger: "border-danger/20 text-danger",
-    warning: "border-amber/40 text-amber-foreground",
-    navy: "border-navy/20 text-navy",
-    success: "border-success/25 text-success",
-  }[tone];
-  const chipClass = {
-    danger: "bg-danger/10",
-    warning: "bg-amber/20",
-    navy: "bg-navy/10",
-    success: "bg-success/10",
+  const palette = {
+    danger: { num: "text-[#D85A30]", icon: "text-[#D85A30]", chip: "bg-[#D85A30]/10" },
+    warning: { num: "text-[#042C53]", icon: "text-[#185FA5]", chip: "bg-[#185FA5]/10" },
+    navy: { num: "text-[#042C53]", icon: "text-[#185FA5]", chip: "bg-[#185FA5]/10" },
+    success: { num: "text-emerald-600", icon: "text-emerald-600", chip: "bg-emerald-500/10" },
   }[tone];
   return (
     <div
       className={cn(
-        "min-w-[160px] snap-start rounded-2xl border bg-card p-4 shadow-sm transition-shadow md:min-w-0 md:hover:shadow-md",
-        toneClass,
+        "flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
       )}
     >
-      <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide">
-        <span className="text-muted-foreground">{label}</span>
-        <span className={cn("grid h-7 w-7 place-items-center rounded-full", chipClass)}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+          {label}
+        </span>
+        <span className={cn("rounded-full p-2", palette.chip, palette.icon)}>
           {icon}
         </span>
       </div>
-      <div className="mt-3 text-3xl font-bold tabular-nums text-navy">{count}</div>
+      <div className={cn("mt-2 text-3xl font-bold tabular-nums md:text-4xl", palette.num)}>
+        {count}
+      </div>
     </div>
   );
 }
