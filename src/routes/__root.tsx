@@ -262,17 +262,15 @@ function RoleSwitcher() {
 
 function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/5 bg-navy text-navy-foreground shadow-sm">
+    <header className="sticky top-0 z-30 border-b border-border/60 bg-white text-[#042C53] shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:px-8">
         {/* Logo with generous safe area (equivalent to ring thickness) */}
         <Link to="/" className="flex min-w-0 items-center group p-3 -m-3" aria-label="Chef.IA">
-          <span className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 shadow-sm">
-            <img
-              src={chefiaLogoAsset.url}
-              alt="Chef.IA"
-              className="h-6 w-auto md:h-7"
-            />
-          </span>
+          <img
+            src={chefiaLogoAsset.url}
+            alt="Chef.IA"
+            className="h-7 w-auto md:h-8"
+          />
         </Link>
 
 
@@ -298,7 +296,7 @@ function NavItem({ to, children }: { to: string; children: ReactNode }) {
     <Link
       to={to}
       activeOptions={{ exact: true }}
-      className="rounded-md px-3 py-1.5 font-medium text-navy-foreground/70 transition-colors hover:bg-white/10 hover:text-navy-foreground [&.active]:bg-white/10 [&.active]:text-amber"
+      className="rounded-md px-3 py-1.5 font-medium text-[#042C53]/70 transition-colors hover:bg-[#042C53]/5 hover:text-[#042C53] [&.active]:bg-[#042C53]/10 [&.active]:text-[#042C53]"
     >
       {children}
     </Link>
