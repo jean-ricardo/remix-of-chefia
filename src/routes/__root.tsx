@@ -180,6 +180,34 @@ function AppShell() {
         <Outlet />
       </main>
       <MobileBottomNav />
+      <QaAuthMenu />
+    </div>
+  );
+}
+
+function QaAuthMenu() {
+  const items = [
+    { to: "/login", label: "Test Login" },
+    { to: "/register", label: "Test Register" },
+    { to: "/accept-invite", label: "Test Invite" },
+  ] as const;
+  return (
+    <div
+      className="fixed bottom-20 right-3 z-50 flex flex-col gap-1 rounded-lg border border-border/70 bg-white/95 p-1.5 shadow-lg backdrop-blur md:bottom-3"
+      aria-label="QA Auth Menu"
+    >
+      <span className="px-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+        QA
+      </span>
+      {items.map((it) => (
+        <Link
+          key={it.to}
+          to={it.to}
+          className="rounded-md bg-[#042C53] px-2 py-1 text-[10px] font-medium text-white transition-colors hover:bg-[#185FA5]"
+        >
+          {it.label}
+        </Link>
+      ))}
     </div>
   );
 }
