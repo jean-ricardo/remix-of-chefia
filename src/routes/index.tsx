@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
   CalendarClock,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Eye,
   Flag,
