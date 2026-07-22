@@ -247,7 +247,7 @@ function SiteHeader() {
           </span>
         </Link>
 
-        </Link>
+
 
         <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
           <NavItem to="/">Painel</NavItem>
