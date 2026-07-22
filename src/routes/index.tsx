@@ -484,8 +484,10 @@ function OccurrenceCard({
 
   return (
     <li
+      onPointerDown={handleCardPointerDown}
+      onClick={handleCardClick}
       className={cn(
-        "group rounded-2xl border bg-card p-3.5 shadow-sm transition-all md:p-4 md:hover:shadow-md md:hover:border-navy/25",
+        "group cursor-pointer rounded-2xl border bg-card p-3.5 shadow-sm transition-all md:p-4 md:hover:shadow-md md:hover:border-navy/25",
         borderTone,
         completed && "bg-success/5",
       )}
@@ -579,70 +581,21 @@ function OccurrenceCard({
             variant="outline"
             disabled={busy}
             className="h-11 min-w-[44px] md:h-9"
-            onClick={openRescheduleDialog}
+            onClick={() => openEdit("reschedule")}
           >
             <RotateCw className="h-4 w-4" />
             Reprogramar
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Reprogramar atividade</DialogTitle>
-                <DialogDescription>
-                  Escolha a nova data e descreva o motivo da reprogramação.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Nova data
-                  </Label>
-                  <div className="rounded-md border">
-                    <Calendar
-                      mode="single"
-                      selected={rescheduleDate}
-                      onSelect={setRescheduleDate}
-                      locale={ptBR}
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label
-                    htmlFor="justification"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    Justificativa <span className="text-danger">*</span>
-                  </Label>
-                  <Textarea
-                    id="justification"
-                    value={justification}
-                    onChange={(e) => setJustification(e.target.value)}
-                    placeholder="Explique por que a atividade precisa ser reprogramada…"
-                    rows={4}
-                    required
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                  disabled={busy}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={reschedule}
-                  disabled={busy || !rescheduleDate || justification.trim().length < 3}
-                >
-                  Confirmar reprogramação
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       )}
+
+      <EditActivitySheet
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        occurrence={occ}
+        mode={editMode}
+      />
     </li>
   );
 }
+
