@@ -333,19 +333,84 @@ function Section({
           {emptyText}
         </p>
       ) : (
-        <ul className="space-y-2.5">
-          {items.map((occ) => (
-            <OccurrenceCard
-              key={`${occ.activity.id}-${occ.originalKey}`}
-              occ={occ}
-              memberById={memberById}
-              completed={!!showCompletedStyle}
-              currentUser={currentUser}
-            />
-          ))}
-        </ul>
+        <PaginatedTaskList
+          items={items}
+          memberById={memberById}
+          completed={!!showCompletedStyle}
+          currentUser={currentUser}
+        />
       )}
     </section>
+  );
+}
+
+const PAGE_SIZE = 7;
+
+function PaginatedTaskList({
+  items,
+  memberById,
+  completed,
+  currentUser,
+}: {
+  items: OccurrenceView[];
+  memberById: Map<string, TeamMember>;
+  completed: boolean;
+  currentUser: ReturnType<typeof useMockUser>;
+}) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+
+  // Clamp page only if it becomes invalid (e.g. items removed).
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
+  const page = Math.min(currentPage, totalPages);
+  const start = (page - 1) * PAGE_SIZE;
+  const visible = items.slice(start, start + PAGE_SIZE);
+
+  return (
+    <div className="flex flex-col content-start gap-3">
+      <ul className="space-y-2.5">
+        {visible.map((occ) => (
+          <OccurrenceCard
+            key={`${occ.activity.id}-${occ.originalKey}`}
+            occ={occ}
+            memberById={memberById}
+            completed={completed}
+            currentUser={currentUser}
+          />
+        ))}
+      </ul>
+      {items.length > PAGE_SIZE && (
+        <nav
+          aria-label="Paginação"
+          className="mt-1 flex items-center justify-between gap-2 border-t border-border/50 pt-3"
+        >
+          <button
+            type="button"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            aria-label="Página anterior"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#444441] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5] active:bg-[#185FA5]/15 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#444441]"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <span className="text-xs font-medium text-[#444441] sm:text-sm">
+            Página {page} de {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            aria-label="Próxima página"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#444441] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5] active:bg-[#185FA5]/15 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#444441]"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </nav>
+      )}
+    </div>
   );
 }
 
