@@ -60,8 +60,9 @@ function getSnapshot() {
   return state;
 }
 
+const SERVER_SNAPSHOT: MockState = { role: "admin", memberId: null };
 function getServerSnapshot(): MockState {
-  return { role: "admin", memberId: null };
+  return SERVER_SNAPSHOT;
 }
 
 export function useMockState(): MockState {
