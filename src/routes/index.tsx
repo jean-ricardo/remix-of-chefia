@@ -182,34 +182,32 @@ function DashboardPage() {
           />
         </div>
 
-        {/* STAT CARDS: mobile horizontal scroll / desktop grid */}
-        <div className="-mx-4 overflow-x-auto scrollbar-hide px-4 md:mx-0 md:overflow-visible md:px-0">
-          <div className="flex min-w-max gap-3 md:grid md:min-w-0 md:grid-cols-4">
-            <StatCard
-              label="Atrasadas"
-              count={atrasadas.length}
-              tone="danger"
-              icon={<AlertTriangle className="h-4 w-4" />}
-            />
-            <StatCard
-              label="Para hoje"
-              count={hoje.length}
-              tone="warning"
-              icon={<Clock className="h-4 w-4" />}
-            />
-            <StatCard
-              label="Próx. 7 dias"
-              count={proximas.length}
-              tone="navy"
-              icon={<CalendarClock className="h-4 w-4" />}
-            />
-            <StatCard
-              label="Concluídas hoje"
-              count={concluidas.length}
-              tone="success"
-              icon={<CheckCircle2 className="h-4 w-4" />}
-            />
-          </div>
+        {/* STAT CARDS: responsive grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Atrasadas"
+            count={atrasadas.length}
+            tone="danger"
+            icon={<AlertTriangle className="h-5 w-5" />}
+          />
+          <StatCard
+            label="Para hoje"
+            count={hoje.length}
+            tone="warning"
+            icon={<Clock className="h-5 w-5" />}
+          />
+          <StatCard
+            label="Próx. 7 dias"
+            count={proximas.length}
+            tone="navy"
+            icon={<CalendarClock className="h-5 w-5" />}
+          />
+          <StatCard
+            label="Concluídas hoje"
+            count={concluidas.length}
+            tone="success"
+            icon={<CheckCircle2 className="h-5 w-5" />}
+          />
         </div>
 
         {isLoading ? (
