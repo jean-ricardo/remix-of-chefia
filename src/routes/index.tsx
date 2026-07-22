@@ -26,13 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import {
-  useActivities,
-  useCompletions,
-  useReschedules,
-  useRotinaRealtime,
-  useTeamMembers,
-} from "@/lib/useRotina";
 import { cn } from "@/lib/utils";
 import {
   useActivities,
