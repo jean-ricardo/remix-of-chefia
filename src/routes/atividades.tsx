@@ -1,14 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, ListPlus, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Plus, Search, User as UserIcon, Calendar as CalendarIcon, RotateCw } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,293 +12,349 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { useActivities, useRotinaRealtime, useTeamMembers } from "@/lib/useRotina";
+import { NewActivitySheet } from "@/components/activities/NewActivitySheet";
+import { EditActivitySheet } from "@/components/activities/EditActivitySheet";
 import {
-  PRIORITY_LABEL,
-  WEEKDAY_LABEL,
+  useActivities,
+  useCompletions,
+  useReschedules,
+  useRotinaRealtime,
+  useTeamMembers,
+} from "@/lib/useRotina";
+import {
+  buildOccurrence,
+  RECURRENCE_LABEL,
   WEEKDAY_LONG,
-  ymd,
-  type Priority,
-  type RecurrenceType,
+  type OccurrenceView,
+  type TeamMember,
 } from "@/lib/rotina";
 
 export const Route = createFileRoute("/atividades")({
   component: AtividadesPage,
 });
 
+type StatusFilter = "all" | "pendentes" | "concluidas" | "atrasadas";
+type RecurrenceFilter = "all" | "unica" | "diaria" | "semanal" | "mensal";
+
 function AtividadesPage() {
   useRotinaRealtime();
   const members = useTeamMembers();
   const activities = useActivities();
+  const completions = useCompletions();
+  const reschedules = useReschedules();
 
-  const [title, setTitle] = useState("");
-  const [assignee, setAssignee] = useState<string>("none");
-  const [priority, setPriority] = useState<Priority>("media");
-  const [recurrence, setRecurrence] = useState<RecurrenceType>("diaria");
-  const [weekday, setWeekday] = useState<number>(1);
-  const [monthDay, setMonthDay] = useState<number>(1);
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [recFilter, setRecFilter] = useState<RecurrenceFilter>("all");
 
-  const memberById = new Map((members.data ?? []).map((m) => [m.id, m]));
+  const [selected, setSelected] = useState<OccurrenceView | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim()) return;
-    if (recurrence === "unica" && !dueDate) {
-      toast.error("Escolha uma data para atividade única");
-      return;
+  const today = useMemo(() => new Date(), []);
+
+  const memberById = useMemo(() => {
+    const m = new Map<string, TeamMember>();
+    (members.data ?? []).forEach((x) => m.set(x.id, x));
+    return m;
+  }, [members.data]);
+
+  // Derived rows — never mutate original activities array.
+  const rows = useMemo(() => {
+    const compSet = new Set(
+      (completions.data ?? []).map((c) => `${c.activity_id}|${c.occurrence_key}`),
+    );
+    const reMap = new Map(
+      (reschedules.data ?? []).map((r) => [
+        `${r.activity_id}|${r.original_occurrence_key}`,
+        { new_date: r.new_date, justification: r.justification ?? "" },
+      ]),
+    );
+    const list: OccurrenceView[] = [];
+    for (const a of activities.data ?? []) {
+      const occ = buildOccurrence(a, today, compSet, reMap);
+      if (occ) list.push(occ);
     }
-    setBusy(true);
-    const payload = {
-      title: title.trim(),
-      assigned_user_id: assignee === "none" ? null : assignee,
-      priority,
-      recurrence_type: recurrence,
-      weekday: recurrence === "semanal" ? weekday : null,
-      month_day: recurrence === "mensal" ? monthDay : null,
-      due_date: recurrence === "unica" && dueDate ? ymd(dueDate) : null,
-    };
-    const { error } = await supabase.from("activities").insert(payload);
-    setBusy(false);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Atividade cadastrada");
-      setTitle("");
-      setAssignee("none");
-      setPriority("media");
-      setRecurrence("diaria");
-      setDueDate(undefined);
-    }
+    return list;
+  }, [activities.data, completions.data, reschedules.data, today]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rows.filter((occ) => {
+      // Recurrence filter
+      if (recFilter !== "all" && occ.activity.recurrence_type !== recFilter) return false;
+
+      // Status filter
+      if (statusFilter === "atrasadas" && occ.status !== "atrasada") return false;
+      if (statusFilter === "concluidas" && occ.status !== "concluida") return false;
+      if (
+        statusFilter === "pendentes" &&
+        !(occ.status === "hoje" || occ.status === "proxima" || occ.status === "atrasada") 
+      )
+        return false;
+      if (statusFilter === "pendentes" && occ.status === "concluida") return false;
+
+      // Text search: title + assignee name
+      if (q) {
+        const assignee = occ.activity.assigned_user_id
+          ? memberById.get(occ.activity.assigned_user_id)?.name ?? ""
+          : "";
+        const hay = `${occ.activity.title} ${assignee}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [rows, query, statusFilter, recFilter, memberById]);
+
+  function openRow(occ: OccurrenceView) {
+    setSelected(occ);
+    setEditOpen(true);
   }
 
-  async function remove(id: string) {
-    if (!confirm("Remover esta atividade e todo o seu histórico?")) return;
-    const { error } = await supabase.from("activities").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else toast.success("Atividade removida");
-  }
+  const isLoading =
+    activities.isLoading || completions.isLoading || reschedules.isLoading || members.isLoading;
 
   return (
     <>
       <Toaster position="top-right" richColors />
-      <div className="space-y-8">
-        <header>
-          <p className="text-xs font-semibold uppercase tracking-widest text-amber">Atividades</p>
-          <h1 className="mt-1 text-3xl font-bold text-navy">Catálogo de atividades</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Cadastre atividades com recorrência diária, semanal, mensal ou única.
-          </p>
-        </header>
-
-        <form
-          onSubmit={add}
-          className="grid gap-4 rounded-2xl border border-border/60 bg-surface p-5 shadow-sm md:grid-cols-2"
-        >
-          <div className="space-y-1.5 md:col-span-2">
-            <Label htmlFor="a-title">Título</Label>
-            <Input
-              id="a-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex.: Revisar caixa do dia"
-              required
+      <div className="space-y-6">
+        {/* HEADER */}
+        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#D85A30]">
+              Atividades
+            </p>
+            <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight text-[#042C53] md:text-[32px]">
+              Command Center
+            </h1>
+            <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
+              Histórico completo — busque, filtre e edite qualquer atividade da equipe.
+            </p>
+          </div>
+          <div className="hidden md:block">
+            <NewActivitySheet
+              trigger={
+                <Button className="h-10 gap-1.5 rounded-lg bg-[#185FA5] px-4 font-medium text-white hover:bg-[#042C53]">
+                  <Plus className="h-4 w-4" />
+                  Nova Atividade
+                </Button>
+              }
             />
           </div>
+        </header>
 
-          <div className="space-y-1.5">
-            <Label>Responsável</Label>
-            <Select value={assignee} onValueChange={setAssignee}>
-              <SelectTrigger className="bg-card">
-                <SelectValue placeholder="Selecionar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sem responsável</SelectItem>
-                {(members.data ?? []).map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Mobile FAB */}
+        <div className="fixed bottom-[88px] right-4 z-40 md:hidden">
+          <NewActivitySheet
+            trigger={
+              <button
+                type="button"
+                aria-label="Nova atividade"
+                className="grid h-14 w-14 place-items-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-transform active:scale-95 hover:bg-[#993C1D]"
+              >
+                <Plus className="h-6 w-6" />
+              </button>
+            }
+          />
+        </div>
+
+        {/* COMMAND BAR */}
+        <div className="flex flex-col items-stretch gap-3 rounded-xl bg-white p-4 shadow-sm md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar no histórico..."
+              className="h-10 w-full rounded-lg border border-border bg-white pl-9 pr-3 text-sm text-[#042C53] placeholder:text-muted-foreground/70 focus:border-[#185FA5] focus:outline-none focus:ring-2 focus:ring-[#185FA5]/30"
+            />
           </div>
-
-          <div className="space-y-1.5">
-            <Label>Prioridade</Label>
-            <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-              <SelectTrigger className="bg-card">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+              <SelectTrigger className="h-10 w-full rounded-lg bg-white sm:w-[160px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="alta">Alta</SelectItem>
-                <SelectItem value="media">Média</SelectItem>
-                <SelectItem value="baixa">Baixa</SelectItem>
+                <SelectItem value="all">Status: Todas</SelectItem>
+                <SelectItem value="pendentes">Pendentes</SelectItem>
+                <SelectItem value="concluidas">Concluídas</SelectItem>
+                <SelectItem value="atrasadas">Atrasadas</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Recorrência</Label>
-            <Select value={recurrence} onValueChange={(v) => setRecurrence(v as RecurrenceType)}>
-              <SelectTrigger className="bg-card">
+            <Select value={recFilter} onValueChange={(v) => setRecFilter(v as RecurrenceFilter)}>
+              <SelectTrigger className="h-10 w-full rounded-lg bg-white sm:w-[170px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Recorrência: Todas</SelectItem>
+                <SelectItem value="unica">Única</SelectItem>
                 <SelectItem value="diaria">Diária</SelectItem>
                 <SelectItem value="semanal">Semanal</SelectItem>
                 <SelectItem value="mensal">Mensal</SelectItem>
-                <SelectItem value="unica">Única</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <div className="space-y-1.5">
-            {recurrence === "semanal" && (
-              <>
-                <Label>Dia da semana</Label>
-                <div className="flex flex-wrap gap-1">
-                  {WEEKDAY_LABEL.map((lbl, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setWeekday(i)}
-                      className={cn(
-                        "h-9 w-11 rounded-md border text-sm font-medium transition-colors",
-                        weekday === i
-                          ? "border-navy bg-navy text-navy-foreground"
-                          : "border-border bg-card text-foreground hover:bg-muted",
-                      )}
-                    >
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-            {recurrence === "mensal" && (
-              <>
-                <Label htmlFor="a-monthday">Dia do mês (1–28)</Label>
-                <Input
-                  id="a-monthday"
-                  type="number"
-                  min={1}
-                  max={28}
-                  value={monthDay}
-                  onChange={(e) =>
-                    setMonthDay(Math.max(1, Math.min(28, Number(e.target.value) || 1)))
-                  }
-                />
-              </>
-            )}
-            {recurrence === "unica" && (
-              <>
-                <Label>Data</Label>
-                <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start bg-card font-normal",
-                        !dueDate && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="h-4 w-4" />
-                      {dueDate ? format(dueDate, "PPP", { locale: ptBR }) : "Escolher data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={dueDate}
-                      onSelect={(d) => {
-                        setDueDate(d ?? undefined);
-                        setPickerOpen(false);
-                      }}
-                      locale={ptBR}
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </>
-            )}
-            {recurrence === "diaria" && (
-              <div className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                Repete todos os dias.
-              </div>
-            )}
+        {/* LIST */}
+        {isLoading ? (
+          <div className="rounded-xl border border-border/60 bg-white p-8 text-center text-sm text-muted-foreground">
+            Carregando…
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-white p-10 text-center text-sm text-muted-foreground">
+            Nenhuma atividade encontrada com os filtros atuais.
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {filtered.map((occ) => (
+              <HistoryRow
+                key={`${occ.activity.id}-${occ.originalKey}`}
+                occ={occ}
+                memberById={memberById}
+                onOpen={() => openRow(occ)}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
 
-          <div className="md:col-span-2">
-            <Button
-              type="submit"
-              disabled={busy}
-              className="bg-amber text-amber-foreground hover:bg-amber/90"
+      <EditActivitySheet
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        occurrence={selected}
+        mode="edit"
+      />
+    </>
+  );
+}
+
+function HistoryRow({
+  occ,
+  memberById,
+  onOpen,
+}: {
+  occ: OccurrenceView;
+  memberById: Map<string, TeamMember>;
+  onOpen: () => void;
+}) {
+  const member = occ.activity.assigned_user_id
+    ? memberById.get(occ.activity.assigned_user_id)
+    : null;
+
+  const statusMeta = (() => {
+    switch (occ.status) {
+      case "atrasada":
+        return { dot: "bg-danger", label: "Atrasada", chip: "bg-danger/10 text-danger" };
+      case "hoje":
+        return { dot: "bg-amber", label: "Hoje", chip: "bg-amber/20 text-amber-foreground" };
+      case "proxima":
+        return { dot: "bg-[#185FA5]", label: "Próxima", chip: "bg-[#185FA5]/10 text-[#185FA5]" };
+      case "concluida":
+        return { dot: "bg-success", label: "Concluída", chip: "bg-success/10 text-success" };
+      default:
+        return { dot: "bg-muted-foreground", label: "—", chip: "bg-muted text-muted-foreground" };
+    }
+  })();
+
+  const recurrenceLabel = (() => {
+    const a = occ.activity;
+    switch (a.recurrence_type) {
+      case "diaria":
+        return "Diária";
+      case "semanal":
+        return a.weekday != null ? `Semanal · ${WEEKDAY_LONG[a.weekday]}` : "Semanal";
+      case "mensal":
+        return a.month_day != null ? `Mensal · dia ${a.month_day}` : "Mensal";
+      case "unica":
+        return "Única";
+      default:
+        return RECURRENCE_LABEL[a.recurrence_type];
+    }
+  })();
+
+  const dateLabel = format(occ.effectiveDate, "d MMM yyyy", { locale: ptBR });
+
+  return (
+    <li
+      onClick={onOpen}
+      className={cn(
+        "group cursor-pointer rounded-xl border border-border/60 bg-white p-4 shadow-sm transition-all",
+        "hover:border-[#185FA5]/40 hover:shadow-md",
+        "flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between md:gap-4",
+      )}
+    >
+      {/* LEFT: dot + title + badges */}
+      <div className="flex min-w-0 flex-1 items-start gap-3 md:items-center">
+        <span
+          className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full md:mt-0", statusMeta.dot)}
+          aria-label={statusMeta.label}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium text-[#042C53]">{occ.activity.title}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 md:hidden">
+            <span
+              className={cn(
+                "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                statusMeta.chip,
+              )}
             >
-              <ListPlus className="h-4 w-4" />
-              Cadastrar atividade
-            </Button>
+              {statusMeta.label}
+            </span>
+            <span className="inline-flex rounded-full border border-border bg-[#F7F6F2] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#042C53]/70">
+              {recurrenceLabel}
+            </span>
+            {occ.isRescheduled && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#185FA5]/25 bg-[#185FA5]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#185FA5]">
+                <RotateCw className="h-3 w-3" />
+                Reprogramada
+              </span>
+            )}
           </div>
-        </form>
-
-        <div className="rounded-2xl border border-border/60 bg-card shadow-sm">
-          {activities.isLoading ? (
-            <div className="p-6 text-sm text-muted-foreground">Carregando…</div>
-          ) : (activities.data ?? []).length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">
-              Nenhuma atividade cadastrada ainda.
-            </div>
-          ) : (
-            <ul className="divide-y divide-border/60">
-              {(activities.data ?? []).map((a) => {
-                const m = a.assigned_user_id ? memberById.get(a.assigned_user_id) : null;
-                const detail =
-                  a.recurrence_type === "semanal"
-                    ? `Semanal · ${a.weekday != null ? WEEKDAY_LONG[a.weekday] : ""}`
-                    : a.recurrence_type === "mensal"
-                      ? `Mensal · dia ${a.month_day}`
-                      : a.recurrence_type === "unica"
-                        ? `Única · ${a.due_date ? format(new Date(a.due_date + "T00:00"), "PPP", { locale: ptBR }) : ""}`
-                        : "Diária";
-                return (
-                  <li key={a.id} className="flex items-center gap-4 p-4">
-                    <div
-                      className={cn(
-                        "h-2.5 w-2.5 shrink-0 rounded-full",
-                        a.priority === "alta"
-                          ? "bg-danger"
-                          : a.priority === "media"
-                            ? "bg-amber"
-                            : "bg-navy",
-                      )}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-semibold text-navy">{a.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {PRIORITY_LABEL[a.priority]} · {detail} ·{" "}
-                        {m?.name ?? "Sem responsável"}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => remove(a.id)}
-                      className="text-danger hover:bg-danger/10 hover:text-danger"
-                      aria-label="Remover"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
         </div>
       </div>
-    </>
+
+      {/* RIGHT (desktop): badges + assignee + date */}
+      <div className="hidden shrink-0 items-center gap-3 md:flex">
+        {occ.isRescheduled && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-[#185FA5]/25 bg-[#185FA5]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#185FA5]">
+            <RotateCw className="h-3 w-3" />
+            Reprogramada
+          </span>
+        )}
+        <span
+          className={cn(
+            "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+            statusMeta.chip,
+          )}
+        >
+          {statusMeta.label}
+        </span>
+        <span className="inline-flex rounded-full border border-border bg-[#F7F6F2] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#042C53]/70">
+          {recurrenceLabel}
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-xs text-[#042C53]/70">
+          <UserIcon className="h-3.5 w-3.5" />
+          {member?.name ?? "Sem responsável"}
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#042C53]">
+          <CalendarIcon className="h-3.5 w-3.5" />
+          {dateLabel}
+        </span>
+      </div>
+
+      {/* Mobile meta row */}
+      <div className="flex w-full items-center justify-between gap-3 text-xs text-[#042C53]/70 md:hidden">
+        <span className="inline-flex items-center gap-1.5 truncate">
+          <UserIcon className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{member?.name ?? "Sem responsável"}</span>
+        </span>
+        <span className="inline-flex shrink-0 items-center gap-1.5 font-medium text-[#042C53]">
+          <CalendarIcon className="h-3.5 w-3.5" />
+          {dateLabel}
+        </span>
+      </div>
+    </li>
   );
 }
