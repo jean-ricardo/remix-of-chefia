@@ -39,7 +39,7 @@ import {
   PRIORITY_LABEL,
   sortOccurrences,
   WEEKDAY_LONG,
-  ymd,
+  WEEKDAY_LONG,
   type OccurrenceStatus,
   type OccurrenceView,
   type Priority,
