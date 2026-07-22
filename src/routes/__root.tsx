@@ -8,25 +8,47 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import {
+  LayoutDashboard,
+  ListChecks,
+  RotateCw,
+  Users,
+  Shield,
+  UserCircle2,
+} from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import {
+  setMockMemberId,
+  setMockRole,
+  useMockState,
+} from "@/lib/mockUser";
+import { useTeamMembers } from "@/lib/useRotina";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          A página que você procura não existe ou foi movida.
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Voltar ao painel
           </Link>
         </div>
       </div>
@@ -45,10 +67,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Esta página não carregou
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Algo deu errado. Tente novamente ou volte para o painel.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -58,13 +80,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Tentar novamente
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Ir para o painel
           </a>
         </div>
       </div>
@@ -76,7 +98,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Rotina da Equipe" },
       {
         name: "description",
@@ -96,23 +118,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6aa92ae4-b26f-4b77-ba63-d190fe2ce391/id-preview-6168e772--4ca07aa6-4085-41b1-b575-23312d5acabc.lovable.app-1783976420681.png" },
     ],
     links: [
-      {
-        rel: "preconnect",
-        href: "https://fonts.googleapis.com",
-      },
-      {
-        rel: "preconnect",
-        href: "https://fonts.gstatic.com",
-        crossOrigin: "anonymous",
-      },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap",
       },
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
@@ -124,7 +136,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
@@ -150,37 +162,93 @@ function AppShell() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
+      <main className="mx-auto max-w-7xl px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
         <Outlet />
       </main>
+      <MobileBottomNav />
     </div>
+  );
+}
+
+function RoleSwitcher() {
+  const state = useMockState();
+  const members = useTeamMembers();
+
+  const value = state.role === "admin" ? "admin" : `m:${state.memberId ?? ""}`;
+
+  function onChange(v: string) {
+    if (v === "admin") {
+      setMockRole("admin");
+      return;
+    }
+    if (v.startsWith("m:")) {
+      const id = v.slice(2);
+      setMockRole("member");
+      setMockMemberId(id || null);
+    }
+  }
+
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        className={cn(
+          "h-9 min-w-[140px] gap-2 border-white/15 bg-white/5 text-navy-foreground",
+          "hover:bg-white/10 focus:ring-amber/40",
+        )}
+        aria-label="Ver como"
+      >
+        <span className="inline-flex items-center gap-2 text-xs font-medium">
+          {state.role === "admin" ? (
+            <Shield className="h-3.5 w-3.5 text-amber" />
+          ) : (
+            <UserCircle2 className="h-3.5 w-3.5 text-amber" />
+          )}
+          <SelectValue />
+        </span>
+      </SelectTrigger>
+      <SelectContent align="end">
+        <SelectItem value="admin">Admin (todas as ações)</SelectItem>
+        {(members.data ?? []).map((m) => (
+          <SelectItem key={m.id} value={`m:${m.id}`}>
+            Membro · {m.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
 function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-border/60 bg-navy text-navy-foreground shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-8">
-        <Link to="/" className="flex items-center gap-3 group">
+    <header className="sticky top-0 z-30 border-b border-white/5 bg-navy text-navy-foreground shadow-sm">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:px-8">
+        <Link to="/" className="flex min-w-0 items-center gap-2.5 group">
           <span
             aria-hidden
-            className="hexagon flex h-9 w-9 items-center justify-center bg-amber text-amber-foreground font-bold"
+            className="hexagon flex h-9 w-9 shrink-0 items-center justify-center bg-amber text-amber-foreground text-sm font-bold"
           >
             R
           </span>
-          <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-wide uppercase text-amber">
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-amber">
               Rotina
             </div>
-            <div className="text-xs text-navy-foreground/70">Gestão da equipe</div>
+            <div className="truncate text-[11px] text-navy-foreground/60">
+              Gestão da equipe
+            </div>
           </div>
         </Link>
-        <nav className="flex items-center gap-1 text-sm">
+
+        <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
           <NavItem to="/">Painel</NavItem>
           <NavItem to="/atividades">Atividades</NavItem>
           <NavItem to="/reprogramadas">Reprogramadas</NavItem>
           <NavItem to="/equipe">Equipe</NavItem>
         </nav>
+
+        <div className="ml-auto flex items-center gap-2">
+          <RoleSwitcher />
+        </div>
       </div>
     </header>
   );
@@ -191,10 +259,62 @@ function NavItem({ to, children }: { to: string; children: ReactNode }) {
     <Link
       to={to}
       activeOptions={{ exact: true }}
-      className="rounded-md px-3 py-1.5 font-medium text-navy-foreground/80 transition-colors hover:bg-white/10 hover:text-navy-foreground [&.active]:bg-white/15 [&.active]:text-amber"
+      className="rounded-md px-3 py-1.5 font-medium text-navy-foreground/70 transition-colors hover:bg-white/10 hover:text-navy-foreground [&.active]:bg-white/10 [&.active]:text-amber"
     >
       {children}
     </Link>
   );
 }
 
+function MobileBottomNav() {
+  const items = [
+    { to: "/", label: "Painel", icon: LayoutDashboard },
+    { to: "/atividades", label: "Atividades", icon: ListChecks },
+    { to: "/reprogramadas", label: "Reprog.", icon: RotateCw },
+    { to: "/equipe", label: "Equipe", icon: Users },
+  ] as const;
+
+  return (
+    <nav
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-card/95 backdrop-blur",
+        "pb-[env(safe-area-inset-bottom)] md:hidden",
+      )}
+      aria-label="Navegação principal"
+    >
+      <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1">
+        {items.map((it) => {
+          const Icon = it.icon;
+          return (
+            <li key={it.to} className="flex-1">
+              <Link
+                to={it.to}
+                activeOptions={{ exact: true }}
+                className={cn(
+                  "flex min-h-[56px] flex-col items-center justify-center gap-1 px-2 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors",
+                  "[&.active]:text-navy",
+                )}
+              >
+                {({ isActive }) => (
+                  <>
+                    <span
+                      className={cn(
+                        "flex h-8 w-12 items-center justify-center rounded-full transition-colors",
+                        isActive ? "bg-amber/25 text-navy" : "text-muted-foreground",
+                      )}
+                    >
+                      <Icon className="h-[18px] w-[18px]" />
+                    </span>
+                    <span className={cn(isActive && "text-navy font-semibold")}>
+                      {it.label}
+                    </span>
+                  </>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
