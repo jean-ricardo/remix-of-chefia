@@ -647,7 +647,7 @@ function OccurrenceCard({
                   Confirmar reprogramação
                 </Button>
               </DialogFooter>
-            </Dialog>
+            </DialogContent>
           </Dialog>
         </div>
       )}
