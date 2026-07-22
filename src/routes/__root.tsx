@@ -16,7 +16,19 @@ import {
   Users,
   Shield,
   UserCircle2,
+  ChevronDown,
+  LogOut,
+  User as UserIcon,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
 import chefiaLogoAsset from "@/assets/chefia-logo.png.asset.json";
@@ -26,6 +38,7 @@ import {
   setMockMemberId,
   setMockRole,
   useMockState,
+  useMockUser,
 } from "@/lib/mockUser";
 import { useTeamMembers } from "@/lib/useRotina";
 import {
@@ -284,11 +297,68 @@ function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           <RoleSwitcher />
+          <UserMenu />
         </div>
       </div>
     </header>
   );
 }
+
+function UserMenu() {
+  const user = useMockUser();
+  const navigate = useNavigate();
+  const initials = (user?.name || "U")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p: string) => p[0]?.toUpperCase() ?? "")
+    .join("") || "U";
+
+  function handleLogout() {
+    // Mocked logout — clears role state, no backend sign-out.
+    setMockRole("admin");
+    setMockMemberId(null);
+    navigate({ to: "/login" });
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#042C53]/10 bg-white px-2 text-[#042C53] transition-colors hover:bg-[#042C53]/5 focus:outline-none focus:ring-2 focus:ring-[#185FA5]/40"
+        aria-label="Menu do usuário"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#185FA5]/10 text-xs font-semibold text-[#185FA5]">
+          {initials}
+        </span>
+        <span className="hidden max-w-[120px] truncate text-sm font-medium sm:inline">
+          {user?.name || "Usuário"}
+        </span>
+        <ChevronDown className="h-4 w-4 text-[#042C53]/60" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-[#042C53]">
+          {user?.name || "Usuário"}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={() => navigate({ to: "/perfil" })}
+          className="min-h-11 cursor-pointer gap-2 text-sm"
+        >
+          <UserIcon className="h-4 w-4" />
+          Meu Perfil
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={handleLogout}
+          className="min-h-11 cursor-pointer gap-2 text-sm text-[#D85A30] focus:text-[#D85A30]"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 
 
 function NavItem({ to, children }: { to: string; children: ReactNode }) {
