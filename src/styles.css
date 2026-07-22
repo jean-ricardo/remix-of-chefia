@@ -139,3 +139,25 @@
     display: none;
   }
 }
+
+@utility auth-input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(4, 44, 83, 0.15);
+  background-color: #ffffff;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: #042C53;
+  transition: border-color 150ms, box-shadow 150ms;
+  &::placeholder {
+    color: #9a9a95;
+  }
+  &:focus {
+    outline: none;
+    border-color: #185FA5;
+    box-shadow: 0 0 0 2px #185FA5;
+  }
+}
+

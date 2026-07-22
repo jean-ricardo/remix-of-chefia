@@ -10,13 +10,26 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ReprogramadasRouteImport } from './routes/reprogramadas'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as AtividadesRouteImport } from './routes/atividades'
+import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as IndexRouteImport } from './routes/index'
 
 const ReprogramadasRoute = ReprogramadasRouteImport.update({
   id: '/reprogramadas',
   path: '/reprogramadas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EquipeRoute = EquipeRouteImport.update({
@@ -29,6 +42,11 @@ const AtividadesRoute = AtividadesRouteImport.update({
   path: '/atividades',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AcceptInviteRoute = AcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,35 +55,69 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/atividades': typeof AtividadesRoute
   '/equipe': typeof EquipeRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/reprogramadas': typeof ReprogramadasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/atividades': typeof AtividadesRoute
   '/equipe': typeof EquipeRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/reprogramadas': typeof ReprogramadasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/atividades': typeof AtividadesRoute
   '/equipe': typeof EquipeRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/reprogramadas': typeof ReprogramadasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/atividades' | '/equipe' | '/reprogramadas'
+  fullPaths:
+    | '/'
+    | '/accept-invite'
+    | '/atividades'
+    | '/equipe'
+    | '/login'
+    | '/register'
+    | '/reprogramadas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/atividades' | '/equipe' | '/reprogramadas'
-  id: '__root__' | '/' | '/atividades' | '/equipe' | '/reprogramadas'
+  to:
+    | '/'
+    | '/accept-invite'
+    | '/atividades'
+    | '/equipe'
+    | '/login'
+    | '/register'
+    | '/reprogramadas'
+  id:
+    | '__root__'
+    | '/'
+    | '/accept-invite'
+    | '/atividades'
+    | '/equipe'
+    | '/login'
+    | '/register'
+    | '/reprogramadas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcceptInviteRoute: typeof AcceptInviteRoute
   AtividadesRoute: typeof AtividadesRoute
   EquipeRoute: typeof EquipeRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
   ReprogramadasRoute: typeof ReprogramadasRoute
 }
 
@@ -76,6 +128,20 @@ declare module '@tanstack/react-router' {
       path: '/reprogramadas'
       fullPath: '/reprogramadas'
       preLoaderRoute: typeof ReprogramadasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/equipe': {
@@ -92,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtividadesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/accept-invite': {
+      id: '/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/accept-invite'
+      preLoaderRoute: typeof AcceptInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,8 +177,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcceptInviteRoute: AcceptInviteRoute,
   AtividadesRoute: AtividadesRoute,
   EquipeRoute: EquipeRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
   ReprogramadasRoute: ReprogramadasRoute,
 }
 export const routeTree = rootRouteImport
