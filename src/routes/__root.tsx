@@ -180,6 +180,34 @@ function AppShell() {
         <Outlet />
       </main>
       <MobileBottomNav />
+      <QaAuthMenu />
+    </div>
+  );
+}
+
+function QaAuthMenu() {
+  const items = [
+    { to: "/login", label: "Test Login" },
+    { to: "/register", label: "Test Register" },
+    { to: "/accept-invite", label: "Test Invite" },
+  ] as const;
+  return (
+    <div
+      className="fixed bottom-20 right-3 z-50 flex flex-col gap-1 rounded-lg border border-border/70 bg-white/95 p-1.5 shadow-lg backdrop-blur md:bottom-3"
+      aria-label="QA Auth Menu"
+    >
+      <span className="px-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+        QA
+      </span>
+      {items.map((it) => (
+        <Link
+          key={it.to}
+          to={it.to}
+          className="rounded-md bg-[#042C53] px-2 py-1 text-[10px] font-medium text-white transition-colors hover:bg-[#185FA5]"
+        >
+          {it.label}
+        </Link>
+      ))}
     </div>
   );
 }
@@ -206,8 +234,8 @@ function RoleSwitcher() {
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         className={cn(
-          "h-9 min-w-[140px] gap-2 border-white/15 bg-white/5 text-navy-foreground",
-          "hover:bg-white/10 focus:ring-amber/40",
+          "h-9 min-w-[140px] gap-2 border-[#042C53]/15 bg-[#042C53]/5 text-[#042C53]",
+          "hover:bg-[#042C53]/10 focus:ring-[#185FA5]/40",
         )}
         aria-label="Ver como"
       >
@@ -234,17 +262,15 @@ function RoleSwitcher() {
 
 function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/5 bg-navy text-navy-foreground shadow-sm">
+    <header className="sticky top-0 z-30 border-b border-border/60 bg-white text-[#042C53] shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:px-8">
         {/* Logo with generous safe area (equivalent to ring thickness) */}
         <Link to="/" className="flex min-w-0 items-center group p-3 -m-3" aria-label="Chef.IA">
-          <span className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 shadow-sm">
-            <img
-              src={chefiaLogoAsset.url}
-              alt="Chef.IA"
-              className="h-6 w-auto md:h-7"
-            />
-          </span>
+          <img
+            src={chefiaLogoAsset.url}
+            alt="Chef.IA"
+            className="h-7 w-auto md:h-8"
+          />
         </Link>
 
 
@@ -270,7 +296,7 @@ function NavItem({ to, children }: { to: string; children: ReactNode }) {
     <Link
       to={to}
       activeOptions={{ exact: true }}
-      className="rounded-md px-3 py-1.5 font-medium text-navy-foreground/70 transition-colors hover:bg-white/10 hover:text-navy-foreground [&.active]:bg-white/10 [&.active]:text-amber"
+      className="rounded-md px-3 py-1.5 font-medium text-[#042C53]/70 transition-colors hover:bg-[#042C53]/5 hover:text-[#042C53] [&.active]:bg-[#042C53]/10 [&.active]:text-[#042C53]"
     >
       {children}
     </Link>
