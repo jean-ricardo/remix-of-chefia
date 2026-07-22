@@ -16,7 +16,7 @@ export function AuthLayout({
       <div className="mx-auto flex w-full max-w-md flex-col items-center">
         {/* Logo with generous safe area */}
         <Link to="/login" className="mb-8 block p-6" aria-label="Chef.IA">
-          <ChefiaLogo className="h-16 w-auto md:h-20" />
+          <ChefiaLogo className="h-24 w-auto md:h-30" />
         </Link>
 
         <div className="w-full rounded-2xl bg-white p-6 shadow-lg md:p-8">
