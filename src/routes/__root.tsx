@@ -38,6 +38,7 @@ import {
   setMockMemberId,
   setMockRole,
   useMockState,
+  useMockUser,
 } from "@/lib/mockUser";
 import { useTeamMembers } from "@/lib/useRotina";
 import {
