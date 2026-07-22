@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -25,6 +25,19 @@ export const Route = createFileRoute("/perfil")({
   component: PerfilPage,
 });
 
+const JOB_OPTIONS = [
+  "Administrador",
+  "Diretor",
+  "Gerente",
+  "Coordenador",
+  "Analista",
+  "Operações",
+  "Marketing",
+  "Vendas",
+  "TI",
+  "Outro",
+] as const;
+
 function initialsOf(name: string | undefined) {
   const n = (name || "Usuário").trim();
   const parts = n.split(/\s+/).slice(0, 2);
@@ -37,17 +50,67 @@ function PerfilPage() {
   const [name, setName] = useState<string>(user?.name || "");
   const [email] = useState<string>("usuario@empresa.com");
   const [jobTitle, setJobTitle] = useState<string>(
-    user?.role === "admin" ? "Administrador" : "Membro da equipe",
+    user?.role === "admin" ? "Administrador" : "Analista",
   );
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const avatarUrlRef = useRef<string | null>(null);
+
+  // Keep ref in sync so unmount cleanup can revoke the latest URL.
+  useEffect(() => {
+    avatarUrlRef.current = avatarUrl;
+  }, [avatarUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarUrlRef.current) {
+        URL.revokeObjectURL(avatarUrlRef.current);
+        avatarUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  function handlePickPhoto() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Reset so re-selecting the same file still fires change.
+    e.target.value = "";
+    if (!file) return;
+
+    // Revoke previous URL to prevent memory leaks.
+    if (avatarUrlRef.current) {
+      URL.revokeObjectURL(avatarUrlRef.current);
+    }
+    const url = URL.createObjectURL(file);
+    setAvatarUrl(url);
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    // Mocked update — no backend request.
+
+    // Conditional password validation: only when user typed a new password.
+    if (newPassword.length > 0) {
+      if (newPassword.length < 8) {
+        toast.warning("A nova senha deve ter pelo menos 8 caracteres.");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast.warning("As senhas não coincidem. Verifique e tente novamente.");
+        return;
+      }
+    }
+
     setCurrentPassword("");
     setNewPassword("");
-    toast.success("Perfil atualizado com sucesso!");
+    setConfirmPassword("");
+    toast.success("Foto e dados atualizados com sucesso (Mock)!");
   }
 
   return (
@@ -71,15 +134,30 @@ function PerfilPage() {
           </h2>
 
           <div className="mt-5 flex items-center gap-4">
-            <div
-              aria-hidden="true"
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-[#185FA5]/10 text-lg font-semibold text-[#185FA5]"
-            >
-              {initialsOf(name)}
-            </div>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Foto de perfil"
+                className="h-16 w-16 rounded-full object-cover ring-2 ring-[#185FA5]/20"
+              />
+            ) : (
+              <div
+                aria-hidden="true"
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-[#185FA5]/10 text-lg font-semibold text-[#185FA5]"
+              >
+                {initialsOf(name)}
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
             <button
               type="button"
-              onClick={() => toast("Foto de perfil (mock)")}
+              onClick={handlePickPhoto}
               className="h-10 rounded-lg border border-gray-200 px-4 text-sm font-medium text-[#185FA5] transition-colors hover:bg-[#185FA5]/5"
             >
               Alterar foto
@@ -118,13 +196,18 @@ function PerfilPage() {
             </Field>
 
             <Field label="Cargo / Função" htmlFor="jobTitle">
-              <input
+              <select
                 id="jobTitle"
-                value={jobTitle || ""}
+                value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-[#042C53] focus:border-[#185FA5] focus:outline-none focus:ring-2 focus:ring-[#185FA5]/30"
-                placeholder="Ex.: Chef de Cozinha"
-              />
+                className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-[#042C53] focus:border-[#185FA5] focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
+              >
+                {JOB_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </Field>
           </div>
         </section>
@@ -158,6 +241,18 @@ function PerfilPage() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-[#042C53] focus:border-[#185FA5] focus:outline-none focus:ring-2 focus:ring-[#185FA5]/30"
                 placeholder="Mínimo 8 caracteres"
+              />
+            </Field>
+
+            <Field label="Confirmar Nova Senha" htmlFor="confirmPassword">
+              <input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword || ""}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-[#042C53] focus:border-[#185FA5] focus:outline-none focus:ring-2 focus:ring-[#185FA5]/30"
+                placeholder="Repita a nova senha"
               />
             </Field>
           </div>
