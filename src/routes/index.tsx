@@ -148,26 +148,24 @@ function DashboardPage() {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Visualizar
-              </label>
-              <Select value={filter} onValueChange={setFilter}>
-                <SelectTrigger className="h-10 w-[190px] bg-card sm:w-[240px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toda a equipe</SelectItem>
-                  {(members.data ?? []).map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="hidden md:flex md:items-end md:pb-[1px]">
+          <div className="flex items-center gap-3">
+            <label className="hidden text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:block">
+              Visualizar
+            </label>
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="h-10 w-[190px] rounded-lg bg-card sm:w-[240px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toda a equipe</SelectItem>
+                {(members.data ?? []).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="hidden md:block">
               <NewActivitySheet
                 trigger={
                   <Button className="h-10 gap-1.5 rounded-lg bg-[#185FA5] px-4 font-medium text-white hover:bg-[#042C53]">
