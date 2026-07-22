@@ -234,8 +234,8 @@ function RoleSwitcher() {
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         className={cn(
-          "h-9 min-w-[140px] gap-2 border-white/15 bg-white/5 text-navy-foreground",
-          "hover:bg-white/10 focus:ring-amber/40",
+          "h-9 min-w-[140px] gap-2 border-[#042C53]/15 bg-[#042C53]/5 text-[#042C53]",
+          "hover:bg-[#042C53]/10 focus:ring-[#185FA5]/40",
         )}
         aria-label="Ver como"
       >
