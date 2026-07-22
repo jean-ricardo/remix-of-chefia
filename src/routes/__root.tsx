@@ -269,7 +269,7 @@ function SiteHeader() {
           <img
             src={chefiaLogoAsset.url}
             alt="Chef.IA"
-            className="h-7 w-auto md:h-8"
+            className="h-[42px] w-auto md:h-12"
           />
         </Link>
 
