@@ -311,7 +311,7 @@ function UserMenu() {
     .trim()
     .split(/\s+/)
     .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
+    .map((p: string) => p[0]?.toUpperCase() ?? "")
     .join("") || "U";
 
   function handleLogout() {
