@@ -1,4 +1,4 @@
-import logoUrl from "@/assets/chefia-logo.png";
+import logoAsset from "@/assets/chefia-logo.png.asset.json";
 
 export function ChefiaLogo({
   className,
@@ -9,11 +9,9 @@ export function ChefiaLogo({
 }) {
   return (
     <img
-      src={logoUrl}
+      src={logoAsset.url}
       alt="Chef.IA"
       className={className}
-      width={1024}
-      height={1024}
       loading="lazy"
       data-variant={variant}
     />
