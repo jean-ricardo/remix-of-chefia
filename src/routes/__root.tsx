@@ -19,8 +19,9 @@ import {
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
-import chefiaLogo from "@/assets/chefia-logo.png";
+import chefiaLogoAsset from "@/assets/chefia-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+
 import {
   setMockMemberId,
   setMockRole,
@@ -236,23 +237,16 @@ function SiteHeader() {
     <header className="sticky top-0 z-30 border-b border-white/5 bg-navy text-navy-foreground shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:px-8">
         {/* Logo with generous safe area (equivalent to ring thickness) */}
-        <Link to="/" className="flex min-w-0 items-center gap-2 group p-2 -m-2" aria-label="Chef.IA">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white p-1.5 shadow-sm">
+        <Link to="/" className="flex min-w-0 items-center group p-3 -m-3" aria-label="Chef.IA">
+          <span className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 shadow-sm">
             <img
-              src={chefiaLogo}
-              alt=""
-              aria-hidden
-              className="h-full w-full object-contain"
+              src={chefiaLogoAsset.url}
+              alt="Chef.IA"
+              className="h-6 w-auto md:h-7"
             />
           </span>
-          <div className="min-w-0 leading-tight">
-            <div className="truncate text-sm font-bold tracking-tight text-navy-foreground">
-              Chef.IA
-            </div>
-            <div className="truncate text-[11px] text-navy-foreground/60">
-              Gestão da equipe
-            </div>
-          </div>
+        </Link>
+
         </Link>
 
         <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
