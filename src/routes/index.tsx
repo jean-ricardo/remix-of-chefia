@@ -90,11 +90,25 @@ function DashboardPage() {
     const bucket = (s: OccurrenceStatus) =>
       list.filter((o) => o.status === s).sort(sortOccurrences);
 
+    // Inbox Zero (dashboard only): hide completed items older than 24h.
+    // Fail-safe: if no completion timestamp exists on the item, keep it visible.
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const nowMs = today.getTime();
+    const within24h = (o: OccurrenceView) => {
+      const raw =
+        (o as unknown as { completed_at?: string | number | Date }).completed_at ??
+        (o as unknown as { updated_at?: string | number | Date }).updated_at;
+      if (!raw) return true;
+      const t = new Date(raw).getTime();
+      if (Number.isNaN(t)) return true;
+      return nowMs - t <= DAY_MS;
+    };
+
     return {
       atrasadas: bucket("atrasada"),
       hoje: bucket("hoje"),
       proximas: bucket("proxima"),
-      concluidas: bucket("concluida"),
+      concluidas: bucket("concluida").filter(within24h),
     };
   }, [activities.data, completions.data, reschedules.data, filter, today]);
 
