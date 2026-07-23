@@ -283,6 +283,31 @@ function DashboardPage() {
   );
 }
 
+function LiveClock() {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  const label = now
+    ? (() => {
+        const day = format(now, "EEEE", { locale: ptBR });
+        const cap = day.charAt(0).toUpperCase() + day.slice(1);
+        return `${cap}, ${format(now, "d 'de' MMMM", { locale: ptBR })} • ${format(now, "HH:mm")}`;
+      })()
+    : "\u00A0";
+  return (
+    <p
+      className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#185FA5]"
+      suppressHydrationWarning
+    >
+      <Clock className="h-3.5 w-3.5 text-[#185FA5]" />
+      <span className="truncate">{label}</span>
+    </p>
+  );
+}
+
 function StatCard({
   label,
   count,
