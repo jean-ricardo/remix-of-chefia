@@ -4,17 +4,22 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
+  Calendar,
   CalendarClock,
+  CheckCircle,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Coffee,
   Eye,
   Flag,
+  Inbox,
   Plus,
   RotateCw,
   User as UserIcon,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { NewActivitySheet } from "@/components/activities/NewActivitySheet";
 import { EditActivitySheet, type EditMode } from "@/components/activities/EditActivitySheet";
 import { supabase } from "@/integrations/supabase/client";
