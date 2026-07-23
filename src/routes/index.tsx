@@ -69,7 +69,6 @@ function DashboardPage() {
 
   const today = useMemo(() => new Date(), []);
 
-  const nowMs = today.getTime();
   const { atrasadas, hoje, proximas, concluidas } = useMemo(() => {
     const compSet = new Set(
       (completions.data ?? []).map((c) => `${c.activity_id}|${c.occurrence_key}`),
