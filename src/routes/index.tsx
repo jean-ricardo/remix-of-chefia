@@ -217,47 +217,58 @@ function DashboardPage() {
           />
         </div>
 
-        {isLoading ? (
-          <div className="rounded-xl border border-border/60 bg-card p-8 text-center text-sm text-muted-foreground">
-            Carregando…
-          </div>
-        ) : (
-          <div className="grid gap-5 lg:grid-cols-2">
-            <Section
-              title="Atrasadas"
-              tone="danger"
-              items={atrasadas}
-              memberById={memberById}
-              emptyText="Nada em atraso. Ótimo trabalho."
-              currentUser={currentUser}
-            />
-            <Section
-              title="Para hoje"
-              tone="warning"
-              items={hoje}
-              memberById={memberById}
-              emptyText="Nenhuma atividade para hoje."
-              currentUser={currentUser}
-            />
-            <Section
-              title="Próximos 7 dias"
-              tone="navy"
-              items={proximas}
-              memberById={memberById}
-              emptyText="Sem atividades na próxima semana."
-              currentUser={currentUser}
-            />
-            <Section
-              title="Concluídas hoje"
-              tone="success"
-              items={concluidas}
-              memberById={memberById}
-              emptyText="Ainda nada concluído hoje."
-              currentUser={currentUser}
-              showCompletedStyle
-            />
-          </div>
-        )}
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Section
+            title="Atrasadas"
+            tone="danger"
+            items={atrasadas}
+            memberById={memberById}
+            isLoading={isLoading}
+            emptyIcon={CheckCircle}
+            emptyIconClass="text-emerald-500"
+            emptyTitle="Tudo em dia!"
+            emptyMessage="Nenhuma atividade atrasada."
+            currentUser={currentUser}
+          />
+          <Section
+            title="Para hoje"
+            tone="warning"
+            items={hoje}
+            memberById={memberById}
+            isLoading={isLoading}
+            emptyIcon={Coffee}
+            emptyIconClass="text-[#185FA5]"
+            emptyTitle="Dia tranquilo"
+            emptyMessage="Você não tem atividades para hoje."
+            currentUser={currentUser}
+          />
+          <Section
+            title="Próximos 7 dias"
+            tone="navy"
+            items={proximas}
+            memberById={memberById}
+            isLoading={isLoading}
+            emptyIcon={Calendar}
+            emptyIconClass="text-gray-400"
+            emptyTitle="Nada por aqui"
+            emptyMessage="Nenhuma atividade neste período."
+            currentUser={currentUser}
+          />
+          <Section
+            title="Concluídas hoje"
+            tone="success"
+            items={concluidas}
+            memberById={memberById}
+            isLoading={isLoading}
+            emptyIcon={Inbox}
+            emptyIconClass="text-gray-400"
+            emptyTitle="Nada por aqui"
+            emptyMessage="Ainda nada concluído hoje."
+            currentUser={currentUser}
+            showCompletedStyle
+          />
+        </div>
+
       </div>
     </>
   );
