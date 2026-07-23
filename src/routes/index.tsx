@@ -374,7 +374,57 @@ function Section({
 
 }
 
+function EmptyStateCard({
+  icon: Icon,
+  iconClass,
+  title,
+  message,
+}: {
+  icon: LucideIcon;
+  iconClass: string;
+  title: string;
+  message: string;
+}) {
+  return (
+    <div className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white p-8 text-center transition-all hover:border-[#185FA5]/30">
+      <Icon size={32} className={cn("mb-3", iconClass)} />
+      <h3 className="mb-1 text-base font-bold text-[#042C53]">{title}</h3>
+      <p className="text-sm text-gray-500">{message}</p>
+    </div>
+  );
+}
+
+function TaskCardSkeleton() {
+  return (
+    <div className="w-full space-y-2.5" aria-busy="true" aria-live="polite">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="animate-pulse rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-5"
+        >
+          <div className="flex gap-2">
+            <div className="h-4 w-16 rounded-full bg-gray-200" />
+            <div className="h-4 w-20 rounded-full bg-gray-100" />
+          </div>
+          <div className="mt-3 h-4 w-3/4 rounded bg-gray-200" />
+          <div className="mt-2 h-4 w-1/2 rounded bg-gray-100" />
+          <div className="mt-4 flex gap-3">
+            <div className="h-3 w-20 rounded bg-gray-100" />
+            <div className="h-3 w-24 rounded bg-gray-100" />
+            <div className="h-3 w-16 rounded bg-gray-100" />
+          </div>
+          <div className="mt-4 flex gap-2 border-t border-gray-50 pt-3">
+            <div className="h-10 flex-1 rounded-lg bg-gray-100" />
+            <div className="h-10 flex-1 rounded-lg bg-gray-100" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const PAGE_SIZE = 7;
+
 
 function PaginatedTaskList({
   items,
