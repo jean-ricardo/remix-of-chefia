@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
   ListChecks,
@@ -274,19 +274,48 @@ function RoleSwitcher() {
 }
 
 function SiteHeader() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    function onScroll() {
+      const y = window.scrollY;
+      setIsScrolled((prev) => {
+        if (y > 20 && !prev) return true;
+        if (y <= 20 && prev) return false;
+        return prev;
+      });
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-[#F7F6F2]/90 text-[#042C53] shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:px-8">
+    <header
+      className={cn(
+        "sticky top-0 z-50 text-[#042C53] transition-all duration-300 ease-in-out",
+        isScrolled
+          ? "border-b border-gray-200/50 bg-[#F7F6F2]/95 py-2 shadow-sm backdrop-blur-lg"
+          : "border-b border-transparent bg-[#F7F6F2]/80 py-4 backdrop-blur-md md:py-5",
+      )}
+    >
+      <div
+        className={cn(
+          "mx-auto flex max-w-7xl items-center gap-3 px-4 transition-transform duration-300 md:px-8",
+          isScrolled && "origin-left scale-[0.97]",
+        )}
+      >
         {/* Logo with generous safe area (equivalent to ring thickness) */}
-        <Link to="/" className="flex min-w-0 items-center group p-3 -m-3" aria-label="Chef.IA">
+        <Link to="/" className="group -m-3 flex min-w-0 items-center p-3" aria-label="Chef.IA">
           <img
             src={chefiaLogoAsset.url}
             alt="Chef.IA"
-            className="h-[94px] w-auto md:h-[108px]"
+            className={cn(
+              "w-auto transition-all duration-300",
+              isScrolled ? "h-[64px] md:h-[72px]" : "h-[94px] md:h-[108px]",
+            )}
           />
         </Link>
-
-
 
         <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
           <NavItem to="/">Painel</NavItem>
