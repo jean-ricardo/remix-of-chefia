@@ -112,6 +112,16 @@ function PerfilPage() {
       }
     }
 
+    if (whatsapp.trim().length > 0 && !isValidWhatsApp(whatsapp)) {
+      toast.warning("Informe um WhatsApp válido para receber notificações.");
+      return;
+    }
+
+    // NOTE: `whatsapp` is intentionally excluded from any backend payload —
+    // the profile table does not yet have this column. Mock-only for now.
+    // eslint-disable-next-line no-console
+    console.info("[mock] WhatsApp salvo no perfil:", whatsapp);
+
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
