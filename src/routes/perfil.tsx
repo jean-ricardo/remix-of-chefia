@@ -57,6 +57,9 @@ function PerfilPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  // WhatsApp: mocked only — NOT sent to backend (schema pending).
+  const [whatsapp, setWhatsapp] = useState<string>("");
+  const hasSavedWhatsapp = whatsapp.trim().length > 0;
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
