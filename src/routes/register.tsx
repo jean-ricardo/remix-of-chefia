@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 import { setMockRole } from "@/lib/mockUser";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { formatWhatsApp, isValidWhatsApp } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -23,6 +25,7 @@ function RegisterPage() {
     company: "",
     password: "",
   });
+  const [whatsapp, setWhatsapp] = useState("");
 
   function set<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -30,6 +33,15 @@ function RegisterPage() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!isValidWhatsApp(whatsapp)) {
+      toast.warning("Informe um WhatsApp válido para receber notificações.");
+      return;
+    }
+    // NOTE: WhatsApp is intentionally NOT sent to the auth API yet — backend
+    // schema does not have this column. Mock its submission on the frontend.
+    // eslint-disable-next-line no-console
+    console.info("[mock] WhatsApp capturado no cadastro:", whatsapp);
+    toast.success("Conta criada! WhatsApp registrado para notificações (mock).");
     setMockRole("admin");
     navigate({ to: "/" });
   }
@@ -89,6 +101,25 @@ function RegisterPage() {
             className="auth-input"
           />
         </Field>
+
+        <Field label="WhatsApp (Celular)" htmlFor="whatsapp">
+          <input
+            id="whatsapp"
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9\-\+\s\(\)]*"
+            required
+            autoComplete="tel"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))}
+            placeholder="+55 (11) 91234-5678"
+            className="auth-input focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Usado exclusivamente para receber notificações da plataforma.
+          </p>
+        </Field>
+
 
         <button
           type="submit"

@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Lock } from "lucide-react";
+import { toast } from "sonner";
 import { setMockRole } from "@/lib/mockUser";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { formatWhatsApp, isValidWhatsApp } from "@/lib/whatsapp";
 
 const MOCK_COMPANY = "Chef Cozinhas Ltda.";
 const MOCK_EMAIL = "convidado@empresa.com";
@@ -24,12 +26,23 @@ function AcceptInvitePage() {
   const [name, setName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [password, setPassword] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!isValidWhatsApp(whatsapp)) {
+      toast.warning("Informe um WhatsApp válido para receber notificações.");
+      return;
+    }
+    // NOTE: WhatsApp is intentionally stripped from the auth payload — backend
+    // schema does not yet have this column. Captured as a mock only.
+    // eslint-disable-next-line no-console
+    console.info("[mock] WhatsApp capturado no convite:", whatsapp);
+    toast.success("Convite aceito! WhatsApp registrado (mock).");
     setMockRole("member");
     navigate({ to: "/" });
   }
+
 
   return (
     <AuthLayout
@@ -80,6 +93,25 @@ function AcceptInvitePage() {
             className="auth-input focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
           />
         </Field>
+
+        <Field label="WhatsApp (Celular)" htmlFor="whatsapp">
+          <input
+            id="whatsapp"
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9\-\+\s\(\)]*"
+            required
+            autoComplete="tel"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))}
+            placeholder="+55 (11) 91234-5678"
+            className="auth-input focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Usado exclusivamente para receber notificações da plataforma.
+          </p>
+        </Field>
+
 
         <button
           type="submit"
