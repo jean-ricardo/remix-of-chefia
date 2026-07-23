@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Lock } from "lucide-react";
+import { AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { useMockUser } from "@/lib/mockUser";
+import { formatWhatsApp, isValidWhatsApp } from "@/lib/whatsapp";
+
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
