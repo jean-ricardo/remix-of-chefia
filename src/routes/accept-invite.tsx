@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Lock } from "lucide-react";
+import { toast } from "sonner";
 import { setMockRole } from "@/lib/mockUser";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { formatWhatsApp, isValidWhatsApp } from "@/lib/whatsapp";
 
 const MOCK_COMPANY = "Chef Cozinhas Ltda.";
 const MOCK_EMAIL = "convidado@empresa.com";
@@ -24,12 +26,23 @@ function AcceptInvitePage() {
   const [name, setName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [password, setPassword] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!isValidWhatsApp(whatsapp)) {
+      toast.warning("Informe um WhatsApp válido para receber notificações.");
+      return;
+    }
+    // NOTE: WhatsApp is intentionally stripped from the auth payload — backend
+    // schema does not yet have this column. Captured as a mock only.
+    // eslint-disable-next-line no-console
+    console.info("[mock] WhatsApp capturado no convite:", whatsapp);
+    toast.success("Convite aceito! WhatsApp registrado (mock).");
     setMockRole("member");
     navigate({ to: "/" });
   }
+
 
   return (
     <AuthLayout
