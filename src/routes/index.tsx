@@ -317,7 +317,11 @@ function Section({
   tone,
   items,
   memberById,
-  emptyText,
+  isLoading,
+  emptyIcon: EmptyIcon,
+  emptyIconClass,
+  emptyTitle,
+  emptyMessage,
   showCompletedStyle,
   currentUser,
 }: {
@@ -325,7 +329,11 @@ function Section({
   tone: "danger" | "warning" | "navy" | "success";
   items: OccurrenceView[];
   memberById: Map<string, TeamMember>;
-  emptyText: string;
+  isLoading: boolean;
+  emptyIcon: LucideIcon;
+  emptyIconClass: string;
+  emptyTitle: string;
+  emptyMessage: string;
   showCompletedStyle?: boolean;
   currentUser: ReturnType<typeof useMockUser>;
 }) {
@@ -341,13 +349,18 @@ function Section({
         <span className={cn("h-2.5 w-2.5 rounded-full", dotClass)} />
         <h2 className="text-base font-semibold text-navy md:text-lg">{title}</h2>
         <span className="ml-auto rounded-full bg-navy/8 px-2 py-0.5 text-[11px] font-semibold text-navy">
-          {items.length}
+          {isLoading ? "…" : items.length}
         </span>
       </header>
-      {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-          {emptyText}
-        </p>
+      {isLoading ? (
+        <TaskCardSkeleton />
+      ) : items.length === 0 ? (
+        <EmptyStateCard
+          icon={EmptyIcon}
+          iconClass={emptyIconClass}
+          title={emptyTitle}
+          message={emptyMessage}
+        />
       ) : (
         <PaginatedTaskList
           items={items}
@@ -358,6 +371,7 @@ function Section({
       )}
     </section>
   );
+
 }
 
 const PAGE_SIZE = 7;
