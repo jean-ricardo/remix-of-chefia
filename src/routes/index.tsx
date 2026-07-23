@@ -186,19 +186,17 @@ function DashboardPage() {
         </header>
 
         {/* Mobile FAB */}
-        <div className="fixed bottom-[88px] right-4 z-40 md:hidden">
-          <NewActivitySheet
-            trigger={
-              <button
-                type="button"
-                aria-label="Nova atividade"
-                className="grid h-14 w-14 place-items-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-transform active:scale-95 hover:bg-[#993C1D]"
-              >
-                <Plus className="h-6 w-6" />
-              </button>
-            }
-          />
-        </div>
+        <NewActivitySheet
+          trigger={
+            <button
+              type="button"
+              aria-label="Nova atividade"
+              className="fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-colors hover:bg-[#c24f2a] active:scale-95 md:hidden"
+            >
+              <Plus className="h-6 w-6" />
+            </button>
+          }
+        />
 
         {/* STAT CARDS: responsive grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
