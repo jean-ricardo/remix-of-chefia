@@ -94,6 +94,25 @@ function AcceptInvitePage() {
           />
         </Field>
 
+        <Field label="WhatsApp (Celular)" htmlFor="whatsapp">
+          <input
+            id="whatsapp"
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9\-\+\s\(\)]*"
+            required
+            autoComplete="tel"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))}
+            placeholder="+55 (11) 91234-5678"
+            className="auth-input focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Usado exclusivamente para receber notificações da plataforma.
+          </p>
+        </Field>
+
+
         <button
           type="submit"
           className="min-h-[48px] w-full rounded-xl bg-[#185FA5] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#042C53] focus:outline-none focus:ring-2 focus:ring-[#185FA5] focus:ring-offset-2"
