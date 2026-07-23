@@ -132,10 +132,11 @@ function DashboardPage() {
   return (
     <>
       <Toaster position="top-right" richColors />
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-6 pb-24 md:space-y-8 md:pb-8">
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
+            <LiveClock />
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber">
               {format(today, "EEEE", { locale: ptBR })} ·{" "}
               {format(today, "d 'de' MMMM", { locale: ptBR })}
