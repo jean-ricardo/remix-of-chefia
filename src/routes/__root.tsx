@@ -275,7 +275,7 @@ function RoleSwitcher() {
 
 function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-border/60 bg-white text-[#042C53] shadow-sm">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-[#F7F6F2]/90 text-[#042C53] shadow-sm backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:px-8">
         {/* Logo with generous safe area (equivalent to ring thickness) */}
         <Link to="/" className="flex min-w-0 items-center group p-3 -m-3" aria-label="Chef.IA">

@@ -90,11 +90,25 @@ function DashboardPage() {
     const bucket = (s: OccurrenceStatus) =>
       list.filter((o) => o.status === s).sort(sortOccurrences);
 
+    // Inbox Zero (dashboard only): hide completed items older than 24h.
+    // Fail-safe: if no completion timestamp exists on the item, keep it visible.
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const nowMs = today.getTime();
+    const within24h = (o: OccurrenceView) => {
+      const raw =
+        (o as unknown as { completed_at?: string | number | Date }).completed_at ??
+        (o as unknown as { updated_at?: string | number | Date }).updated_at;
+      if (!raw) return true;
+      const t = new Date(raw).getTime();
+      if (Number.isNaN(t)) return true;
+      return nowMs - t <= DAY_MS;
+    };
+
     return {
       atrasadas: bucket("atrasada"),
       hoje: bucket("hoje"),
       proximas: bucket("proxima"),
-      concluidas: bucket("concluida"),
+      concluidas: bucket("concluida").filter(within24h),
     };
   }, [activities.data, completions.data, reschedules.data, filter, today]);
 
@@ -118,14 +132,11 @@ function DashboardPage() {
   return (
     <>
       <Toaster position="top-right" richColors />
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-6 pb-24 md:space-y-8 md:pb-8">
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber">
-              {format(today, "EEEE", { locale: ptBR })} ·{" "}
-              {format(today, "d 'de' MMMM", { locale: ptBR })}
-            </p>
+            <LiveClock />
             <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight text-navy md:text-[32px]">
               Painel da rotina
             </h1>
@@ -175,19 +186,17 @@ function DashboardPage() {
         </header>
 
         {/* Mobile FAB */}
-        <div className="fixed bottom-[88px] right-4 z-40 md:hidden">
-          <NewActivitySheet
-            trigger={
-              <button
-                type="button"
-                aria-label="Nova atividade"
-                className="grid h-14 w-14 place-items-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-transform active:scale-95 hover:bg-[#993C1D]"
-              >
-                <Plus className="h-6 w-6" />
-              </button>
-            }
-          />
-        </div>
+        <NewActivitySheet
+          trigger={
+            <button
+              type="button"
+              aria-label="Nova atividade"
+              className="fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-colors hover:bg-[#c24f2a] active:scale-95 md:hidden"
+            >
+              <Plus className="h-6 w-6" />
+            </button>
+          }
+        />
 
         {/* STAT CARDS: responsive grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -271,6 +280,31 @@ function DashboardPage() {
 
       </div>
     </>
+  );
+}
+
+function LiveClock() {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  const label = now
+    ? (() => {
+        const day = format(now, "EEEE", { locale: ptBR });
+        const cap = day.charAt(0).toUpperCase() + day.slice(1);
+        return `${cap}, ${format(now, "d 'de' MMMM", { locale: ptBR })} • ${format(now, "HH:mm")}`;
+      })()
+    : "\u00A0";
+  return (
+    <p
+      className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#185FA5]"
+      suppressHydrationWarning
+    >
+      <Clock className="h-3.5 w-3.5 text-[#185FA5]" />
+      <span className="truncate">{label}</span>
+    </p>
   );
 }
 
