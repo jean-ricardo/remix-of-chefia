@@ -137,10 +137,6 @@ function DashboardPage() {
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
             <LiveClock />
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber">
-              {format(today, "EEEE", { locale: ptBR })} ·{" "}
-              {format(today, "d 'de' MMMM", { locale: ptBR })}
-            </p>
             <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight text-navy md:text-[32px]">
               Painel da rotina
             </h1>
