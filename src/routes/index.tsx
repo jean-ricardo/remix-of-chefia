@@ -206,11 +206,14 @@ function DashboardPage() {
           <div className="min-w-0">
             <LiveClock />
             <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight text-navy md:text-[32px]">
-              Painel da rotina
+              {heroTitle}
             </h1>
             <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-              Atividades atrasadas, para hoje e próximas — atualizadas em tempo real.
+              {isAdmin
+                ? "Visão consolidada de toda a equipe — atualizada em tempo real."
+                : "Suas atividades atrasadas, para hoje e próximas."}
             </p>
+
             {currentUser.role === "member" && (
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
                 <Eye className="h-3 w-3" />
