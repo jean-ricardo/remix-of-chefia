@@ -121,11 +121,12 @@ function DashboardPage() {
     );
 
     // Secure filtering engine: apply RBAC BEFORE any occurrence math.
-    const assigneeOf = (a: typeof activities.data extends Array<infer T> ? T : never) =>
+    const assigneeOf = (a: import("@/lib/rotina").Activity): string | null =>
       (a as unknown as { assigned_user_id?: string | null; assignee_id?: string | null })
         .assigned_user_id ??
       (a as unknown as { assignee_id?: string | null }).assignee_id ??
       null;
+
 
     const master = (activities.data ?? []).filter((a) => {
       if (!isAdmin) {
