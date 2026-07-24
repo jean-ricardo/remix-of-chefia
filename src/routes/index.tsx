@@ -8,6 +8,7 @@ import {
   CalendarClock,
   CheckCircle,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -877,6 +878,11 @@ function kanbanSort(a: OccurrenceView, b: OccurrenceView, todayMs: number) {
   return bcMs - acMs;
 }
 
+const INITIAL_VISIBLE = 5;
+const LOAD_STEP = 5;
+
+type LimitsState = { todo: number; in_progress: number; done: number };
+
 function KanbanBoard({
   atrasadas,
   hoje,
@@ -918,12 +924,62 @@ function KanbanBoard({
     return { todo, inProgress, done };
   }, [atrasadas, hoje, proximas, concluidas, today]);
 
+  // Per-column visible limits — persist across refetch / realtime mutations.
+  const [limits, setLimits] = useState<LimitsState>({
+    todo: INITIAL_VISIBLE,
+    in_progress: INITIAL_VISIBLE,
+    done: INITIAL_VISIBLE,
+  });
+
+  // Ghost-task prevention: when a card newly appears in a column past the current
+  // visible limit (e.g., after a status change moved it there), auto-expand that
+  // column so the user never thinks data was lost.
+  const seenRef = useRef<{ todo: Set<string>; in_progress: Set<string>; done: Set<string> }>({
+    todo: new Set(),
+    in_progress: new Set(),
+    done: new Set(),
+  });
+  useEffect(() => {
+    const map: Array<[keyof LimitsState, OccurrenceView[]]> = [
+      ["todo", columns.todo],
+      ["in_progress", columns.inProgress],
+      ["done", columns.done],
+    ];
+    setLimits((prev) => {
+      let next = prev;
+      for (const [key, items] of map) {
+        const seen = seenRef.current[key];
+        let maxNewIdx = -1;
+        items.forEach((occ, idx) => {
+          const id = `${occ.activity.id}-${occ.originalKey}`;
+          if (!seen.has(id) && idx > maxNewIdx) maxNewIdx = idx;
+        });
+        if (maxNewIdx >= prev[key]) {
+          const needed = Math.ceil((maxNewIdx + 1) / LOAD_STEP) * LOAD_STEP;
+          if (needed > prev[key]) {
+            if (next === prev) next = { ...prev };
+            next[key] = needed;
+          }
+        }
+        const fresh = new Set<string>();
+        items.forEach((occ) => fresh.add(`${occ.activity.id}-${occ.originalKey}`));
+        seenRef.current[key] = fresh;
+      }
+      return next;
+    });
+  }, [columns]);
+
+  const loadMore = (key: keyof LimitsState) =>
+    setLimits((prev) => ({ ...prev, [key]: prev[key] + LOAD_STEP }));
+
   return (
     <div className="-mx-4 flex snap-x snap-mandatory flex-row gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 md:mx-0 md:grid md:h-[calc(100vh-16rem)] md:min-h-[600px] md:snap-none md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0">
       <KanbanColumn
         title="A Fazer"
         accent="bg-[#185FA5]"
         items={columns.todo}
+        limit={limits.todo}
+        onLoadMore={() => loadMore("todo")}
         memberById={memberById}
         currentUser={currentUser}
         isLoading={isLoading}
@@ -936,6 +992,8 @@ function KanbanBoard({
         title="Em Andamento"
         accent="bg-amber-500"
         items={columns.inProgress}
+        limit={limits.in_progress}
+        onLoadMore={() => loadMore("in_progress")}
         memberById={memberById}
         currentUser={currentUser}
         isLoading={isLoading}
@@ -948,6 +1006,8 @@ function KanbanBoard({
         title="Concluído"
         accent="bg-emerald-500"
         items={columns.done}
+        limit={limits.done}
+        onLoadMore={() => loadMore("done")}
         memberById={memberById}
         currentUser={currentUser}
         isLoading={isLoading}
@@ -965,6 +1025,8 @@ function KanbanColumn({
   title,
   accent,
   items,
+  limit,
+  onLoadMore,
   memberById,
   currentUser,
   isLoading,
@@ -977,6 +1039,8 @@ function KanbanColumn({
   title: string;
   accent: string;
   items: OccurrenceView[];
+  limit: number;
+  onLoadMore: () => void;
   memberById: Map<string, TeamMember>;
   currentUser: ReturnType<typeof useMockUser>;
   isLoading: boolean;
@@ -986,6 +1050,9 @@ function KanbanColumn({
   emptyTitle: string;
   emptyMessage: string;
 }) {
+  const visible = useMemo(() => items.slice(0, limit), [items, limit]);
+  const remaining = Math.max(0, items.length - visible.length);
+
   return (
     <div className="flex min-w-[85vw] snap-center flex-col md:min-w-0 md:snap-none">
       <header className="mb-2 flex items-center gap-2 px-1">
@@ -1006,17 +1073,29 @@ function KanbanColumn({
             message={emptyMessage}
           />
         ) : (
-          <ul className="space-y-3">
-            {items.map((occ) => (
-              <OccurrenceCard
-                key={`${occ.activity.id}-${occ.originalKey}`}
-                occ={occ}
-                memberById={memberById}
-                completed={!!completedStyle || occ.status === "concluida"}
-                currentUser={currentUser}
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-3">
+              {visible.map((occ) => (
+                <OccurrenceCard
+                  key={`${occ.activity.id}-${occ.originalKey}`}
+                  occ={occ}
+                  memberById={memberById}
+                  completed={!!completedStyle || occ.status === "concluida"}
+                  currentUser={currentUser}
+                />
+              ))}
+            </ul>
+            {remaining > 0 && (
+              <button
+                type="button"
+                onClick={onLoadMore}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#185FA5]"
+              >
+                <ChevronDown className="h-4 w-4" />
+                Carregar mais ({remaining})
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
