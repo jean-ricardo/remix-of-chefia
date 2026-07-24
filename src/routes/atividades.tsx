@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { NewActivitySheet } from "@/components/activities/NewActivitySheet";
+import { NewTaskModal } from "@/components/activities/NewTaskModal";
 import { EditActivitySheet } from "@/components/activities/EditActivitySheet";
 import {
   useActivities,
