@@ -229,17 +229,24 @@ function RoleSwitcher() {
   const state = useMockState();
   const members = useTeamMembers();
 
-  const value = state.role === "admin" ? "admin" : `m:${state.memberId ?? ""}`;
+  const value =
+    state.role === "admin"
+      ? "admin"
+      : `${state.role === "gestor" ? "g" : "u"}:${state.memberId ?? ""}`;
 
   function onChange(v: string) {
     if (v === "admin") {
       setMockRole("admin");
       return;
     }
-    if (v.startsWith("m:")) {
-      const id = v.slice(2);
-      setMockRole("member");
-      setMockMemberId(id || null);
+    if (v.startsWith("g:")) {
+      setMockRole("gestor");
+      setMockMemberId(v.slice(2) || null);
+      return;
+    }
+    if (v.startsWith("u:")) {
+      setMockRole("usuario");
+      setMockMemberId(v.slice(2) || null);
     }
   }
 
@@ -264,14 +271,20 @@ function RoleSwitcher() {
       <SelectContent align="end">
         <SelectItem value="admin">Admin (todas as ações)</SelectItem>
         {(members.data ?? []).map((m) => (
-          <SelectItem key={m.id} value={`m:${m.id}`}>
-            Membro · {m.name}
+          <SelectItem key={`g-${m.id}`} value={`g:${m.id}`}>
+            Gestor · {m.name}
+          </SelectItem>
+        ))}
+        {(members.data ?? []).map((m) => (
+          <SelectItem key={`u-${m.id}`} value={`u:${m.id}`}>
+            Usuário · {m.name}
           </SelectItem>
         ))}
       </SelectContent>
     </Select>
   );
 }
+
 
 function SiteHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
