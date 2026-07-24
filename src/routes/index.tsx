@@ -59,6 +59,11 @@ import { canActOnActivity, useMockUser } from "@/lib/mockUser";
 
 export const Route = createFileRoute("/")({
   component: DashboardPage,
+  validateSearch: zodValidator(
+    z.object({
+      taskId: fallback(z.string().optional(), undefined),
+    }),
+  ),
 });
 
 function DashboardPage() {
@@ -68,11 +73,27 @@ function DashboardPage() {
   const completions = useCompletions();
   const reschedules = useReschedules();
   const currentUser = useMockUser();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/" });
 
   const [filter, setFilter] = useState<string>("all");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null);
 
   const today = useMemo(() => new Date(), []);
+
+  // Deep-link: open the details sheet when ?taskId=... is present.
+  useEffect(() => {
+    if (search.taskId) setDetailsTaskId(search.taskId);
+  }, [search.taskId]);
+
+  function closeDetails() {
+    setDetailsTaskId(null);
+    if (search.taskId) {
+      navigate({ search: (prev) => ({ ...prev, taskId: undefined }), replace: true });
+    }
+  }
+
 
   const { atrasadas, hoje, proximas, concluidas } = useMemo(() => {
     const compSet = new Set(
