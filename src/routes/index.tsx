@@ -227,22 +227,27 @@ function DashboardPage() {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <label className="hidden text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:block">
-              Visualizar
-            </label>
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="h-10 w-[190px] rounded-lg bg-card sm:w-[240px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toda a equipe</SelectItem>
-                {(members.data ?? []).map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isAdmin && (
+              <>
+                <label className="hidden text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:block">
+                  Visualizar
+                </label>
+                <Select value={filter} onValueChange={setFilter}>
+                  <SelectTrigger className="h-10 w-[190px] rounded-lg bg-card sm:w-[240px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toda a equipe</SelectItem>
+                    {(members.data ?? []).map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+
             <div className="hidden md:block">
               <Button
                 onClick={() => setNewTaskOpen(true)}
