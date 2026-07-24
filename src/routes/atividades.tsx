@@ -133,31 +133,30 @@ function AtividadesPage() {
             </p>
           </div>
           <div className="hidden md:block">
-            <NewActivitySheet
-              trigger={
-                <Button className="h-10 gap-1.5 rounded-lg bg-[#185FA5] px-4 font-medium text-white hover:bg-[#042C53]">
-                  <Plus className="h-4 w-4" />
-                  Nova Atividade
-                </Button>
-              }
-            />
+            <Button
+              onClick={() => setNewTaskOpen(true)}
+              className="h-10 gap-1.5 rounded-lg bg-[#185FA5] px-4 font-medium text-white hover:bg-[#042C53]"
+            >
+              <Plus className="h-4 w-4" />
+              Nova Atividade
+            </Button>
           </div>
         </header>
 
         {/* Mobile FAB */}
         <div className="fixed bottom-[88px] right-4 z-40 md:hidden">
-          <NewActivitySheet
-            trigger={
-              <button
-                type="button"
-                aria-label="Nova atividade"
-                className="grid h-14 w-14 place-items-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-transform active:scale-95 hover:bg-[#993C1D]"
-              >
-                <Plus className="h-6 w-6" />
-              </button>
-            }
-          />
+          <button
+            type="button"
+            onClick={() => setNewTaskOpen(true)}
+            aria-label="Nova atividade"
+            className="grid h-14 w-14 place-items-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-transform active:scale-95 hover:bg-[#993C1D]"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
         </div>
+
+        <NewTaskModal isOpen={newTaskOpen} onClose={() => setNewTaskOpen(false)} />
+
 
         {/* COMMAND BAR */}
         <div className="flex flex-col items-stretch gap-3 rounded-xl bg-white p-4 shadow-sm md:flex-row md:items-center">
