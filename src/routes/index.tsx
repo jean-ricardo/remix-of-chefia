@@ -323,9 +323,8 @@ function DashboardPage() {
               isLoading={false}
               currentUser={currentUser}
               today={today}
-              highlightAssignee={isAdmin}
-
             />
+
           </>
         )}
 
