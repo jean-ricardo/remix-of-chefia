@@ -95,6 +95,20 @@ function DashboardPage() {
   }
 
 
+  // Dynamic RBAC schema adaptability: accept admin/director/isAdmin variants.
+  const rawRole =
+    (currentUser as unknown as { role?: string }).role ??
+    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "admin" : undefined);
+  const isAdmin =
+    rawRole === "admin" ||
+    rawRole === "diretor" ||
+    rawRole === "director";
+  // Deny-by-default: undefined/unknown role -> member view.
+  const effectiveUserId =
+    !isAdmin && currentUser.id && !currentUser.id.startsWith("__")
+      ? currentUser.id
+      : null;
+
   const { atrasadas, hoje, proximas, concluidas } = useMemo(() => {
     const compSet = new Set(
       (completions.data ?? []).map((c) => `${c.activity_id}|${c.occurrence_key}`),
@@ -106,9 +120,27 @@ function DashboardPage() {
       ]),
     );
 
+    // Secure filtering engine: apply RBAC BEFORE any occurrence math.
+    const assigneeOf = (a: import("@/lib/rotina").Activity): string | null =>
+      (a as unknown as { assigned_user_id?: string | null; assignee_id?: string | null })
+        .assigned_user_id ??
+      (a as unknown as { assignee_id?: string | null }).assignee_id ??
+      null;
+
+
+    const master = (activities.data ?? []).filter((a) => {
+      if (!isAdmin) {
+        // Deny-by-default: no resolvable user -> no tasks.
+        if (!effectiveUserId) return false;
+        return assigneeOf(a) === effectiveUserId;
+      }
+      // Admin/Director extra "focus on member" dropdown (optional).
+      if (filter !== "all") return assigneeOf(a) === filter;
+      return true;
+    });
+
     const list: OccurrenceView[] = [];
-    for (const a of activities.data ?? []) {
-      if (filter !== "all" && a.assigned_user_id !== filter) continue;
+    for (const a of master) {
       const occ = buildOccurrence(a, today, compSet, reMap);
       if (occ && occ.status !== "fora") list.push(occ);
     }
@@ -136,7 +168,7 @@ function DashboardPage() {
       proximas: bucket("proxima"),
       concluidas: bucket("concluida").filter(within24h),
     };
-  }, [activities.data, completions.data, reschedules.data, filter, today]);
+  }, [activities.data, completions.data, reschedules.data, filter, today, isAdmin, effectiveUserId]);
 
   const memberById = useMemo(() => {
     const m = new Map<string, TeamMember>();
@@ -150,10 +182,20 @@ function DashboardPage() {
     reschedules.isLoading ||
     members.isLoading;
 
+  // Anti-flicker lock: block Kanban render until BOTH data and role are resolved.
+  const isReady = !isLoading && rawRole !== undefined;
+
   const impersonatedName =
-    currentUser.role === "member" && currentUser.id !== "__member_unassigned__"
+    !isAdmin && currentUser.id && !currentUser.id.startsWith("__")
       ? memberById.get(currentUser.id)?.name
       : null;
+
+  const totalFiltered =
+    atrasadas.length + hoje.length + proximas.length + concluidas.length;
+  const showMemberEmpty = isReady && !isAdmin && totalFiltered === 0;
+
+  const heroTitle = isAdmin ? "Visão Geral (Diretoria)" : "Minhas Atividades";
+
 
   return (
     <>
@@ -164,11 +206,14 @@ function DashboardPage() {
           <div className="min-w-0">
             <LiveClock />
             <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight text-navy md:text-[32px]">
-              Painel da rotina
+              {heroTitle}
             </h1>
             <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-              Atividades atrasadas, para hoje e próximas — atualizadas em tempo real.
+              {isAdmin
+                ? "Visão consolidada de toda a equipe — atualizada em tempo real."
+                : "Suas atividades atrasadas, para hoje e próximas."}
             </p>
+
             {currentUser.role === "member" && (
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
                 <Eye className="h-3 w-3" />
@@ -182,22 +227,27 @@ function DashboardPage() {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <label className="hidden text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:block">
-              Visualizar
-            </label>
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="h-10 w-[190px] rounded-lg bg-card sm:w-[240px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toda a equipe</SelectItem>
-                {(members.data ?? []).map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isAdmin && (
+              <>
+                <label className="hidden text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:block">
+                  Visualizar
+                </label>
+                <Select value={filter} onValueChange={setFilter}>
+                  <SelectTrigger className="h-10 w-[190px] rounded-lg bg-card sm:w-[240px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toda a equipe</SelectItem>
+                    {(members.data ?? []).map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+
             <div className="hidden md:block">
               <Button
                 onClick={() => setNewTaskOpen(true)}
@@ -230,44 +280,54 @@ function DashboardPage() {
 
 
 
-        {/* STAT CARDS: responsive grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Atrasadas"
-            count={atrasadas.length}
-            tone="danger"
-            icon={<AlertTriangle className="h-5 w-5" />}
-          />
-          <StatCard
-            label="Para hoje"
-            count={hoje.length}
-            tone="warning"
-            icon={<Clock className="h-5 w-5" />}
-          />
-          <StatCard
-            label="Próx. 7 dias"
-            count={proximas.length}
-            tone="navy"
-            icon={<CalendarClock className="h-5 w-5" />}
-          />
-          <StatCard
-            label="Concluídas hoje"
-            count={concluidas.length}
-            tone="success"
-            icon={<CheckCircle2 className="h-5 w-5" />}
-          />
-        </div>
+        {!isReady ? (
+          <BoardLoading />
+        ) : showMemberEmpty ? (
+          <MemberEmptyState />
+        ) : (
+          <>
+            {/* STAT CARDS: responsive grid */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard
+                label="Atrasadas"
+                count={atrasadas.length}
+                tone="danger"
+                icon={<AlertTriangle className="h-5 w-5" />}
+              />
+              <StatCard
+                label="Para hoje"
+                count={hoje.length}
+                tone="warning"
+                icon={<Clock className="h-5 w-5" />}
+              />
+              <StatCard
+                label="Próx. 7 dias"
+                count={proximas.length}
+                tone="navy"
+                icon={<CalendarClock className="h-5 w-5" />}
+              />
+              <StatCard
+                label="Concluídas hoje"
+                count={concluidas.length}
+                tone="success"
+                icon={<CheckCircle2 className="h-5 w-5" />}
+              />
+            </div>
 
-        <KanbanBoard
-          atrasadas={atrasadas}
-          hoje={hoje}
-          proximas={proximas}
-          concluidas={concluidas}
-          memberById={memberById}
-          isLoading={isLoading}
-          currentUser={currentUser}
-          today={today}
-        />
+            <KanbanBoard
+              atrasadas={atrasadas}
+              hoje={hoje}
+              proximas={proximas}
+              concluidas={concluidas}
+              memberById={memberById}
+              isLoading={false}
+              currentUser={currentUser}
+              today={today}
+            />
+
+          </>
+        )}
+
 
 
       </div>
@@ -959,6 +1019,33 @@ function KanbanColumn({
           </ul>
         )}
       </div>
+    </div>
+  );
+}
+
+function BoardLoading() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-busy="true" aria-live="polite">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={i}
+          className="h-28 animate-pulse rounded-2xl border border-gray-100 bg-white shadow-sm"
+        />
+      ))}
+    </div>
+  );
+}
+
+function MemberEmptyState() {
+  return (
+    <div className="flex min-h-[60vh] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white p-8 text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+        <CheckCircle className="h-8 w-8" />
+      </div>
+      <h2 className="text-xl font-bold text-[#042C53] md:text-2xl">Bom trabalho!</h2>
+      <p className="mt-2 max-w-sm text-sm text-gray-500 md:text-base">
+        Você não tem atividades pendentes no momento.
+      </p>
     </div>
   );
 }
