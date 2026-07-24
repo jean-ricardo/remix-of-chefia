@@ -22,7 +22,11 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
 import { EditActivitySheet, type EditMode } from "@/components/activities/EditActivitySheet";
+import { TaskDetailsSheet } from "@/components/activities/TaskDetailsSheet";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
@@ -55,6 +59,11 @@ import { canActOnActivity, useMockUser } from "@/lib/mockUser";
 
 export const Route = createFileRoute("/")({
   component: DashboardPage,
+  validateSearch: zodValidator(
+    z.object({
+      taskId: fallback(z.string().optional(), undefined),
+    }),
+  ),
 });
 
 function DashboardPage() {
@@ -64,11 +73,27 @@ function DashboardPage() {
   const completions = useCompletions();
   const reschedules = useReschedules();
   const currentUser = useMockUser();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/" });
 
   const [filter, setFilter] = useState<string>("all");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null);
 
   const today = useMemo(() => new Date(), []);
+
+  // Deep-link: open the details sheet when ?taskId=... is present.
+  useEffect(() => {
+    if (search.taskId) setDetailsTaskId(search.taskId);
+  }, [search.taskId]);
+
+  function closeDetails() {
+    setDetailsTaskId(null);
+    if (search.taskId) {
+      navigate({ search: (prev: { taskId?: string }) => ({ ...prev, taskId: undefined }), replace: true });
+    }
+  }
+
 
   const { atrasadas, hoje, proximas, concluidas } = useMemo(() => {
     const compSet = new Set(
@@ -196,6 +221,13 @@ function DashboardPage() {
         </button>
 
         <NewTaskModal isOpen={newTaskOpen} onClose={() => setNewTaskOpen(false)} />
+
+        <TaskDetailsSheet
+          taskId={detailsTaskId}
+          isOpen={!!detailsTaskId}
+          onClose={closeDetails}
+        />
+
 
 
         {/* STAT CARDS: responsive grid */}
@@ -604,6 +636,7 @@ function OccurrenceCard({
   function handleCardPointerDown(e: React.PointerEvent) {
     pointerRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
   }
+  const navigate = useNavigate({ from: "/" });
   function handleCardClick(e: React.MouseEvent) {
     // Ignore clicks originating from interactive children (buttons, links).
     const target = e.target as HTMLElement;
@@ -614,7 +647,8 @@ function OccurrenceCard({
       const dy = Math.abs(e.clientY - p.y);
       if (dx > 8 || dy > 8) return; // treated as scroll/swipe
     }
-    openEdit("edit");
+    // Open the premium details sheet via deep-link so WhatsApp URLs share the same flow.
+    navigate({ search: (prev: { taskId?: string }) => ({ ...prev, taskId: occ.activity.id }), replace: true });
   }
 
 
