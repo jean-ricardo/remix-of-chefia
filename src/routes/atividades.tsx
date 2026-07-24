@@ -50,6 +50,7 @@ function AtividadesPage() {
 
   const [selected, setSelected] = useState<OccurrenceView | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
 
