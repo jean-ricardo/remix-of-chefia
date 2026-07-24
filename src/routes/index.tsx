@@ -280,44 +280,54 @@ function DashboardPage() {
 
 
 
-        {/* STAT CARDS: responsive grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Atrasadas"
-            count={atrasadas.length}
-            tone="danger"
-            icon={<AlertTriangle className="h-5 w-5" />}
-          />
-          <StatCard
-            label="Para hoje"
-            count={hoje.length}
-            tone="warning"
-            icon={<Clock className="h-5 w-5" />}
-          />
-          <StatCard
-            label="Próx. 7 dias"
-            count={proximas.length}
-            tone="navy"
-            icon={<CalendarClock className="h-5 w-5" />}
-          />
-          <StatCard
-            label="Concluídas hoje"
-            count={concluidas.length}
-            tone="success"
-            icon={<CheckCircle2 className="h-5 w-5" />}
-          />
-        </div>
+        {!isReady ? (
+          <BoardLoading />
+        ) : showMemberEmpty ? (
+          <MemberEmptyState />
+        ) : (
+          <>
+            {/* STAT CARDS: responsive grid */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard
+                label="Atrasadas"
+                count={atrasadas.length}
+                tone="danger"
+                icon={<AlertTriangle className="h-5 w-5" />}
+              />
+              <StatCard
+                label="Para hoje"
+                count={hoje.length}
+                tone="warning"
+                icon={<Clock className="h-5 w-5" />}
+              />
+              <StatCard
+                label="Próx. 7 dias"
+                count={proximas.length}
+                tone="navy"
+                icon={<CalendarClock className="h-5 w-5" />}
+              />
+              <StatCard
+                label="Concluídas hoje"
+                count={concluidas.length}
+                tone="success"
+                icon={<CheckCircle2 className="h-5 w-5" />}
+              />
+            </div>
 
-        <KanbanBoard
-          atrasadas={atrasadas}
-          hoje={hoje}
-          proximas={proximas}
-          concluidas={concluidas}
-          memberById={memberById}
-          isLoading={isLoading}
-          currentUser={currentUser}
-          today={today}
-        />
+            <KanbanBoard
+              atrasadas={atrasadas}
+              hoje={hoje}
+              proximas={proximas}
+              concluidas={concluidas}
+              memberById={memberById}
+              isLoading={false}
+              currentUser={currentUser}
+              today={today}
+              highlightAssignee={isAdmin}
+            />
+          </>
+        )}
+
 
 
       </div>
