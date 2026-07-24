@@ -878,10 +878,9 @@ function kanbanSort(a: OccurrenceView, b: OccurrenceView, todayMs: number) {
   return bcMs - acMs;
 }
 
-const INITIAL_VISIBLE = 5;
-const LOAD_STEP = 5;
+const COLUMN_PAGE_SIZE = 5;
 
-type LimitsState = { todo: number; in_progress: number; done: number };
+type PagesState = { todo: number; in_progress: number; done: number };
 
 function KanbanBoard({
   atrasadas,
@@ -924,53 +923,31 @@ function KanbanBoard({
     return { todo, inProgress, done };
   }, [atrasadas, hoje, proximas, concluidas, today]);
 
-  // Per-column visible limits — persist across refetch / realtime mutations.
-  const [limits, setLimits] = useState<LimitsState>({
-    todo: INITIAL_VISIBLE,
-    in_progress: INITIAL_VISIBLE,
-    done: INITIAL_VISIBLE,
-  });
+  // Independent per-column pagination state.
+  const [pages, setPages] = useState<PagesState>({ todo: 1, in_progress: 1, done: 1 });
 
-  // Ghost-task prevention: when a card newly appears in a column past the current
-  // visible limit (e.g., after a status change moved it there), auto-expand that
-  // column so the user never thinks data was lost.
-  const seenRef = useRef<{ todo: Set<string>; in_progress: Set<string>; done: Set<string> }>({
-    todo: new Set(),
-    in_progress: new Set(),
-    done: new Set(),
-  });
+  // Orphan-page protection: if a column shrinks below the current page,
+  // clamp instantly to the new last page (min 1).
   useEffect(() => {
-    const map: Array<[keyof LimitsState, OccurrenceView[]]> = [
-      ["todo", columns.todo],
-      ["in_progress", columns.inProgress],
-      ["done", columns.done],
-    ];
-    setLimits((prev) => {
+    setPages((prev) => {
+      const totals: PagesState = {
+        todo: Math.max(1, Math.ceil(columns.todo.length / COLUMN_PAGE_SIZE)),
+        in_progress: Math.max(1, Math.ceil(columns.inProgress.length / COLUMN_PAGE_SIZE)),
+        done: Math.max(1, Math.ceil(columns.done.length / COLUMN_PAGE_SIZE)),
+      };
       let next = prev;
-      for (const [key, items] of map) {
-        const seen = seenRef.current[key];
-        let maxNewIdx = -1;
-        items.forEach((occ, idx) => {
-          const id = `${occ.activity.id}-${occ.originalKey}`;
-          if (!seen.has(id) && idx > maxNewIdx) maxNewIdx = idx;
-        });
-        if (maxNewIdx >= prev[key]) {
-          const needed = Math.ceil((maxNewIdx + 1) / LOAD_STEP) * LOAD_STEP;
-          if (needed > prev[key]) {
-            if (next === prev) next = { ...prev };
-            next[key] = needed;
-          }
+      (Object.keys(totals) as Array<keyof PagesState>).forEach((k) => {
+        if (prev[k] > totals[k]) {
+          if (next === prev) next = { ...prev };
+          next[k] = totals[k];
         }
-        const fresh = new Set<string>();
-        items.forEach((occ) => fresh.add(`${occ.activity.id}-${occ.originalKey}`));
-        seenRef.current[key] = fresh;
-      }
+      });
       return next;
     });
   }, [columns]);
 
-  const loadMore = (key: keyof LimitsState) =>
-    setLimits((prev) => ({ ...prev, [key]: prev[key] + LOAD_STEP }));
+  const setPage = (key: keyof PagesState, page: number) =>
+    setPages((prev) => ({ ...prev, [key]: page }));
 
   return (
     <div className="-mx-4 flex snap-x snap-mandatory flex-row gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 md:mx-0 md:grid md:h-[calc(100vh-16rem)] md:min-h-[600px] md:snap-none md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0">
@@ -978,8 +955,8 @@ function KanbanBoard({
         title="A Fazer"
         accent="bg-[#185FA5]"
         items={columns.todo}
-        limit={limits.todo}
-        onLoadMore={() => loadMore("todo")}
+        page={pages.todo}
+        onPageChange={(p) => setPage("todo", p)}
         memberById={memberById}
         currentUser={currentUser}
         isLoading={isLoading}
@@ -992,8 +969,8 @@ function KanbanBoard({
         title="Em Andamento"
         accent="bg-amber-500"
         items={columns.inProgress}
-        limit={limits.in_progress}
-        onLoadMore={() => loadMore("in_progress")}
+        page={pages.in_progress}
+        onPageChange={(p) => setPage("in_progress", p)}
         memberById={memberById}
         currentUser={currentUser}
         isLoading={isLoading}
@@ -1006,8 +983,8 @@ function KanbanBoard({
         title="Concluído"
         accent="bg-emerald-500"
         items={columns.done}
-        limit={limits.done}
-        onLoadMore={() => loadMore("done")}
+        page={pages.done}
+        onPageChange={(p) => setPage("done", p)}
         memberById={memberById}
         currentUser={currentUser}
         isLoading={isLoading}
@@ -1025,8 +1002,8 @@ function KanbanColumn({
   title,
   accent,
   items,
-  limit,
-  onLoadMore,
+  page,
+  onPageChange,
   memberById,
   currentUser,
   isLoading,
@@ -1039,8 +1016,8 @@ function KanbanColumn({
   title: string;
   accent: string;
   items: OccurrenceView[];
-  limit: number;
-  onLoadMore: () => void;
+  page: number;
+  onPageChange: (page: number) => void;
   memberById: Map<string, TeamMember>;
   currentUser: ReturnType<typeof useMockUser>;
   isLoading: boolean;
@@ -1050,8 +1027,14 @@ function KanbanColumn({
   emptyTitle: string;
   emptyMessage: string;
 }) {
-  const visible = useMemo(() => items.slice(0, limit), [items, limit]);
-  const remaining = Math.max(0, items.length - visible.length);
+  const totalPages = Math.max(1, Math.ceil(items.length / COLUMN_PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const start = (safePage - 1) * COLUMN_PAGE_SIZE;
+  const visible = useMemo(
+    () => items.slice(start, start + COLUMN_PAGE_SIZE),
+    [items, start],
+  );
+  const showPager = items.length > COLUMN_PAGE_SIZE;
 
   return (
     <div className="flex min-w-[85vw] snap-center flex-col md:min-w-0 md:snap-none">
@@ -1062,18 +1045,18 @@ function KanbanColumn({
           {isLoading ? "…" : items.length}
         </span>
       </header>
-      <div className="flex max-h-[75vh] flex-1 flex-col space-y-3 overflow-y-auto rounded-xl border border-gray-100 bg-gray-50/60 p-3 scrollbar-hide md:max-h-none">
-        {isLoading ? (
-          <TaskCardSkeleton />
-        ) : items.length === 0 ? (
-          <EmptyStateCard
-            icon={emptyIcon}
-            iconClass={emptyIconClass}
-            title={emptyTitle}
-            message={emptyMessage}
-          />
-        ) : (
-          <>
+      <div className="flex max-h-[75vh] min-h-[420px] flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/60 md:max-h-none">
+        <div className="flex-1 space-y-3 overflow-y-auto p-3 scrollbar-hide">
+          {isLoading ? (
+            <TaskCardSkeleton />
+          ) : items.length === 0 ? (
+            <EmptyStateCard
+              icon={emptyIcon}
+              iconClass={emptyIconClass}
+              title={emptyTitle}
+              message={emptyMessage}
+            />
+          ) : (
             <ul className="space-y-3">
               {visible.map((occ) => (
                 <OccurrenceCard
@@ -1085,17 +1068,32 @@ function KanbanColumn({
                 />
               ))}
             </ul>
-            {remaining > 0 && (
-              <button
-                type="button"
-                onClick={onLoadMore}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#185FA5]"
-              >
-                <ChevronDown className="h-4 w-4" />
-                Carregar mais ({remaining})
-              </button>
-            )}
-          </>
+          )}
+        </div>
+        {showPager && !isLoading && (
+          <div className="mt-auto flex items-center justify-between rounded-b-xl border-t border-gray-200/60 bg-gray-50/95 p-3 backdrop-blur-sm">
+            <button
+              type="button"
+              onClick={() => onPageChange(safePage - 1)}
+              disabled={safePage === 1}
+              aria-label="Página anterior"
+              className="rounded-md p-2 transition-all hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              <ChevronLeft className="h-4 w-4 text-gray-700" />
+            </button>
+            <span className="text-xs font-semibold text-gray-600">
+              {safePage} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => onPageChange(safePage + 1)}
+              disabled={safePage === totalPages}
+              aria-label="Próxima página"
+              className="rounded-md p-2 transition-all hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              <ChevronRight className="h-4 w-4 text-gray-700" />
+            </button>
+          </div>
         )}
       </div>
     </div>
