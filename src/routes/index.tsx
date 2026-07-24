@@ -1023,3 +1023,30 @@ function KanbanColumn({
   );
 }
 
+function BoardLoading() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-busy="true" aria-live="polite">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={i}
+          className="h-28 animate-pulse rounded-2xl border border-gray-100 bg-white shadow-sm"
+        />
+      ))}
+    </div>
+  );
+}
+
+function MemberEmptyState() {
+  return (
+    <div className="flex min-h-[60vh] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white p-8 text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+        <CheckCircle className="h-8 w-8" />
+      </div>
+      <h2 className="text-xl font-bold text-[#042C53] md:text-2xl">Bom trabalho!</h2>
+      <p className="mt-2 max-w-sm text-sm text-gray-500 md:text-base">
+        Você não tem atividades pendentes no momento.
+      </p>
+    </div>
+  );
+}
+
