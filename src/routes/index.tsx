@@ -20,7 +20,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { NewActivitySheet } from "@/components/activities/NewActivitySheet";
+import { NewTaskModal } from "@/components/activities/NewTaskModal";
 import { EditActivitySheet, type EditMode } from "@/components/activities/EditActivitySheet";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -66,6 +66,7 @@ function DashboardPage() {
   const currentUser = useMockUser();
 
   const [filter, setFilter] = useState<string>("all");
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
 
@@ -173,30 +174,29 @@ function DashboardPage() {
               </SelectContent>
             </Select>
             <div className="hidden md:block">
-              <NewActivitySheet
-                trigger={
-                  <Button className="h-10 gap-1.5 rounded-lg bg-[#185FA5] px-4 font-medium text-white hover:bg-[#042C53]">
-                    <Plus className="h-4 w-4" />
-                    Nova Atividade
-                  </Button>
-                }
-              />
+              <Button
+                onClick={() => setNewTaskOpen(true)}
+                className="h-10 gap-1.5 rounded-lg bg-[#185FA5] px-4 font-medium text-white hover:bg-[#042C53]"
+              >
+                <Plus className="h-4 w-4" />
+                Nova Atividade
+              </Button>
             </div>
           </div>
         </header>
 
         {/* Mobile FAB */}
-        <NewActivitySheet
-          trigger={
-            <button
-              type="button"
-              aria-label="Nova atividade"
-              className="fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-colors hover:bg-[#c24f2a] active:scale-95 md:hidden"
-            >
-              <Plus className="h-6 w-6" />
-            </button>
-          }
-        />
+        <button
+          type="button"
+          onClick={() => setNewTaskOpen(true)}
+          aria-label="Nova atividade"
+          className="fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-colors hover:bg-[#c24f2a] active:scale-95 md:hidden"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+
+        <NewTaskModal isOpen={newTaskOpen} onClose={() => setNewTaskOpen(false)} />
+
 
         {/* STAT CARDS: responsive grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
