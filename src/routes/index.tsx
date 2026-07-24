@@ -22,7 +22,11 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
 import { EditActivitySheet, type EditMode } from "@/components/activities/EditActivitySheet";
+import { TaskDetailsSheet } from "@/components/activities/TaskDetailsSheet";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
