@@ -17,7 +17,7 @@ import {
   Inbox,
   Plus,
   RotateCw,
-  User as UserIcon,
+
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
