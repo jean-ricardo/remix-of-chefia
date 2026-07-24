@@ -636,6 +636,7 @@ function OccurrenceCard({
   function handleCardPointerDown(e: React.PointerEvent) {
     pointerRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
   }
+  const navigate = useNavigate({ from: "/" });
   function handleCardClick(e: React.MouseEvent) {
     // Ignore clicks originating from interactive children (buttons, links).
     const target = e.target as HTMLElement;
@@ -646,7 +647,8 @@ function OccurrenceCard({
       const dy = Math.abs(e.clientY - p.y);
       if (dx > 8 || dy > 8) return; // treated as scroll/swipe
     }
-    openEdit("edit");
+    // Open the premium details sheet via deep-link so WhatsApp URLs share the same flow.
+    navigate({ search: (prev: { taskId?: string }) => ({ ...prev, taskId: occ.activity.id }), replace: true });
   }
 
 
