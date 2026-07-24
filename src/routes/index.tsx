@@ -258,57 +258,17 @@ function DashboardPage() {
           />
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-2">
-          <Section
-            title="Atrasadas"
-            tone="danger"
-            items={atrasadas}
-            memberById={memberById}
-            isLoading={isLoading}
-            emptyIcon={CheckCircle}
-            emptyIconClass="text-emerald-500"
-            emptyTitle="Tudo em dia!"
-            emptyMessage="Nenhuma atividade atrasada."
-            currentUser={currentUser}
-          />
-          <Section
-            title="Para hoje"
-            tone="warning"
-            items={hoje}
-            memberById={memberById}
-            isLoading={isLoading}
-            emptyIcon={Coffee}
-            emptyIconClass="text-[#185FA5]"
-            emptyTitle="Dia tranquilo"
-            emptyMessage="Você não tem atividades para hoje."
-            currentUser={currentUser}
-          />
-          <Section
-            title="Próximos 7 dias"
-            tone="navy"
-            items={proximas}
-            memberById={memberById}
-            isLoading={isLoading}
-            emptyIcon={Calendar}
-            emptyIconClass="text-gray-400"
-            emptyTitle="Nada por aqui"
-            emptyMessage="Nenhuma atividade neste período."
-            currentUser={currentUser}
-          />
-          <Section
-            title="Concluídas hoje"
-            tone="success"
-            items={concluidas}
-            memberById={memberById}
-            isLoading={isLoading}
-            emptyIcon={Inbox}
-            emptyIconClass="text-gray-400"
-            emptyTitle="Nada por aqui"
-            emptyMessage="Ainda nada concluído hoje."
-            currentUser={currentUser}
-            showCompletedStyle
-          />
-        </div>
+        <KanbanBoard
+          atrasadas={atrasadas}
+          hoje={hoje}
+          proximas={proximas}
+          concluidas={concluidas}
+          memberById={memberById}
+          isLoading={isLoading}
+          currentUser={currentUser}
+          today={today}
+        />
+
 
       </div>
     </>
