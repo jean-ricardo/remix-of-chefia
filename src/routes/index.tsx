@@ -20,7 +20,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { NewActivitySheet } from "@/components/activities/NewActivitySheet";
+import { NewTaskModal } from "@/components/activities/NewTaskModal";
 import { EditActivitySheet, type EditMode } from "@/components/activities/EditActivitySheet";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
