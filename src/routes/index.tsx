@@ -8,7 +8,6 @@ import {
   CalendarClock,
   CheckCircle,
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
