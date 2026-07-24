@@ -258,9 +258,10 @@ export function NewActivitySheet({ trigger }: Props) {
             </Button>
             <Button
               type="submit"
-              className="h-11 min-w-[160px] bg-[#185FA5] font-semibold text-white hover:bg-[#042C53]"
+              disabled={submitting}
+              className="h-11 min-w-[160px] bg-[#185FA5] font-semibold text-white hover:bg-[#042C53] disabled:opacity-70"
             >
-              Criar atividade
+              {submitting ? "Criando..." : "Criar atividade"}
             </Button>
           </div>
         </form>
