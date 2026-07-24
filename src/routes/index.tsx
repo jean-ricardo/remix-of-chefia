@@ -95,15 +95,17 @@ function DashboardPage() {
   }
 
 
-  // Dynamic RBAC schema adaptability: accept admin/director/isAdmin variants.
+  // Dynamic RBAC schema adaptability: admin + gestor + legacy director aliases
+  // all have global scope. Anything else (including undefined) → deny-by-default.
   const rawRole =
     (currentUser as unknown as { role?: string }).role ??
     ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "admin" : undefined);
   const isAdmin =
     rawRole === "admin" ||
+    rawRole === "gestor" ||
     rawRole === "diretor" ||
     rawRole === "director";
-  // Deny-by-default: undefined/unknown role -> member view.
+  // Deny-by-default: unknown role -> usuario view; requires a resolved user id.
   const effectiveUserId =
     !isAdmin && currentUser.id && !currentUser.id.startsWith("__")
       ? currentUser.id
@@ -214,10 +216,10 @@ function DashboardPage() {
                 : "Suas atividades atrasadas, para hoje e próximas."}
             </p>
 
-            {currentUser.role === "member" && (
+            {currentUser.role !== "admin" && (
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
                 <Eye className="h-3 w-3" />
-                Modo membro
+                {currentUser.role === "gestor" ? "Modo gestor" : "Modo usuário"}
                 {impersonatedName ? (
                   <span className="text-navy/70">· {impersonatedName}</span>
                 ) : (
