@@ -66,6 +66,7 @@ function DashboardPage() {
   const currentUser = useMockUser();
 
   const [filter, setFilter] = useState<string>("all");
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
 
