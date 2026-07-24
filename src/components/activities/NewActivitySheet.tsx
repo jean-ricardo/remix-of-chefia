@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Sheet,
   SheetContent,
@@ -16,14 +17,34 @@ import {
 } from "@/components/ui/select";
 import { useTeamMembers } from "@/lib/useRotina";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
 
 interface Props {
   trigger: React.ReactNode;
 }
 
+function getMemberWhatsApp(memberId: string | undefined | null): string | null {
+  if (!memberId || typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(`chefia_whatsapp_${memberId}`);
+  } catch {
+    return null;
+  }
+}
+
+function formatDateBR(iso: string | undefined): string {
+  if (!iso) return "Sem data";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
 export function NewActivitySheet({ trigger }: Props) {
   const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const members = useTeamMembers();
+  const notify = useServerFn(sendWhatsAppNotification);
 
   const [title, setTitle] = useState("");
   const [client, setClient] = useState("");
@@ -41,16 +62,56 @@ export function NewActivitySheet({ trigger }: Props) {
     setDescription("");
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!title.trim()) {
       toast.error("Informe o título da atividade");
       return;
     }
-    // MOCK ONLY — no backend mutation.
+    setSubmitting(true);
+    const effectiveDate = dueDate || new Date().toISOString().slice(0, 10);
+    const assignedUserId = assignee || null;
+    const validPriority = (["alta", "media", "baixa"].includes(priority)
+      ? priority
+      : "media") as "alta" | "media" | "baixa";
+
+    const { error } = await supabase.from("activities").insert({
+      title: title.trim(),
+      assigned_user_id: assignedUserId,
+      priority: validPriority,
+      recurrence_type: "unica",
+      due_date: effectiveDate,
+    });
+
+    if (error) {
+      console.error("[activities] insert failed", error);
+      toast.error("Não foi possível criar a atividade");
+      setSubmitting(false);
+      return;
+    }
+
+    // Fire-and-forget WhatsApp notification — never block or fail the UI.
+    const number = getMemberWhatsApp(assignedUserId);
+    if (number) {
+      const platformLink =
+        typeof window !== "undefined" ? window.location.origin : "https://chef.ia";
+      void notify({
+        data: {
+          number,
+          taskTitle: title.trim(),
+          startDate: formatDateBR(effectiveDate),
+          endDate: formatDateBR(effectiveDate),
+          platformLink,
+        },
+      }).catch((err) => {
+        console.error("[whatsapp-notify] dispatch failed", err);
+      });
+    }
+
     toast.success("Atividade criada com sucesso!");
     setOpen(false);
     reset();
+    setSubmitting(false);
   }
 
   const inputClass =
@@ -197,9 +258,10 @@ export function NewActivitySheet({ trigger }: Props) {
             </Button>
             <Button
               type="submit"
-              className="h-11 min-w-[160px] bg-[#185FA5] font-semibold text-white hover:bg-[#042C53]"
+              disabled={submitting}
+              className="h-11 min-w-[160px] bg-[#185FA5] font-semibold text-white hover:bg-[#042C53] disabled:opacity-70"
             >
-              Criar atividade
+              {submitting ? "Criando..." : "Criar atividade"}
             </Button>
           </div>
         </form>
