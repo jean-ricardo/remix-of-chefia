@@ -618,20 +618,37 @@ function OccurrenceCard({
   }
 
 
-  const dateLabel = format(occ.effectiveDate, "EEE, d MMM", { locale: ptBR });
+  const safeDate = (d: Date | null | undefined): Date | null => {
+    if (!d) return null;
+    const t = d instanceof Date ? d : new Date(d);
+    return Number.isNaN(t.getTime()) ? null : t;
+  };
+  const effective = safeDate(occ.effectiveDate);
+  const dateLabel = effective ? format(effective, "EEE, d MMM", { locale: ptBR }) : null;
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const isOverdue = !!effective && !completed && effective.getTime() < startOfToday.getTime();
+
+  const assigneeLabel = member?.name ?? null;
+
+  const stop = (fn: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    fn();
+  };
 
   return (
     <li
       onPointerDown={handleCardPointerDown}
       onClick={handleCardClick}
       className={cn(
-        "group flex cursor-pointer flex-col justify-between rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow duration-200 md:p-5 md:hover:shadow-md",
+        "group flex cursor-pointer flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#185FA5]/30 hover:shadow-md",
         completed && "bg-success/5",
       )}
     >
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <PriorityPill priority={occ.activity.priority} />
+      {/* Top row: priority + assignee */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <PriorityDot priority={occ.activity.priority} />
           {occ.isRescheduled && (
             <span className="inline-flex items-center gap-1 rounded-full border border-navy/20 bg-navy/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy">
               <RotateCw className="h-3 w-3" />
@@ -645,15 +662,23 @@ function OccurrenceCard({
             </span>
           )}
         </div>
+        {assigneeLabel && (
+          <span className="shrink-0 truncate text-xs font-medium text-gray-500">
+            {assigneeLabel}
+          </span>
+        )}
+      </div>
 
+      {/* Middle: title */}
+      <div className="mt-2 min-w-0">
         {clientName && (
-          <div className="mt-2 mb-1 truncate text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <div className="mb-1 truncate text-[10px] font-bold uppercase tracking-wider text-gray-400">
             {clientName}
           </div>
         )}
         <h3
           className={cn(
-            "mb-2 line-clamp-2 text-base font-semibold leading-tight text-[#042C53]",
+            "line-clamp-2 text-base font-semibold leading-snug text-gray-900",
             completed && "text-muted-foreground line-through",
           )}
         >
@@ -673,36 +698,35 @@ function OccurrenceCard({
         )}
       </div>
 
-      <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 pt-3 text-xs text-gray-500">
-        {member?.name && (
-          <span className="inline-flex items-center gap-1">
-            <UserIcon className="h-3 w-3" />
-            {member.name}
-            {member.role ? (
-              <span className="text-gray-400">· {member.role}</span>
-            ) : null}
-          </span>
-        )}
-        {dateLabel && (
-          <span className="inline-flex items-center gap-1">
-            <CalendarClock className="h-3 w-3" />
-            {dateLabel}
-          </span>
-        )}
-        {recurrenceDetail && (
-          <span className="inline-flex items-center gap-1">
-            <RotateCw className="h-3 w-3" />
-            {recurrenceDetail}
-          </span>
-        )}
-      </div>
+      {/* Bottom: metadata pills */}
+      {(dateLabel || recurrenceDetail) && (
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {dateLabel && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs",
+                isOverdue ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-600",
+              )}
+            >
+              <Calendar className="h-3 w-3" />
+              {dateLabel}
+            </span>
+          )}
+          {recurrenceDetail && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-1 text-xs text-gray-600">
+              <RotateCw className="h-3 w-3" />
+              {recurrenceDetail}
+            </span>
+          )}
+        </div>
+      )}
 
       {canAct && (
         <div className="mt-4 flex gap-2 border-t border-gray-50 pt-3">
           {completed ? (
             <button
               type="button"
-              onClick={reopen}
+              onClick={stop(reopen)}
               disabled={busy}
               className="h-10 flex-1 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50"
             >
@@ -711,7 +735,7 @@ function OccurrenceCard({
           ) : (
             <button
               type="button"
-              onClick={complete}
+              onClick={stop(complete)}
               disabled={busy}
               className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50"
             >
@@ -722,7 +746,7 @@ function OccurrenceCard({
           <button
             type="button"
             disabled={busy}
-            onClick={() => openEdit("reschedule")}
+            onClick={stop(() => openEdit("reschedule"))}
             className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-[#185FA5]/30 hover:bg-[#185FA5]/10 hover:text-[#185FA5] disabled:opacity-50"
           >
             <RotateCw className="h-4 w-4" />
@@ -741,22 +765,29 @@ function OccurrenceCard({
   );
 }
 
-function PriorityPill({ priority }: { priority: Priority }) {
-  const cls = {
-    alta: "bg-red-50 text-red-600",
-    media: "bg-yellow-50 text-yellow-600",
-    baixa: "bg-blue-50 text-[#185FA5]",
-  }[priority];
+function PriorityDot({ priority }: { priority: Priority | null | undefined }) {
+  const map: Record<Priority, { dot: string; chip: string; text: string }> = {
+    alta: { dot: "bg-red-500", chip: "bg-red-50", text: "text-red-600" },
+    media: { dot: "bg-yellow-500", chip: "bg-yellow-50", text: "text-yellow-700" },
+    baixa: { dot: "bg-gray-400", chip: "bg-gray-100", text: "text-gray-600" },
+  };
+  const cfg =
+    priority && map[priority]
+      ? map[priority]
+      : { dot: "bg-gray-300", chip: "bg-gray-100", text: "text-gray-500" };
+  const label = priority ? PRIORITY_LABEL[priority] : "Sem prioridade";
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-        cls,
+        "inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium",
+        cfg.chip,
+        cfg.text,
       )}
     >
-      <Flag className="h-3 w-3" />
-      {PRIORITY_LABEL[priority]}
+      <span className={cn("h-1.5 w-1.5 rounded-full", cfg.dot)} />
+      {label}
     </span>
   );
 }
+
 
