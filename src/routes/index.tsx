@@ -324,6 +324,7 @@ function DashboardPage() {
               currentUser={currentUser}
               today={today}
               highlightAssignee={isAdmin}
+
             />
           </>
         )}
