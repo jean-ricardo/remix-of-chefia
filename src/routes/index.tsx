@@ -90,7 +90,7 @@ function DashboardPage() {
   function closeDetails() {
     setDetailsTaskId(null);
     if (search.taskId) {
-      navigate({ search: (prev) => ({ ...prev, taskId: undefined }), replace: true });
+      navigate({ search: (prev: { taskId?: string }) => ({ ...prev, taskId: undefined }), replace: true });
     }
   }
 
