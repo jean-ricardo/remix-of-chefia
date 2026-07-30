@@ -129,7 +129,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
           taskTitle: createdTitle,
           startDate: startLabel,
           endDate: dueLabel,
-          platformLink: platformLink(),
+          platformLink: platformLink(inserted?.id ?? null),
           actorName,
           action: "create",
         },
