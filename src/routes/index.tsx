@@ -56,6 +56,7 @@ import {
   type TeamMember,
 } from "@/lib/rotina";
 import { canActOnActivity, useCurrentUser } from "@/lib/auth";
+import { consumePendingTaskId } from "@/components/auth/RouteGuards";
 
 export const Route = createFileRoute("/")({
   component: DashboardPage,
@@ -82,10 +83,12 @@ function DashboardPage() {
 
   const today = useMemo(() => new Date(), []);
 
-  // Deep-link: open the details sheet when ?taskId=... is present.
+  // Deep-link: open the details sheet when ?taskId=... is present
+  // (ou quando o id foi preservado durante o fluxo de login).
   useEffect(() => {
-    if (!search.taskId) return;
-    setDetailsTaskId(search.taskId);
+    const pending = search.taskId ?? consumePendingTaskId();
+    if (!pending) return;
+    setDetailsTaskId(pending);
     // Limpa o parâmetro assim que o modal abre: um F5 futuro não reabre a tarefa.
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
