@@ -4,7 +4,7 @@ import { ArrowLeft, BellRing, KanbanSquare, Loader2, ShieldCheck } from "lucide-
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { PublicOnlyRoute } from "@/components/auth/RouteGuards";
 import { ChefiaLogo } from "@/components/brand/ChefiaLogo";
 import { cn } from "@/lib/utils";
 
