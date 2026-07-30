@@ -348,6 +348,27 @@ function SiteHeader() {
   );
 }
 
+/** Opens the realtime audit feed. Visible to admin/gestor only. */
+function HistoryButton() {
+  const [open, setOpen] = useState(false);
+  const user = useMockUser();
+  if (!hasGlobalScope(user.role)) return null;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Abrir histórico de ações"
+        className="grid h-11 w-11 place-items-center rounded-lg text-[#042C53] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5]"
+      >
+        <History className="h-5 w-5" />
+      </button>
+      <ActivityLogDrawer open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+
 function UserMenu() {
   const user = useMockUser();
   const navigate = useNavigate();
