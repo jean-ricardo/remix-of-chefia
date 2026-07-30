@@ -219,6 +219,14 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
         justification: rescheduleReason.trim(),
       });
       if (error) throw error;
+      void logActivity({
+        actorName: currentUser.name,
+        actionType: "reschedule",
+        details: `Reprogramou "${activity.title}" para ${rescheduleDate.split("-").reverse().join("/")}${
+          rescheduleReason.trim() ? ` — ${rescheduleReason.trim()}` : ""
+        }.`,
+        taskId: activity.id,
+      });
       toast.success("Atividade reprogramada");
       await qc.invalidateQueries({ queryKey: ["reschedules"] });
     } catch (e) {
