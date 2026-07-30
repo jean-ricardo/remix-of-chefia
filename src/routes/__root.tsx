@@ -159,20 +159,41 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell />
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
 
+const PUBLIC_ROUTES = ["/login"];
+
 function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isAuthRoute =
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname === "/accept-invite";
+  const { loading, session } = useAuth();
+  const navigate = useNavigate();
+  const isPublic = PUBLIC_ROUTES.includes(pathname);
 
-  if (isAuthRoute) {
+  useEffect(() => {
+    if (!loading && !session && !isPublic) {
+      navigate({ to: "/login", replace: true });
+    }
+  }, [loading, session, isPublic, navigate]);
+
+  if (isPublic) {
     return <Outlet />;
+  }
+
+  if (loading || !session) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-[#F7F6F2]">
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-2 border-[#185FA5]/25 border-t-[#185FA5]"
+          role="status"
+          aria-label="Carregando"
+        />
+      </div>
+    );
   }
 
   return (
@@ -182,97 +203,28 @@ function AppShell() {
         <Outlet />
       </main>
       <MobileBottomNav />
-      <QaAuthMenu />
     </div>
   );
 }
 
-function QaAuthMenu() {
-  const items = [
-    { to: "/login", label: "Test Login" },
-    { to: "/register", label: "Test Register" },
-    { to: "/accept-invite", label: "Test Invite" },
-  ] as const;
+/** Read-only badge showing the role resolved from team_members.cargo_principal. */
+function RoleBadge() {
+  const user = useCurrentUser();
+  const label =
+    user.role === "admin" ? "Diretor" : user.role === "gestor" ? "Adm" : "Membro";
+  const Icon = hasGlobalScope(user.role) ? Shield : UserCircle2;
+
   return (
-    <div
-      className="fixed bottom-20 right-3 z-50 flex flex-col gap-1 rounded-lg border border-border/70 bg-white/95 p-1.5 shadow-lg backdrop-blur md:bottom-3"
-      aria-label="QA Auth Menu"
+    <span
+      className="hidden h-9 items-center gap-2 rounded-lg border border-[#042C53]/15 bg-[#042C53]/5 px-3 text-xs font-semibold text-[#042C53] sm:inline-flex"
+      title={user.mapped ? "Cargo definido em Equipe" : "E-mail não vinculado à equipe"}
     >
-      <span className="px-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-        QA
-      </span>
-      {items.map((it) => (
-        <Link
-          key={it.to}
-          to={it.to}
-          className="rounded-md bg-[#042C53] px-2 py-1 text-[10px] font-medium text-white transition-colors hover:bg-[#185FA5]"
-        >
-          {it.label}
-        </Link>
-      ))}
-    </div>
+      <Icon className="h-3.5 w-3.5 text-amber" />
+      {label}
+    </span>
   );
 }
 
-function RoleSwitcher() {
-  const state = useMockState();
-  const members = useTeamMembers();
-
-  const value =
-    state.role === "admin"
-      ? "admin"
-      : `${state.role === "gestor" ? "g" : "u"}:${state.memberId ?? ""}`;
-
-  function onChange(v: string) {
-    if (v === "admin") {
-      setMockRole("admin");
-      return;
-    }
-    if (v.startsWith("g:")) {
-      setMockRole("gestor");
-      setMockMemberId(v.slice(2) || null);
-      return;
-    }
-    if (v.startsWith("u:")) {
-      setMockRole("usuario");
-      setMockMemberId(v.slice(2) || null);
-    }
-  }
-
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger
-        className={cn(
-          "h-9 min-w-[140px] gap-2 border-[#042C53]/15 bg-[#042C53]/5 text-[#042C53]",
-          "hover:bg-[#042C53]/10 focus:ring-[#185FA5]/40",
-        )}
-        aria-label="Ver como"
-      >
-        <span className="inline-flex items-center gap-2 text-xs font-medium">
-          {state.role === "admin" ? (
-            <Shield className="h-3.5 w-3.5 text-amber" />
-          ) : (
-            <UserCircle2 className="h-3.5 w-3.5 text-amber" />
-          )}
-          <SelectValue />
-        </span>
-      </SelectTrigger>
-      <SelectContent align="end">
-        <SelectItem value="admin">Admin (todas as ações)</SelectItem>
-        {(members.data ?? []).map((m) => (
-          <SelectItem key={`g-${m.id}`} value={`g:${m.id}`}>
-            Gestor · {m.name}
-          </SelectItem>
-        ))}
-        {(members.data ?? []).map((m) => (
-          <SelectItem key={`u-${m.id}`} value={`u:${m.id}`}>
-            Usuário · {m.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
 
 
 function SiteHeader() {
