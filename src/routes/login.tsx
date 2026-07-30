@@ -42,7 +42,7 @@ function AuthPage() {
   }, [loading, session, navigate]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-white font-sans md:flex-row">
+    <div className="flex min-h-screen flex-col bg-white md:flex-row">
       <Toaster position="top-right" richColors />
 
       {/* Content panel — desktop only */}
