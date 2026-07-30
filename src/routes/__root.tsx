@@ -19,6 +19,7 @@ import {
   ChevronDown,
   LogOut,
   User as UserIcon,
+  History as HistoryIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
