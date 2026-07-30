@@ -274,25 +274,39 @@ function SiteHeader() {
   );
 }
 
-/** Opens the realtime audit feed. Visible to diretor/adm only. */
+/**
+ * Feed de auditoria em tempo real.
+ * Visível apenas para diretor (admin) e adm (gestor).
+ * Membros: nada é montado no DOM (nem botão, nem drawer).
+ */
 function HistoryButton() {
   const [open, setOpen] = useState(false);
+  const { loading } = useAuth();
   const user = useCurrentUser();
-  if (!hasGlobalScope(user.role)) return null;
+
+  const allowed = !loading && hasGlobalScope(user.role);
+
+  useEffect(() => {
+    if (!allowed && open) setOpen(false);
+  }, [allowed, open]);
+
+  if (!allowed) return null;
+
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Abrir histórico de ações"
-        className="grid h-11 w-11 place-items-center rounded-lg text-[#042C53] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5]"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[#042C53] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5]"
       >
         <HistoryIcon className="h-5 w-5" />
       </button>
-      <ActivityLogDrawer open={open} onClose={() => setOpen(false)} />
+      {open ? <ActivityLogDrawer open onClose={() => setOpen(false)} /> : null}
     </>
   );
 }
+
 
 
 function UserMenu() {
