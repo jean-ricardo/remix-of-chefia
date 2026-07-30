@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ArrowLeft, ScrollText, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 import {
   ACTION_LABEL,
@@ -122,37 +122,24 @@ function HistoricoPage() {
     "h-11 w-full rounded-lg border border-[#042C53]/15 bg-white px-3 text-sm text-[#042C53] focus:outline-none focus:ring-2 focus:ring-[#185FA5]/40 sm:w-auto";
 
   return (
-    <div className="space-y-5">
-      <div>
-        <Link
-          to="/"
-          className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#042C53]/15 bg-white px-3 text-sm font-medium text-[#042C53] transition-colors hover:bg-[#042C53]/5"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar ao Painel
-        </Link>
-      </div>
-
-      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#185FA5]/10 text-[#185FA5]">
-            <ScrollText className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-bold text-[#042C53] sm:text-2xl">
+    <div className="space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber">
+            Auditoria
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <h1 className="truncate text-2xl font-bold text-navy sm:text-3xl">
               Histórico de Ações
             </h1>
-            <p className="truncate text-sm text-[#444441]">
-              Auditoria em tempo real das atividades da equipe
-            </p>
           </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Auditoria em tempo real das atividades da equipe
+          </p>
         </div>
-        <span className="shrink-0 rounded-lg bg-[#042C53]/5 px-3 py-1.5 text-xs font-semibold text-[#042C53]">
-          {filtered.length} registro{filtered.length === 1 ? "" : "s"}
-        </span>
       </header>
 
-      <div className="flex flex-col gap-2 rounded-2xl border border-[#042C53]/10 bg-white p-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 rounded-2xl border border-[#042C53]/10 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#444441]/60" />
           <input
@@ -162,32 +149,37 @@ function HistoricoPage() {
             className="h-11 w-full rounded-lg border border-[#042C53]/15 bg-white pl-9 pr-3 text-sm text-[#042C53] placeholder:text-[#444441]/60 focus:outline-none focus:ring-2 focus:ring-[#185FA5]/40"
           />
         </div>
-        <select
-          value={actor}
-          onChange={(e) => setActor(e.target.value)}
-          aria-label="Filtrar por membro"
-          className={selectClass}
-        >
-          <option value="all">Todos os membros</option>
-          {actors.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
-        <select
-          value={action}
-          onChange={(e) => setAction(e.target.value)}
-          aria-label="Filtrar por tipo de ação"
-          className={selectClass}
-        >
-          <option value="all">Todas as ações</option>
-          {actions.map((a) => (
-            <option key={a} value={a}>
-              {ACTION_LABEL[a] ?? a}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <select
+            value={actor}
+            onChange={(e) => setActor(e.target.value)}
+            aria-label="Filtrar por membro"
+            className={selectClass}
+          >
+            <option value="all">Todos os membros</option>
+            {actors.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+          <select
+            value={action}
+            onChange={(e) => setAction(e.target.value)}
+            aria-label="Filtrar por tipo de ação"
+            className={selectClass}
+          >
+            <option value="all">Todas as ações</option>
+            {actions.map((a) => (
+              <option key={a} value={a}>
+                {ACTION_LABEL[a] ?? a}
+              </option>
+            ))}
+          </select>
+          <span className="shrink-0 rounded-lg bg-[#042C53]/5 px-3 py-1.5 text-center text-xs font-semibold text-[#042C53]">
+            {filtered.length} registro{filtered.length === 1 ? "" : "s"}
+          </span>
+        </div>
       </div>
 
       {isLoading ? (
