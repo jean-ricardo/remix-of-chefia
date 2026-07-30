@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { ArrowLeft, BellRing, KanbanSquare, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { PublicOnlyRoute } from "@/components/auth/RouteGuards";
 import { ChefiaLogo } from "@/components/brand/ChefiaLogo";
 import { cn } from "@/lib/utils";
 
@@ -33,13 +33,15 @@ export const Route = createFileRoute("/login")({
 type Mode = "signin" | "signup" | "recovery";
 
 function AuthPage() {
-  const [mode, setMode] = useState<Mode>("signin");
-  const { session, loading } = useAuth();
-  const navigate = useNavigate();
+  return (
+    <PublicOnlyRoute>
+      <AuthPageContent />
+    </PublicOnlyRoute>
+  );
+}
 
-  useEffect(() => {
-    if (!loading && session) navigate({ to: "/", replace: true });
-  }, [loading, session, navigate]);
+function AuthPageContent() {
+  const [mode, setMode] = useState<Mode>("signin");
 
   return (
     <div className="flex min-h-screen flex-col bg-white md:flex-row">

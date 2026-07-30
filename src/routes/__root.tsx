@@ -37,6 +37,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 
 import { AuthProvider, hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
 import { ActivityLogDrawer } from "@/components/logs/ActivityLogDrawer";
+import { ProtectedRoute } from "@/components/auth/RouteGuards";
+
 import { cn } from "@/lib/utils";
 
 
@@ -170,42 +172,25 @@ const PUBLIC_ROUTES = ["/login"];
 
 function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { loading, session } = useAuth();
-  const navigate = useNavigate();
   const isPublic = PUBLIC_ROUTES.includes(pathname);
-
-  useEffect(() => {
-    if (!loading && !session && !isPublic) {
-      navigate({ to: "/login", replace: true });
-    }
-  }, [loading, session, isPublic, navigate]);
 
   if (isPublic) {
     return <Outlet />;
   }
 
-  if (loading || !session) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-[#F7F6F2]">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-[#185FA5]/25 border-t-[#185FA5]"
-          role="status"
-          aria-label="Carregando"
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
-        <Outlet />
-      </main>
-      <MobileBottomNav />
-    </div>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <main className="mx-auto max-w-7xl px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
+          <Outlet />
+        </main>
+        <MobileBottomNav />
+      </div>
+    </ProtectedRoute>
   );
 }
+
 
 /** Read-only badge showing the role resolved from team_members.cargo_principal. */
 function RoleBadge() {
