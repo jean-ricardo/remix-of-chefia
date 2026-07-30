@@ -364,7 +364,7 @@ function HistoryButton() {
         aria-label="Abrir histórico de ações"
         className="grid h-11 w-11 place-items-center rounded-lg text-[#042C53] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5]"
       >
-        <History className="h-5 w-5" />
+        <HistoryIcon className="h-5 w-5" />
       </button>
       <ActivityLogDrawer open={open} onClose={() => setOpen(false)} />
     </>
