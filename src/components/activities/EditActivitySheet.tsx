@@ -169,7 +169,12 @@ export function EditActivitySheet({
     }
     setSubmitting(true);
 
-    const patch: Record<string, unknown> = {
+    const patch: {
+      title: string;
+      priority: Priority;
+      assigned_user_id: string | null;
+      due_date?: string | null;
+    } = {
       title: title.trim(),
       priority,
       assigned_user_id: assignee || null,
@@ -178,6 +183,7 @@ export function EditActivitySheet({
     if (activity.recurrence_type === "unica") {
       patch.due_date = dueDate || null;
     }
+
 
     const { error } = await supabase
       .from("activities")
