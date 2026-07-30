@@ -42,6 +42,7 @@ const INITIAL = {
 export function NewTaskModal({ isOpen, onClose }: Props) {
   const members = useTeamMembers();
   const notify = useServerFn(sendWhatsAppNotification);
+  const currentUser = useMockUser();
 
   const [form, setForm] = useState(INITIAL);
   const [submitting, setSubmitting] = useState(false);
