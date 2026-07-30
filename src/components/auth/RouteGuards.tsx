@@ -45,6 +45,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !session) {
+      stashPendingTaskId();
       navigate({ to: "/login", replace: true });
     }
   }, [loading, session, navigate]);
@@ -64,7 +65,12 @@ export function PublicOnlyRoute({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && session) {
-      navigate({ to: "/", replace: true });
+      const pending = consumePendingTaskId();
+      navigate({
+        to: "/",
+        search: pending ? { taskId: pending } : {},
+        replace: true,
+      });
     }
   }, [loading, session, navigate]);
 
