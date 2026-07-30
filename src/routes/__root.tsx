@@ -266,12 +266,7 @@ function SiteHeader() {
           />
         </Link>
 
-        <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
-          <NavItem to="/">Painel</NavItem>
-          <NavItem to="/atividades">Atividades</NavItem>
-          <NavItem to="/reprogramadas">Reprogramadas</NavItem>
-          <NavItem to="/equipe">Equipe</NavItem>
-        </nav>
+        <MainNav />
 
         <div className="ml-auto flex items-center gap-2">
           <RoleBadge />
