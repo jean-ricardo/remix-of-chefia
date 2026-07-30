@@ -13,6 +13,7 @@ import { Route as ReprogramadasRouteImport } from './routes/reprogramadas'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EquipeRouteImport } from './routes/equipe'
+import { Route as CadastrarRouteImport } from './routes/cadastrar'
 import { Route as AtividadesRouteImport } from './routes/atividades'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -36,6 +37,11 @@ const EquipeRoute = EquipeRouteImport.update({
   path: '/equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CadastrarRoute = CadastrarRouteImport.update({
+  id: '/cadastrar',
+  path: '/cadastrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AtividadesRoute = AtividadesRouteImport.update({
   id: '/atividades',
   path: '/atividades',
@@ -50,6 +56,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/atividades': typeof AtividadesRoute
+  '/cadastrar': typeof CadastrarRoute
   '/equipe': typeof EquipeRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/atividades': typeof AtividadesRoute
+  '/cadastrar': typeof CadastrarRoute
   '/equipe': typeof EquipeRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/atividades': typeof AtividadesRoute
+  '/cadastrar': typeof CadastrarRoute
   '/equipe': typeof EquipeRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
@@ -77,16 +86,25 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/atividades'
+    | '/cadastrar'
     | '/equipe'
     | '/login'
     | '/perfil'
     | '/reprogramadas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/atividades' | '/equipe' | '/login' | '/perfil' | '/reprogramadas'
+  to:
+    | '/'
+    | '/atividades'
+    | '/cadastrar'
+    | '/equipe'
+    | '/login'
+    | '/perfil'
+    | '/reprogramadas'
   id:
     | '__root__'
     | '/'
     | '/atividades'
+    | '/cadastrar'
     | '/equipe'
     | '/login'
     | '/perfil'
@@ -96,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtividadesRoute: typeof AtividadesRoute
+  CadastrarRoute: typeof CadastrarRoute
   EquipeRoute: typeof EquipeRoute
   LoginRoute: typeof LoginRoute
   PerfilRoute: typeof PerfilRoute
@@ -132,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cadastrar': {
+      id: '/cadastrar'
+      path: '/cadastrar'
+      fullPath: '/cadastrar'
+      preLoaderRoute: typeof CadastrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/atividades': {
       id: '/atividades'
       path: '/atividades'
@@ -152,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtividadesRoute: AtividadesRoute,
+  CadastrarRoute: CadastrarRoute,
   EquipeRoute: EquipeRoute,
   LoginRoute: LoginRoute,
   PerfilRoute: PerfilRoute,
