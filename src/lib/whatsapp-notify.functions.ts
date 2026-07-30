@@ -63,6 +63,8 @@ export const sendWhatsAppNotification = createServerFn({ method: "POST" })
           number: cleaned,
           text: buildMessage(data),
         }),
+        // Timeout curto: a notificação nunca pode segurar o worker.
+        signal: AbortSignal.timeout(10_000),
       });
       if (!res.ok) {
         const body = await res.text().catch(() => "");
