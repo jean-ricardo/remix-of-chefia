@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { ArrowLeft, ScrollText, Search } from "lucide-react";
 
 import {
@@ -8,7 +9,7 @@ import {
   useActivityLogsRealtime,
   type ActivityLog,
 } from "@/lib/activityLog";
-import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
+import { hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/historico")({
@@ -54,8 +55,16 @@ const ACTION_TONE: Record<string, string> = {
 };
 
 function HistoricoPage() {
+  const { loading } = useAuth();
   const user = useCurrentUser();
   const allowed = hasGlobalScope(user.role);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading || allowed) return;
+    toast.error("Acesso restrito à diretoria e administradores.");
+    navigate({ to: "/", replace: true });
+  }, [loading, allowed, navigate]);
 
   useActivityLogsRealtime(allowed);
   const { data, isLoading } = useActivityLogs(allowed);
