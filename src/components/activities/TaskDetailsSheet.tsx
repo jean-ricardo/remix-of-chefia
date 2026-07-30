@@ -39,6 +39,10 @@ import {
 } from "@/lib/useRotina";
 import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
+import { useServerFn } from "@tanstack/react-start";
+import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
+import { formatDateBR, platformLink, resolveMemberWhatsApp } from "@/lib/taskNotify";
+
 
 export type TaskStatus = "todo" | "in_progress" | "done";
 
@@ -70,6 +74,30 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
   const members = useTeamMembers();
   const currentUser = useCurrentUser();
   const isReadOnly = !hasGlobalScope(currentUser.role);
+  const notify = useServerFn(sendWhatsAppNotification);
+
+  /** Fire-and-forget: falha de WhatsApp nunca reverte o banco nem quebra a UI. */
+  function dispatchWhatsApp(
+    action: "complete" | "reschedule",
+    taskTitle: string,
+    memberId: string | null,
+    dueLabel: string,
+  ) {
+    const number = resolveMemberWhatsApp(memberId, members.data);
+    if (!number) return;
+    void notify({
+      data: {
+        number,
+        taskTitle,
+        startDate: dueLabel,
+        endDate: dueLabel,
+        platformLink: platformLink(),
+        actorName: currentUser.name,
+        action,
+      },
+    }).catch((err) => console.error("[whatsapp-notify] dispatch failed", err));
+  }
+
 
   const today = useMemo(() => new Date(), [isOpen, taskId]);
 
@@ -170,6 +198,17 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
           taskId: activity.id,
         });
         toast.success("Atividade marcada como concluída");
+        dispatchWhatsApp(
+          "complete",
+          activity.title,
+          activity.assigned_user_id,
+          formatDateBR(
+            view.effectiveDate
+              ? `${view.effectiveDate.getFullYear()}-${String(view.effectiveDate.getMonth() + 1).padStart(2, "0")}-${String(view.effectiveDate.getDate()).padStart(2, "0")}`
+              : activity.due_date,
+          ),
+        );
+
       } else if (next !== "done" && view.completed) {
         const { error } = await supabase
           .from("completions")
@@ -229,6 +268,13 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
       });
       toast.success("Atividade reprogramada");
       await qc.invalidateQueries({ queryKey: ["reschedules"] });
+      dispatchWhatsApp(
+        "reschedule",
+        activity.title,
+        activity.assigned_user_id,
+        formatDateBR(rescheduleDate),
+      );
+
     } catch (e) {
       toast.error("Não foi possível reprogramar: " + (e as Error).message);
     } finally {

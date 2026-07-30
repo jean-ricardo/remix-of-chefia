@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,9 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { useTeamMembers } from "@/lib/useRotina";
 import { cn } from "@/lib/utils";
-import type { OccurrenceView } from "@/lib/rotina";
+import { useCurrentUser } from "@/lib/auth";
+import { logActivity } from "@/lib/activityLog";
+import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
+import { formatDateBR, platformLink, resolveMemberWhatsApp } from "@/lib/taskNotify";
+import type { OccurrenceView, Priority } from "@/lib/rotina";
 
 export type EditMode = "edit" | "reschedule";
 
@@ -23,9 +30,19 @@ interface Props {
   mode: EditMode;
 }
 
+/** yyyy-MM-dd local, sem conversão UTC (evita saltos de fuso). */
+function toYmd(d: Date | null | undefined): string {
+  if (!d) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
+
 /**
- * Reuses the create-activity Slide-over pattern for Editing / Rescheduling.
- * MOCK ONLY — no backend mutations are fired on submit.
+ * Slide-over unificado de Edição / Reprogramação.
+ * Escreve de verdade no banco — sem alterar schema nem políticas:
+ *  - edit: UPDATE em `activities` (title, priority, assigned_user_id, due_date).
+ *  - reschedule: INSERT em `reschedules` (nunca reescreve a atividade).
  */
 export function EditActivitySheet({
   open,
@@ -33,36 +50,28 @@ export function EditActivitySheet({
   occurrence,
   mode,
 }: Props) {
+  const qc = useQueryClient();
   const members = useTeamMembers();
+  const currentUser = useCurrentUser();
+  const notify = useServerFn(sendWhatsAppNotification);
   const dateRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState("");
-  const [client, setClient] = useState("");
-  const [priority, setPriority] = useState<string>("media");
+  const [priority, setPriority] = useState<Priority>("media");
   const [assignee, setAssignee] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
-  const [description, setDescription] = useState("");
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  // Pre-fill defensively — any missing legacy field falls back safely.
   useEffect(() => {
     if (!open || !occurrence) return;
-    const a = occurrence.activity as typeof occurrence.activity & {
-      client_name?: string | null;
-      description?: string | null;
-    };
+    const a = occurrence.activity;
     setTitle(a?.title ?? "");
-    setClient(a?.client_name ?? "");
-    setPriority(a?.priority ?? "media");
+    setPriority((a?.priority as Priority) ?? "media");
     setAssignee(a?.assigned_user_id ?? "");
-    const d = occurrence?.effectiveDate;
-    setDueDate(
-      d
-        ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-            d.getDate(),
-          ).padStart(2, "0")}`
-        : "",
-    );
-    setDescription(a?.description ?? "");
+    setDueDate(toYmd(occurrence?.effectiveDate));
+    setReason("");
+    setSubmitting(false);
   }, [open, occurrence]);
 
   // Reschedule mode: focus the date field.
@@ -75,19 +84,158 @@ export function EditActivitySheet({
     return () => clearTimeout(t);
   }, [open, mode]);
 
-  function handleSubmit(e: FormEvent) {
+  const isCompleted = !!occurrence?.completed;
+  const rescheduleLocked = mode === "reschedule" && isCompleted;
+
+  function dispatchWhatsApp(
+    action: "update" | "reschedule",
+    taskTitle: string,
+    memberId: string | null,
+    dueLabel: string,
+  ) {
+    const number = resolveMemberWhatsApp(memberId, members.data);
+    if (!number) return;
+    void notify({
+      data: {
+        number,
+        taskTitle,
+        startDate: dueLabel,
+        endDate: dueLabel,
+        platformLink: platformLink(),
+        actorName: currentUser.name,
+        action,
+      },
+    }).catch((err) => {
+      // Falha do WhatsApp jamais afeta o dado nem a UI.
+      console.error("[whatsapp-notify] dispatch failed", err);
+    });
+  }
+
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (submitting || !occurrence) return;
+
+    const activity = occurrence.activity;
+
+    if (mode === "reschedule") {
+      if (rescheduleLocked) {
+        toast.error("Tarefas concluídas não podem ser reprogramadas.");
+        return;
+      }
+      if (!dueDate) {
+        toast.error("Selecione a nova data.");
+        return;
+      }
+      setSubmitting(true);
+      const { error } = await supabase.from("reschedules").insert({
+        activity_id: activity.id,
+        original_occurrence_key: occurrence.originalKey,
+        new_date: dueDate, // coluna `date`: string yyyy-MM-dd, sem fuso
+        justification: reason.trim(),
+      });
+      if (error) {
+        console.error("[reschedules] insert failed", error);
+        toast.error("Não foi possível reprogramar a atividade");
+        setSubmitting(false);
+        return;
+      }
+
+      void logActivity({
+        actorName: currentUser.name,
+        actionType: "reschedule",
+        details: `Reprogramou "${activity.title}" para ${formatDateBR(dueDate)}${
+          reason.trim() ? ` — ${reason.trim()}` : ""
+        }.`,
+        taskId: activity.id,
+      });
+
+      await qc.invalidateQueries({ queryKey: ["reschedules"] });
+      setSubmitting(false);
+      onOpenChange(false);
+      toast.success("Atividade reprogramada com sucesso!");
+      dispatchWhatsApp(
+        "reschedule",
+        activity.title,
+        activity.assigned_user_id,
+        formatDateBR(dueDate),
+      );
+      return;
+    }
+
+    // ----- edit -----
     if (!title.trim()) {
       toast.error("Informe o título da atividade");
       return;
     }
-    // MOCK ONLY — no PUT/PATCH sent to the backend.
-    toast.success("Atividade atualizada com sucesso!");
+    setSubmitting(true);
+
+    const patch: {
+      title: string;
+      priority: Priority;
+      assigned_user_id: string | null;
+      due_date?: string | null;
+    } = {
+      title: title.trim(),
+      priority,
+      assigned_user_id: assignee || null,
+    };
+    // due_date só é reescrita em atividades únicas; recorrentes usam reschedules.
+    if (activity.recurrence_type === "unica") {
+      patch.due_date = dueDate || null;
+    }
+
+
+    const { error } = await supabase
+      .from("activities")
+      .update(patch)
+      .eq("id", activity.id);
+
+    if (error) {
+      console.error("[activities] update failed", error);
+      toast.error("Não foi possível salvar as alterações");
+      setSubmitting(false);
+      return;
+    }
+
+    // Data-shift em recorrentes vira reprogramação da ocorrência atual.
+    const originalYmd = toYmd(occurrence.effectiveDate);
+    if (
+      activity.recurrence_type !== "unica" &&
+      dueDate &&
+      dueDate !== originalYmd &&
+      !isCompleted
+    ) {
+      const { error: rErr } = await supabase.from("reschedules").insert({
+        activity_id: activity.id,
+        original_occurrence_key: occurrence.originalKey,
+        new_date: dueDate,
+        justification: reason.trim(),
+      });
+      if (rErr) console.error("[reschedules] insert failed", rErr);
+      else await qc.invalidateQueries({ queryKey: ["reschedules"] });
+    }
+
+    void logActivity({
+      actorName: currentUser.name,
+      actionType: "update",
+      details: `Atualizou a atividade "${title.trim()}".`,
+      taskId: activity.id,
+    });
+
+    await qc.invalidateQueries({ queryKey: ["activities"] });
+    setSubmitting(false);
     onOpenChange(false);
+    toast.success("Atividade atualizada com sucesso!");
+    dispatchWhatsApp(
+      "update",
+      title.trim(),
+      assignee || null,
+      formatDateBR(dueDate || originalYmd),
+    );
   }
 
   const inputClass =
-    "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-[#042C53] placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-[#185FA5]/40 focus:border-[#185FA5]";
+    "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-[#042C53] placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-[#185FA5]/40 focus:border-[#185FA5] disabled:opacity-60";
   const labelClass =
     "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-[#042C53]/70";
 
@@ -99,7 +247,7 @@ export function EditActivitySheet({
       : "Atualize as informações da tarefa.";
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={(o) => (submitting ? null : onOpenChange(o))}>
       <SheetContent
         side="right"
         className={cn(
@@ -121,7 +269,8 @@ export function EditActivitySheet({
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[#042C53]/70 hover:bg-[#042C53]/5"
+              disabled={submitting}
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[#042C53]/70 hover:bg-[#042C53]/5 disabled:opacity-50"
               aria-label="Fechar"
             >
               <X className="h-5 w-5" />
@@ -141,27 +290,18 @@ export function EditActivitySheet({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className={inputClass}
+                  disabled={submitting || mode === "reschedule"}
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="edit-client" className={labelClass}>
-                  Cliente / Projeto
-                </label>
-                <input
-                  id="edit-client"
-                  type="text"
-                  value={client}
-                  onChange={(e) => setClient(e.target.value)}
-                  className={inputClass}
-                  placeholder="Ex.: Restaurante Central"
-                />
-              </div>
-
-              <div>
                 <label className={labelClass}>Prioridade</label>
-                <Select value={priority} onValueChange={setPriority}>
+                <Select
+                  value={priority}
+                  onValueChange={(v) => setPriority(v as Priority)}
+                  disabled={submitting || mode === "reschedule"}
+                >
                   <SelectTrigger className="h-11 bg-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -175,7 +315,11 @@ export function EditActivitySheet({
 
               <div>
                 <label className={labelClass}>Responsável</label>
-                <Select value={assignee} onValueChange={setAssignee}>
+                <Select
+                  value={assignee}
+                  onValueChange={setAssignee}
+                  disabled={submitting || mode === "reschedule"}
+                >
                   <SelectTrigger className="h-11 bg-white">
                     <SelectValue placeholder="Selecione um membro" />
                   </SelectTrigger>
@@ -205,6 +349,7 @@ export function EditActivitySheet({
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
+                  disabled={submitting || rescheduleLocked}
                   className={cn(
                     inputClass,
                     mode === "reschedule" &&
@@ -214,18 +359,25 @@ export function EditActivitySheet({
               </div>
 
               <div>
-                <label htmlFor="edit-description" className={labelClass}>
-                  Descrição / Observações
+                <label htmlFor="edit-reason" className={labelClass}>
+                  Justificativa da reprogramação (opcional)
                 </label>
                 <textarea
-                  id="edit-description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  id="edit-reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  disabled={submitting || rescheduleLocked}
                   className={cn(inputClass, "min-h-[96px] resize-y")}
                   rows={4}
-                  placeholder="Detalhes, entregáveis, links…"
+                  placeholder="Motivo da nova data…"
                 />
               </div>
+
+              {rescheduleLocked && (
+                <p className="text-xs italic text-gray-400">
+                  Tarefas concluídas não podem ser reprogramadas.
+                </p>
+              )}
             </div>
           </div>
 
@@ -235,15 +387,26 @@ export function EditActivitySheet({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={submitting}
               className="h-11 min-w-[100px]"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="h-11 min-w-[160px] bg-[#185FA5] font-semibold text-white hover:bg-[#042C53]"
+              disabled={submitting || rescheduleLocked}
+              className="h-11 min-w-[160px] bg-[#185FA5] font-semibold text-white hover:bg-[#042C53] disabled:opacity-70"
             >
-              Salvar Alterações
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando…
+                </>
+              ) : mode === "reschedule" ? (
+                "Confirmar reprogramação"
+              ) : (
+                "Salvar Alterações"
+              )}
             </Button>
           </div>
         </form>
