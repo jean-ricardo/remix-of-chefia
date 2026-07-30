@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   LayoutDashboard,
   ListChecks,
@@ -189,17 +189,22 @@ function AppShell() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
+      <div className="flex min-h-screen flex-col overflow-x-hidden bg-background">
         <SiteHeader />
-        <main className="mx-auto max-w-7xl px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
-          <Outlet />
+        <main className="w-full flex-1 pb-8">
+          <div className="mx-auto max-w-7xl px-4 pt-5 md:px-8 md:pt-8">
+            <Outlet />
+          </div>
         </main>
         <SiteFooter />
+        {/* Espaço para a barra inferior fixa (mobile) */}
+        <div className="h-[76px] md:hidden" aria-hidden />
         <MobileBottomNav />
       </div>
     </ProtectedRoute>
   );
 }
+
 
 
 /** Read-only badge showing the role resolved from team_members.cargo_principal. */
@@ -223,38 +228,12 @@ function RoleBadge() {
 
 
 function SiteHeader() {
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    let ticking = false;
-    function apply() {
-      const y = window.scrollY;
-      setIsScrolled((prev) => {
-        if (!prev && y > 40) return true;
-        if (prev && y < 10) return false;
-        return prev;
-      });
-      ticking = false;
-    }
-    function onScroll() {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(apply);
-    }
-    apply();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   return (
     <header
       className={cn(
-        // Altura fixa: nunca muda durante o scroll (evita jitter/reflow)
-        "sticky top-0 z-50 h-[76px] text-[#042C53] backdrop-blur-lg md:h-[88px]",
-        "border-b transition-[box-shadow,background-color,border-color] duration-200 ease-out",
-        isScrolled
-          ? "border-gray-200/60 bg-[#F7F6F2]/95 shadow-sm"
-          : "border-transparent bg-[#F7F6F2]/80",
+        // Altura fixa e estilo 100% CSS (sem listeners de scroll)
+        "sticky top-0 z-40 w-full border-b bg-background/95 shadow-sm backdrop-blur-md transition-shadow",
+        "h-[76px] text-[#042C53] md:h-[88px]",
       )}
     >
       <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 md:px-8">
@@ -263,12 +242,10 @@ function SiteHeader() {
           <img
             src={chefiaLogoAsset.url}
             alt="Chef.IA"
-            className={cn(
-              "h-[60px] w-auto origin-left transform-gpu transition-transform duration-200 ease-out will-change-transform md:h-[72px]",
-              isScrolled && "scale-[0.9]",
-            )}
+            className="h-[60px] w-auto md:h-[72px]"
           />
         </Link>
+
 
 
         <MainNav />
