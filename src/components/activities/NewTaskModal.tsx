@@ -6,6 +6,8 @@ import { useTeamMembers } from "@/lib/useRotina";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
+import { logActivity } from "@/lib/activityLog";
+import { useMockUser } from "@/lib/mockUser";
 
 interface Props {
   isOpen: boolean;
