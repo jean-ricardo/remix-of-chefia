@@ -159,6 +159,7 @@ export function EditActivitySheet({
         activity.title,
         activity.assigned_user_id,
         formatDateBR(dueDate),
+        activity.id,
       );
       return;
     }
@@ -232,6 +233,7 @@ export function EditActivitySheet({
       title.trim(),
       assignee || null,
       formatDateBR(dueDate || originalYmd),
+      activity.id,
     );
   }
 
