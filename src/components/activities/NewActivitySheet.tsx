@@ -19,31 +19,18 @@ import { useTeamMembers } from "@/lib/useRotina";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
+import { useCurrentUser } from "@/lib/auth";
+import { formatDateBR, platformLink, resolveMemberWhatsApp } from "@/lib/taskNotify";
 
 interface Props {
   trigger: React.ReactNode;
-}
-
-function getMemberWhatsApp(memberId: string | undefined | null): string | null {
-  if (!memberId || typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(`chefia_whatsapp_${memberId}`);
-  } catch {
-    return null;
-  }
-}
-
-function formatDateBR(iso: string | undefined): string {
-  if (!iso) return "Sem data";
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
 }
 
 export function NewActivitySheet({ trigger }: Props) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const members = useTeamMembers();
+  const currentUser = useCurrentUser();
   const notify = useServerFn(sendWhatsAppNotification);
 
   const [title, setTitle] = useState("");
