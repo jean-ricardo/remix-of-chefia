@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useActivities, useRotinaRealtime, useTeamMembers } from "@/lib/useRotina";
-import { setMockRole, useMockUser } from "@/lib/mockUser";
+import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/equipe")({
@@ -54,8 +53,8 @@ function displayNameOf(m: MemberLike) {
 
 function EquipePage() {
   useRotinaRealtime();
-  const currentUser = useMockUser();
-  const isAdmin = currentUser.role === "admin";
+  const currentUser = useCurrentUser();
+  const isAdmin = hasGlobalScope(currentUser.role);
   const members = useTeamMembers();
   const activities = useActivities();
 
@@ -110,21 +109,6 @@ function EquipePage() {
               <h1 className="truncate text-2xl font-bold text-navy sm:text-3xl">
                 Membros
               </h1>
-              {/* QA toggle */}
-              <label
-                className="inline-flex items-center gap-2 rounded-full border border-dashed border-navy/25 bg-surface px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-navy"
-                title="QA: alternar papel"
-              >
-                <span className={cn(!isAdmin && "opacity-50")}>Admin</span>
-                <Switch
-                  checked={!isAdmin}
-                  onCheckedChange={(checked) =>
-                    setMockRole(checked ? "member" : "admin")
-                  }
-                  aria-label="QA alternar Admin/Member"
-                />
-                <span className={cn(isAdmin && "opacity-50")}>Member</span>
-              </label>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               Gerencie as pessoas responsáveis pelas atividades da rotina.
