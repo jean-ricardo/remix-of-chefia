@@ -7,6 +7,8 @@ export interface TeamMember {
   id: string;
   name: string;
   role: string | null;
+  /** Somente leitura — usado para notificações de WhatsApp. */
+  telefone?: string | null;
 }
 
 export interface Activity {
