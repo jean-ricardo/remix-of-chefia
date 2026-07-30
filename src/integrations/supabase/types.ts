@@ -58,6 +58,33 @@ export type Database = {
           },
         ]
       }
+      activity_logs: {
+        Row: {
+          action_type: string
+          actor_name: string
+          created_at: string
+          details: string
+          id: string
+          task_id: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_name: string
+          created_at?: string
+          details: string
+          id?: string
+          task_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_name?: string
+          created_at?: string
+          details?: string
+          id?: string
+          task_id?: string | null
+        }
+        Relationships: []
+      }
       completions: {
         Row: {
           activity_id: string
@@ -124,22 +151,31 @@ export type Database = {
       }
       team_members: {
         Row: {
+          cargo_principal: string | null
           created_at: string
+          email: string | null
           id: string
           name: string
           role: string | null
+          telefone: string | null
         }
         Insert: {
+          cargo_principal?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           name: string
           role?: string | null
+          telefone?: string | null
         }
         Update: {
+          cargo_principal?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           name?: string
           role?: string | null
+          telefone?: string | null
         }
         Relationships: []
       }
