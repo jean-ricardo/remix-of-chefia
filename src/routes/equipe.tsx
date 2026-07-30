@@ -138,16 +138,40 @@ function EquipePage() {
               Licenças: {inUse}/{LICENSE_CAP} em uso
             </Badge>
             {isAdmin && (
-              <Button
-                onClick={() => setInviteOpen(true)}
-                className="h-10 rounded-lg bg-[#D85A30] px-4 font-medium text-white hover:bg-[#c14e28]"
-              >
-                <UserPlus className="h-4 w-4" />
-                Convidar Novo Membro
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={copyInviteLink}
+                  className="h-10 rounded-lg border-navy/20 px-4 font-medium text-navy hover:bg-navy/5"
+                >
+                  <Link2 className="h-4 w-4" />
+                  Convidar Membro
+                </Button>
+                <Button
+                  onClick={() => setInviteOpen(true)}
+                  className="h-10 rounded-lg bg-[#D85A30] px-4 font-medium text-white hover:bg-[#c14e28]"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Convidar por e-mail
+                </Button>
+              </>
             )}
           </div>
         </header>
+
+        {isAdmin && inviteLink ? (
+          <div className="rounded-xl border border-navy/15 bg-surface p-4">
+            <p className="text-xs font-medium text-navy">
+              Copie manualmente o link de cadastro:
+            </p>
+            <Input
+              readOnly
+              value={inviteLink}
+              onFocus={(e) => e.currentTarget.select()}
+              className="mt-2 h-11 bg-white text-sm"
+            />
+          </div>
+        ) : null}
 
         {/* Responsive list — NO tables */}
         {members.isLoading ? (
