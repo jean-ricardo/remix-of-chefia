@@ -16,38 +16,53 @@ function sanitizeNumber(raw: string): string {
   return (raw ?? "").replace(/\D/g, "");
 }
 
-const VERB: Record<NonNullable<WhatsAppNotifyInput["action"]>, string> = {
-  create: "criou",
-  update: "atualizou",
-  complete: "concluiu",
-  reschedule: "reprogramou",
-};
-
 const HEADLINE: Record<NonNullable<WhatsAppNotifyInput["action"]>, string> = {
-  create: "🔔 *Nova Atividade Atribuída no Chef.IA*",
-  update: "🔄 *Atividade Atualizada no Chef.IA*",
-  complete: "✅ *Atividade Concluída no Chef.IA*",
-  reschedule: "📆 *Atividade Reprogramada no Chef.IA*",
+  create: "📋 *Nova Atividade no Chef.IA*",
+  update: "🔄 *Atividade Atualizada*",
+  complete: "✅ *Atividade Concluída*",
+  reschedule: "📅 *Atividade Reprogramada*",
 };
 
 function buildMessage(input: WhatsAppNotifyInput): string {
   const actor = (input.actorName ?? "").trim();
   const action = input.action ?? "create";
-  const verb = VERB[action];
   const headline = HEADLINE[action];
 
-  return [
-    headline,
-    "",
-    actor
-      ? `👤 *${actor}* acabou de ${verb} a atividade: *${input.taskTitle}*`
-      : `*Tarefa:* ${input.taskTitle}`,
-    "",
-    `📅 *Início:* ${input.startDate}`,
-    `⏳ *Prazo:* ${input.endDate}`,
-    "",
-    `🔗 *Acesse para mais detalhes:* ${input.platformLink}`,
-  ].join("\n");
+  const actorLine = actor
+    ? `*${actor}*`
+    : "*Um usuário*";
+
+  const bodyLines: string[] = [];
+
+  switch (action) {
+    case "create":
+      bodyLines.push(
+        `${actorLine} criou a atividade: *${input.taskTitle}*`,
+        "",
+        `*Início:* ${input.startDate}`,
+        `*Prazo:* ${input.endDate}`,
+      );
+      break;
+    case "update":
+      bodyLines.push(
+        `${actorLine} atualizou os detalhes da atividade: *${input.taskTitle}*`,
+      );
+      break;
+    case "reschedule":
+      bodyLines.push(
+        `${actorLine} alterou os prazos da atividade: *${input.taskTitle}*`,
+      );
+      break;
+    case "complete":
+      bodyLines.push(
+        `${actorLine} concluiu a atividade: *${input.taskTitle}*`,
+      );
+      break;
+  }
+
+  bodyLines.push("", `*Acesse:* ${input.platformLink}`);
+
+  return [headline, "", ...bodyLines].join("\n");
 }
 
 
