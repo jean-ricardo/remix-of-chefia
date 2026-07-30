@@ -77,28 +77,33 @@ export function NewActivitySheet({ trigger }: Props) {
       return;
     }
 
-    // Fire-and-forget WhatsApp notification — never block or fail the UI.
-    const number = getMemberWhatsApp(assignedUserId);
-    if (number) {
-      const platformLink =
-        typeof window !== "undefined" ? window.location.origin : "https://chef.ia";
-      void notify({
-        data: {
-          number,
-          taskTitle: title.trim(),
-          startDate: formatDateBR(effectiveDate),
-          endDate: formatDateBR(effectiveDate),
-          platformLink,
-        },
-      }).catch((err) => {
-        console.error("[whatsapp-notify] dispatch failed", err);
-      });
-    }
+    // Dados garantidos: libera a UI antes de qualquer chamada externa.
+    const createdTitle = title.trim();
+    const dueLabel = formatDateBR(effectiveDate);
+    const number = resolveMemberWhatsApp(assignedUserId, members.data);
+    const actorName = currentUser.name;
 
     toast.success("Atividade criada com sucesso!");
     setOpen(false);
     reset();
     setSubmitting(false);
+
+    // Fire-and-forget: falha de WhatsApp nunca afeta o dado nem a tela.
+    if (number) {
+      void notify({
+        data: {
+          number,
+          taskTitle: createdTitle,
+          startDate: dueLabel,
+          endDate: dueLabel,
+          platformLink: platformLink(),
+          actorName,
+          action: "create",
+        },
+      }).catch((err) => {
+        console.error("[whatsapp-notify] dispatch failed", err);
+      });
+    }
   }
 
   const inputClass =
