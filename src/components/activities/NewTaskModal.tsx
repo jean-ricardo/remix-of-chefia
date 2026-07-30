@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
 import { logActivity } from "@/lib/activityLog";
-import { useMockUser } from "@/lib/mockUser";
+import { useCurrentUser } from "@/lib/auth";
 
 interface Props {
   isOpen: boolean;
@@ -42,7 +42,7 @@ const INITIAL = {
 export function NewTaskModal({ isOpen, onClose }: Props) {
   const members = useTeamMembers();
   const notify = useServerFn(sendWhatsAppNotification);
-  const currentUser = useMockUser();
+  const currentUser = useCurrentUser();
 
   const [form, setForm] = useState(INITIAL);
   const [submitting, setSubmitting] = useState(false);

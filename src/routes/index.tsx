@@ -55,7 +55,7 @@ import {
   type Priority,
   type TeamMember,
 } from "@/lib/rotina";
-import { canActOnActivity, useMockUser } from "@/lib/mockUser";
+import { canActOnActivity, useCurrentUser } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   component: DashboardPage,
@@ -72,7 +72,7 @@ function DashboardPage() {
   const activities = useActivities();
   const completions = useCompletions();
   const reschedules = useReschedules();
-  const currentUser = useMockUser();
+  const currentUser = useCurrentUser();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
 
@@ -423,7 +423,7 @@ function Section({
   emptyTitle: string;
   emptyMessage: string;
   showCompletedStyle?: boolean;
-  currentUser: ReturnType<typeof useMockUser>;
+  currentUser: ReturnType<typeof useCurrentUser>;
 }) {
   const dotClass = {
     danger: "bg-danger",
@@ -523,7 +523,7 @@ function PaginatedTaskList({
   items: OccurrenceView[];
   memberById: Map<string, TeamMember>;
   completed: boolean;
-  currentUser: ReturnType<typeof useMockUser>;
+  currentUser: ReturnType<typeof useCurrentUser>;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -592,7 +592,7 @@ function OccurrenceCard({
   occ: OccurrenceView;
   memberById: Map<string, TeamMember>;
   completed: boolean;
-  currentUser: ReturnType<typeof useMockUser>;
+  currentUser: ReturnType<typeof useCurrentUser>;
 }) {
   const [busy, setBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -899,7 +899,7 @@ function KanbanBoard({
   concluidas: OccurrenceView[];
   memberById: Map<string, TeamMember>;
   isLoading: boolean;
-  currentUser: ReturnType<typeof useMockUser>;
+  currentUser: ReturnType<typeof useCurrentUser>;
   today: Date;
 }) {
   const columns = useMemo(() => {
@@ -1020,7 +1020,7 @@ function KanbanColumn({
   page: number;
   onPageChange: (page: number) => void;
   memberById: Map<string, TeamMember>;
-  currentUser: ReturnType<typeof useMockUser>;
+  currentUser: ReturnType<typeof useCurrentUser>;
   isLoading: boolean;
   completedStyle?: boolean;
   emptyIcon: LucideIcon;

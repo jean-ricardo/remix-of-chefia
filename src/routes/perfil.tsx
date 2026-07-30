@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { useMockUser } from "@/lib/mockUser";
+import { useCurrentUser } from "@/lib/auth";
 import { formatWhatsApp, isValidWhatsApp } from "@/lib/whatsapp";
 
 
@@ -47,7 +47,7 @@ function initialsOf(name: string | undefined) {
 }
 
 function PerfilPage() {
-  const user = useMockUser();
+  const user = useCurrentUser();
 
   const [name, setName] = useState<string>(user?.name || "");
   const [email] = useState<string>("usuario@empresa.com");
