@@ -189,17 +189,22 @@ function AppShell() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
+      <div className="flex min-h-screen flex-col overflow-x-hidden bg-background">
         <SiteHeader />
-        <main className="mx-auto max-w-7xl px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
-          <Outlet />
+        <main className="w-full flex-1 pb-8">
+          <div className="mx-auto max-w-7xl px-4 pt-5 md:px-8 md:pt-8">
+            <Outlet />
+          </div>
         </main>
         <SiteFooter />
+        {/* Espaço para a barra inferior fixa (mobile) */}
+        <div className="h-[76px] md:hidden" aria-hidden />
         <MobileBottomNav />
       </div>
     </ProtectedRoute>
   );
 }
+
 
 
 /** Read-only badge showing the role resolved from team_members.cargo_principal. */
