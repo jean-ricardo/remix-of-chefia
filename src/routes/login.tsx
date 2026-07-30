@@ -45,7 +45,7 @@ function AuthPageContent() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white md:flex-row">
-      <Toaster position="top-right" richColors />
+      <Toaster richColors />
 
       {/* Content panel — desktop only */}
       <aside className="relative hidden w-full overflow-hidden px-14 py-16 md:flex md:w-1/2 md:flex-col md:justify-between">

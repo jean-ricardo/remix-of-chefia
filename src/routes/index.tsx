@@ -201,7 +201,7 @@ function DashboardPage() {
 
   return (
     <>
-      <Toaster position="top-right" richColors />
+      <Toaster richColors />
       <div className="space-y-6 pb-24 md:space-y-8 md:pb-8">
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
