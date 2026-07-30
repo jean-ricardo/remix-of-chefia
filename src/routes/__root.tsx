@@ -36,11 +36,13 @@ import chefiaLogoAsset from "@/assets/chefia-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 import {
+  hasGlobalScope,
   setMockMemberId,
   setMockRole,
   useMockState,
   useMockUser,
 } from "@/lib/mockUser";
+import { ActivityLogDrawer } from "@/components/logs/ActivityLogDrawer";
 import { useTeamMembers } from "@/lib/useRotina";
 import {
   Select,
