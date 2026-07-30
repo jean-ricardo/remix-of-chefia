@@ -226,15 +226,22 @@ function SiteHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    function onScroll() {
+    let ticking = false;
+    function apply() {
       const y = window.scrollY;
       setIsScrolled((prev) => {
-        if (y > 20 && !prev) return true;
-        if (y <= 20 && prev) return false;
+        if (!prev && y > 40) return true;
+        if (prev && y < 10) return false;
         return prev;
       });
+      ticking = false;
     }
-    onScroll();
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(apply);
+    }
+    apply();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -242,29 +249,27 @@ function SiteHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 text-[#042C53] transition-all duration-300 ease-in-out",
+        // Altura fixa: nunca muda durante o scroll (evita jitter/reflow)
+        "sticky top-0 z-50 h-[76px] text-[#042C53] backdrop-blur-lg md:h-[88px]",
+        "border-b transition-[box-shadow,background-color,border-color] duration-200 ease-out",
         isScrolled
-          ? "border-b border-gray-200/50 bg-[#F7F6F2]/95 py-2 shadow-sm backdrop-blur-lg"
-          : "border-b border-transparent bg-[#F7F6F2]/80 py-4 backdrop-blur-md md:py-5",
+          ? "border-gray-200/60 bg-[#F7F6F2]/95 shadow-sm"
+          : "border-transparent bg-[#F7F6F2]/80",
       )}
     >
-      <div
-        className={cn(
-          "mx-auto flex max-w-7xl items-center gap-3 px-4 transition-transform duration-300 md:px-8",
-          isScrolled && "origin-left scale-[0.97]",
-        )}
-      >
+      <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 md:px-8">
         {/* Logo with generous safe area (equivalent to ring thickness) */}
         <Link to="/" className="group -m-3 flex min-w-0 items-center p-3" aria-label="Chef.IA">
           <img
             src={chefiaLogoAsset.url}
             alt="Chef.IA"
             className={cn(
-              "w-auto transition-all duration-300",
-              isScrolled ? "h-[64px] md:h-[72px]" : "h-[94px] md:h-[108px]",
+              "h-[60px] w-auto origin-left transform-gpu transition-transform duration-200 ease-out will-change-transform md:h-[72px]",
+              isScrolled && "scale-[0.9]",
             )}
           />
         </Link>
+
 
         <MainNav />
 
