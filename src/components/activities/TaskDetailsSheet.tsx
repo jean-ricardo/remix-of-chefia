@@ -268,6 +268,13 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
       });
       toast.success("Atividade reprogramada");
       await qc.invalidateQueries({ queryKey: ["reschedules"] });
+      dispatchWhatsApp(
+        "reschedule",
+        activity.title,
+        activity.assigned_user_id,
+        formatDateBR(rescheduleDate),
+      );
+
     } catch (e) {
       toast.error("Não foi possível reprogramar: " + (e as Error).message);
     } finally {
