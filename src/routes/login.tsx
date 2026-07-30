@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { ArrowLeft, BellRing, KanbanSquare, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -375,7 +375,6 @@ function RecoveryForm({ onBack }: { onBack: () => void }) {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -405,7 +404,6 @@ function RecoveryForm({ onBack }: { onBack: () => void }) {
       ) : (
         <form onSubmit={onSubmit} className="space-y-5">
           <MaterialInput
-            ref={inputRef}
             id="rec-email"
             label="E-mail corporativo"
             type="email"
