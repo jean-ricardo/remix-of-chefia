@@ -37,6 +37,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 
 import { AuthProvider, hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
 import { ActivityLogDrawer } from "@/components/logs/ActivityLogDrawer";
+import { ProtectedRoute } from "@/components/auth/RouteGuards";
+
 import { cn } from "@/lib/utils";
 
 
