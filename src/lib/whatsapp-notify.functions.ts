@@ -9,20 +9,32 @@ export interface WhatsAppNotifyInput {
   /** Nome real do usuário autenticado que executou a ação. */
   actorName?: string;
   /** Tipo de evento que originou a notificação. */
-  action?: "create" | "update";
+  action?: "create" | "update" | "complete" | "reschedule";
 }
 
 function sanitizeNumber(raw: string): string {
   return (raw ?? "").replace(/\D/g, "");
 }
 
+const VERB: Record<NonNullable<WhatsAppNotifyInput["action"]>, string> = {
+  create: "criou",
+  update: "atualizou",
+  complete: "concluiu",
+  reschedule: "reprogramou",
+};
+
+const HEADLINE: Record<NonNullable<WhatsAppNotifyInput["action"]>, string> = {
+  create: "🔔 *Nova Atividade Atribuída no Chef.IA*",
+  update: "🔄 *Atividade Atualizada no Chef.IA*",
+  complete: "✅ *Atividade Concluída no Chef.IA*",
+  reschedule: "📆 *Atividade Reprogramada no Chef.IA*",
+};
+
 function buildMessage(input: WhatsAppNotifyInput): string {
   const actor = (input.actorName ?? "").trim();
-  const verb = input.action === "update" ? "atualizou" : "criou";
-  const headline =
-    input.action === "update"
-      ? "🔄 *Atividade Atualizada no Chef.IA*"
-      : "🔔 *Nova Atividade Atribuída no Chef.IA*";
+  const action = input.action ?? "create";
+  const verb = VERB[action];
+  const headline = HEADLINE[action];
 
   return [
     headline,
@@ -37,6 +49,7 @@ function buildMessage(input: WhatsAppNotifyInput): string {
     `🔗 *Acesse para mais detalhes:* ${input.platformLink}`,
   ].join("\n");
 }
+
 
 export const sendWhatsAppNotification = createServerFn({ method: "POST" })
   .inputValidator((data: WhatsAppNotifyInput) => data)
