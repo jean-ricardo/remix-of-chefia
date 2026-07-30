@@ -37,7 +37,7 @@ import {
   useReschedules,
   useTeamMembers,
 } from "@/lib/useRotina";
-import { hasGlobalScope, useMockUser } from "@/lib/mockUser";
+import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 
 export type TaskStatus = "todo" | "in_progress" | "done";
@@ -68,7 +68,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
   const completions = useCompletions();
   const reschedules = useReschedules();
   const members = useTeamMembers();
-  const currentUser = useMockUser();
+  const currentUser = useCurrentUser();
   const isReadOnly = !hasGlobalScope(currentUser.role);
 
   const today = useMemo(() => new Date(), [isOpen, taskId]);
