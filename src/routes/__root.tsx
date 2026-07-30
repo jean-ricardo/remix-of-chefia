@@ -35,22 +35,8 @@ import appCss from "../styles.css?url";
 import chefiaLogoAsset from "@/assets/chefia-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
-import {
-  hasGlobalScope,
-  setMockMemberId,
-  setMockRole,
-  useMockState,
-  useMockUser,
-} from "@/lib/mockUser";
+import { AuthProvider, hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
 import { ActivityLogDrawer } from "@/components/logs/ActivityLogDrawer";
-import { useTeamMembers } from "@/lib/useRotina";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 
