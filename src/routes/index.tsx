@@ -84,7 +84,14 @@ function DashboardPage() {
 
   // Deep-link: open the details sheet when ?taskId=... is present.
   useEffect(() => {
-    if (search.taskId) setDetailsTaskId(search.taskId);
+    if (!search.taskId) return;
+    setDetailsTaskId(search.taskId);
+    // Limpa o parâmetro assim que o modal abre: um F5 futuro não reabre a tarefa.
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("taskId");
+      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    }
   }, [search.taskId]);
 
   function closeDetails() {

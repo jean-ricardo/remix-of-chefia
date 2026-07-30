@@ -82,6 +82,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
     taskTitle: string,
     memberId: string | null,
     dueLabel: string,
+    linkTaskId?: string | null,
   ) {
     const number = resolveMemberWhatsApp(memberId, members.data);
     if (!number) return;
@@ -91,7 +92,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
         taskTitle,
         startDate: dueLabel,
         endDate: dueLabel,
-        platformLink: platformLink(),
+        platformLink: platformLink(linkTaskId),
         actorName: currentUser.name,
         action,
       },
@@ -207,6 +208,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
               ? `${view.effectiveDate.getFullYear()}-${String(view.effectiveDate.getMonth() + 1).padStart(2, "0")}-${String(view.effectiveDate.getDate()).padStart(2, "0")}`
               : activity.due_date,
           ),
+          activity.id,
         );
 
       } else if (next !== "done" && view.completed) {
@@ -273,6 +275,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
         activity.title,
         activity.assigned_user_id,
         formatDateBR(rescheduleDate),
+        activity.id,
       );
 
     } catch (e) {

@@ -31,6 +31,8 @@ export function formatDateBR(iso: string | undefined | null): string {
   return `${d}/${m}/${y}`;
 }
 
-export function platformLink(): string {
-  return typeof window !== "undefined" ? window.location.origin : "https://chef.ia";
+export function platformLink(taskId?: string | null): string {
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://chef.ia";
+  return taskId ? `${origin}/?taskId=${taskId}` : origin;
 }

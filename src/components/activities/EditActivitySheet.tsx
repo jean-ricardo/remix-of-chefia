@@ -92,6 +92,7 @@ export function EditActivitySheet({
     taskTitle: string,
     memberId: string | null,
     dueLabel: string,
+    taskId?: string | null,
   ) {
     const number = resolveMemberWhatsApp(memberId, members.data);
     if (!number) return;
@@ -101,7 +102,7 @@ export function EditActivitySheet({
         taskTitle,
         startDate: dueLabel,
         endDate: dueLabel,
-        platformLink: platformLink(),
+        platformLink: platformLink(taskId),
         actorName: currentUser.name,
         action,
       },
@@ -158,6 +159,7 @@ export function EditActivitySheet({
         activity.title,
         activity.assigned_user_id,
         formatDateBR(dueDate),
+        activity.id,
       );
       return;
     }
@@ -231,6 +233,7 @@ export function EditActivitySheet({
       title.trim(),
       assignee || null,
       formatDateBR(dueDate || originalYmd),
+      activity.id,
     );
   }
 

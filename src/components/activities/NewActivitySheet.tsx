@@ -62,13 +62,17 @@ export function NewActivitySheet({ trigger }: Props) {
       ? priority
       : "media") as "alta" | "media" | "baixa";
 
-    const { error } = await supabase.from("activities").insert({
-      title: title.trim(),
-      assigned_user_id: assignedUserId,
-      priority: validPriority,
-      recurrence_type: "unica",
-      due_date: effectiveDate,
-    });
+    const { data: inserted, error } = await supabase
+      .from("activities")
+      .insert({
+        title: title.trim(),
+        assigned_user_id: assignedUserId,
+        priority: validPriority,
+        recurrence_type: "unica",
+        due_date: effectiveDate,
+      })
+      .select("id")
+      .maybeSingle();
 
     if (error) {
       console.error("[activities] insert failed", error);
@@ -96,7 +100,7 @@ export function NewActivitySheet({ trigger }: Props) {
           taskTitle: createdTitle,
           startDate: dueLabel,
           endDate: dueLabel,
-          platformLink: platformLink(),
+          platformLink: platformLink(inserted?.id ?? null),
           actorName,
           action: "create",
         },
