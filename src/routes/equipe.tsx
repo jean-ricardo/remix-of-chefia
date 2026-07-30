@@ -59,9 +59,23 @@ function EquipePage() {
   const activities = useActivities();
 
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"member" | "admin">("member");
   const [inviteBusy, setInviteBusy] = useState(false);
+
+  async function copyInviteLink() {
+    const url =
+      typeof window !== "undefined" ? `${window.location.origin}/cadastrar` : "/cadastrar";
+    try {
+      await navigator.clipboard.writeText(url);
+      setInviteLink("");
+      toast.success("Link de convite copiado para a área de transferência!");
+    } catch {
+      setInviteLink(url);
+      toast.warning("Não foi possível copiar automaticamente. Copie o link abaixo.");
+    }
+  }
 
   const counts = useMemo(() => {
     const c = new Map<string, number>();
