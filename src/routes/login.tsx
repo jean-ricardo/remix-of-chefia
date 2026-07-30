@@ -131,8 +131,8 @@ function AuthPage() {
 
 function Benefit({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <li className="flex items-center gap-4 text-[0.95rem] text-white/80">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.06] text-white/90 backdrop-blur-sm">
+    <li className="flex items-center gap-4 text-[0.95rem] font-medium text-[#042C53]">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#185FA5]/10 bg-[#185FA5]/[0.06] text-[#185FA5] backdrop-blur-sm">
         {icon}
       </span>
       {children}
