@@ -1,9 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 
-const EVOLUTION_URL =
-  "https://evolution-api-evolution-api.6dy4wv.easypanel.host/message/sendText/Chef.IA";
-const EVOLUTION_API_KEY = "F7D074EA5FEB-49D6-B182-1ABF6B7B4890";
-
 export interface WhatsAppNotifyInput {
   number: string;
   taskTitle: string;
@@ -34,11 +30,19 @@ export const sendWhatsAppNotification = createServerFn({ method: "POST" })
     const cleaned = sanitizeNumber(data.number);
     if (!cleaned) return { ok: false, skipped: true };
 
+    // Credentials live only in server-side secrets (never in the bundle).
+    const url = process.env.EVOLUTION_API_URL;
+    const apiKey = process.env.EVOLUTION_API_KEY;
+    if (!url || !apiKey) {
+      console.error("[whatsapp-notify] missing EVOLUTION_API_URL / EVOLUTION_API_KEY");
+      return { ok: false, skipped: true };
+    }
+
     try {
-      const res = await fetch(EVOLUTION_URL, {
+      const res = await fetch(url, {
         method: "POST",
         headers: {
-          apikey: EVOLUTION_API_KEY,
+          apikey: apiKey,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

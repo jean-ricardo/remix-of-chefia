@@ -6,6 +6,8 @@ import { useTeamMembers } from "@/lib/useRotina";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
+import { logActivity } from "@/lib/activityLog";
+import { useMockUser } from "@/lib/mockUser";
 
 interface Props {
   isOpen: boolean;
@@ -40,6 +42,7 @@ const INITIAL = {
 export function NewTaskModal({ isOpen, onClose }: Props) {
   const members = useTeamMembers();
   const notify = useServerFn(sendWhatsAppNotification);
+  const currentUser = useMockUser();
 
   const [form, setForm] = useState(INITIAL);
   const [submitting, setSubmitting] = useState(false);
@@ -95,13 +98,17 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
 
     // Payload strictly mapped to the current DB schema — unmapped premium
     // UX fields (startDate, description) are intentionally NOT sent.
-    const { error } = await supabase.from("activities").insert({
-      title: form.title.trim(),
-      assigned_user_id: form.assignee,
-      priority: form.priority,
-      recurrence_type: "unica",
-      due_date: effectiveDate,
-    });
+    const { data: inserted, error } = await supabase
+      .from("activities")
+      .insert({
+        title: form.title.trim(),
+        assigned_user_id: form.assignee,
+        priority: form.priority,
+        recurrence_type: "unica",
+        due_date: effectiveDate,
+      })
+      .select("id")
+      .maybeSingle();
 
     if (error) {
       console.error("[activities] insert failed", error);
@@ -109,6 +116,15 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
       setSubmitting(false);
       return;
     }
+
+    // Silent audit trail.
+    void logActivity({
+      actorName: currentUser.name,
+      actionType: "create",
+      details: `Criou a atividade "${form.title.trim()}" com vencimento em ${formatDateBR(effectiveDate)}.`,
+      taskId: inserted?.id ?? null,
+    });
+
 
     // Fire-and-forget WhatsApp notification — never block the UI.
     const number = getMemberWhatsApp(form.assignee);

@@ -19,6 +19,7 @@ import {
   ChevronDown,
   LogOut,
   User as UserIcon,
+  History as HistoryIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -35,11 +36,13 @@ import chefiaLogoAsset from "@/assets/chefia-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 import {
+  hasGlobalScope,
   setMockMemberId,
   setMockRole,
   useMockState,
   useMockUser,
 } from "@/lib/mockUser";
+import { ActivityLogDrawer } from "@/components/logs/ActivityLogDrawer";
 import { useTeamMembers } from "@/lib/useRotina";
 import {
   Select,
@@ -338,13 +341,36 @@ function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <HistoryButton />
           <RoleSwitcher />
           <UserMenu />
         </div>
+
       </div>
     </header>
   );
 }
+
+/** Opens the realtime audit feed. Visible to admin/gestor only. */
+function HistoryButton() {
+  const [open, setOpen] = useState(false);
+  const user = useMockUser();
+  if (!hasGlobalScope(user.role)) return null;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Abrir histórico de ações"
+        className="grid h-11 w-11 place-items-center rounded-lg text-[#042C53] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5]"
+      >
+        <HistoryIcon className="h-5 w-5" />
+      </button>
+      <ActivityLogDrawer open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
 
 function UserMenu() {
   const user = useMockUser();

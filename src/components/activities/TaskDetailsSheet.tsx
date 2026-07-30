@@ -38,6 +38,7 @@ import {
   useTeamMembers,
 } from "@/lib/useRotina";
 import { hasGlobalScope, useMockUser } from "@/lib/mockUser";
+import { logActivity } from "@/lib/activityLog";
 
 export type TaskStatus = "todo" | "in_progress" | "done";
 
@@ -162,6 +163,12 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
           { onConflict: "activity_id,occurrence_key" },
         );
         if (error) throw error;
+        void logActivity({
+          actorName: currentUser.name,
+          actionType: "status",
+          details: `Concluiu a atividade "${activity.title}".`,
+          taskId: activity.id,
+        });
         toast.success("Atividade marcada como concluída");
       } else if (next !== "done" && view.completed) {
         const { error } = await supabase
@@ -170,12 +177,19 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
           .eq("activity_id", activity.id)
           .eq("occurrence_key", view.originalKey);
         if (error) throw error;
+        void logActivity({
+          actorName: currentUser.name,
+          actionType: "status",
+          details: `Reabriu a atividade "${activity.title}".`,
+          taskId: activity.id,
+        });
         toast.success("Conclusão desfeita");
       } else if (next === "in_progress") {
         toast.message("Marcada em andamento (visual)", {
           description: "Sincronizamos com o servidor quando a coluna estiver disponível.",
         });
       }
+
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["completions"] }),
         qc.invalidateQueries({ queryKey: ["activities"] }),
@@ -205,6 +219,14 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
         justification: rescheduleReason.trim(),
       });
       if (error) throw error;
+      void logActivity({
+        actorName: currentUser.name,
+        actionType: "reschedule",
+        details: `Reprogramou "${activity.title}" para ${rescheduleDate.split("-").reverse().join("/")}${
+          rescheduleReason.trim() ? ` — ${rescheduleReason.trim()}` : ""
+        }.`,
+        taskId: activity.id,
+      });
       toast.success("Atividade reprogramada");
       await qc.invalidateQueries({ queryKey: ["reschedules"] });
     } catch (e) {
