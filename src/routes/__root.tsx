@@ -36,7 +36,7 @@ import chefiaLogoAsset from "@/assets/chefia-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 import { AuthProvider, hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
-import { ActivityLogDrawer } from "../components/logs/ActivityLogDrawer.tsx";
+import { ActivityLogDrawer } from "@/components/activity/ActivityLogDrawer";
 import { ProtectedRoute } from "@/components/auth/RouteGuards";
 
 import { cn } from "@/lib/utils";
