@@ -338,31 +338,33 @@ function UserMenu() {
 
 
 
-/**
- * Rodapé global. O acesso ao Histórico de Ações é exclusivo de diretor/adm.
- */
+/** Rodapé global. */
 function SiteFooter() {
-  const { loading } = useAuth();
-  const user = useCurrentUser();
-  const allowed = !loading && hasGlobalScope(user.role);
-
   return (
     <footer className="border-t border-[#042C53]/10 bg-[#F7F6F2]/70">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-6 sm:flex-row sm:justify-between md:px-8">
         <p className="text-xs text-[#444441]/80">
           Chef.IA — Rotina da Equipe
         </p>
-        {allowed ? (
-          <Link
-            to="/historico"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#042C53]/15 bg-white px-3 text-sm font-medium text-[#042C53] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5]"
-          >
-            <ScrollText className="h-4 w-4" />
-            Histórico de Ações
-          </Link>
-        ) : null}
       </div>
     </footer>
+  );
+}
+
+/** Navegação principal (desktop). Histórico só para diretor/adm. */
+function MainNav() {
+  const { loading } = useAuth();
+  const user = useCurrentUser();
+  const canSeeHistory = !loading && hasGlobalScope(user.role);
+
+  return (
+    <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
+      <NavItem to="/">Painel</NavItem>
+      <NavItem to="/atividades">Atividades</NavItem>
+      <NavItem to="/reprogramadas">Reprogramadas</NavItem>
+      {canSeeHistory ? <NavItem to="/historico">Histórico</NavItem> : null}
+      <NavItem to="/equipe">Equipe</NavItem>
+    </nav>
   );
 }
 
@@ -379,12 +381,19 @@ function NavItem({ to, children }: { to: string; children: ReactNode }) {
 }
 
 function MobileBottomNav() {
+  const { loading } = useAuth();
+  const user = useCurrentUser();
+  const canSeeHistory = !loading && hasGlobalScope(user.role);
+
   const items = [
     { to: "/", label: "Painel", icon: LayoutDashboard },
     { to: "/atividades", label: "Atividades", icon: ListChecks },
     { to: "/reprogramadas", label: "Reprog.", icon: RotateCw },
+    ...(canSeeHistory
+      ? [{ to: "/historico", label: "Histórico", icon: ScrollText }]
+      : []),
     { to: "/equipe", label: "Equipe", icon: Users },
-  ] as const;
+  ];
 
   return (
     <nav
