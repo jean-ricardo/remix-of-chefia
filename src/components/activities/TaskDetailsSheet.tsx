@@ -74,6 +74,30 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
   const members = useTeamMembers();
   const currentUser = useCurrentUser();
   const isReadOnly = !hasGlobalScope(currentUser.role);
+  const notify = useServerFn(sendWhatsAppNotification);
+
+  /** Fire-and-forget: falha de WhatsApp nunca reverte o banco nem quebra a UI. */
+  function dispatchWhatsApp(
+    action: "complete" | "reschedule",
+    taskTitle: string,
+    memberId: string | null,
+    dueLabel: string,
+  ) {
+    const number = resolveMemberWhatsApp(memberId, members.data);
+    if (!number) return;
+    void notify({
+      data: {
+        number,
+        taskTitle,
+        startDate: dueLabel,
+        endDate: dueLabel,
+        platformLink: platformLink(),
+        actorName: currentUser.name,
+        action,
+      },
+    }).catch((err) => console.error("[whatsapp-notify] dispatch failed", err));
+  }
+
 
   const today = useMemo(() => new Date(), [isOpen, taskId]);
 
