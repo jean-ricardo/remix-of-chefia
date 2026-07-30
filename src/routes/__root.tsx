@@ -19,7 +19,7 @@ import {
   ChevronDown,
   LogOut,
   User as UserIcon,
-  History as HistoryIcon,
+  ScrollText,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -36,7 +36,6 @@ import chefiaLogoAsset from "@/assets/chefia-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 import { AuthProvider, hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
-import { ActivityLogDrawer } from "@/components/activity/ActivityLogDrawer";
 import { ProtectedRoute } from "@/components/auth/RouteGuards";
 
 import { cn } from "@/lib/utils";
@@ -185,6 +184,7 @@ function AppShell() {
         <main className="mx-auto max-w-7xl px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
           <Outlet />
         </main>
+        <SiteFooter />
         <MobileBottomNav />
       </div>
     </ProtectedRoute>
@@ -264,7 +264,6 @@ function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <HistoryButton />
           <RoleBadge />
           <UserMenu />
         </div>
@@ -273,41 +272,6 @@ function SiteHeader() {
     </header>
   );
 }
-
-/**
- * Feed de auditoria em tempo real.
- * Visível apenas para diretor (admin) e adm (gestor).
- * Membros: nada é montado no DOM (nem botão, nem drawer).
- */
-function HistoryButton() {
-  const [open, setOpen] = useState(false);
-  const { loading } = useAuth();
-  const user = useCurrentUser();
-
-  const allowed = !loading && hasGlobalScope(user.role);
-
-  useEffect(() => {
-    if (!allowed && open) setOpen(false);
-  }, [allowed, open]);
-
-  if (!allowed) return null;
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Abrir histórico de ações"
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[#042C53] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5]"
-      >
-        <HistoryIcon className="h-5 w-5" />
-      </button>
-      {open ? <ActivityLogDrawer open onClose={() => setOpen(false)} /> : null}
-    </>
-  );
-}
-
-
 
 function UserMenu() {
   const user = useCurrentUser();
@@ -368,6 +332,34 @@ function UserMenu() {
 }
 
 
+
+/**
+ * Rodapé global. O acesso ao Histórico de Ações é exclusivo de diretor/adm.
+ */
+function SiteFooter() {
+  const { loading } = useAuth();
+  const user = useCurrentUser();
+  const allowed = !loading && hasGlobalScope(user.role);
+
+  return (
+    <footer className="border-t border-[#042C53]/10 bg-[#F7F6F2]/70">
+      <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-6 sm:flex-row sm:justify-between md:px-8">
+        <p className="text-xs text-[#444441]/80">
+          Chef.IA — Rotina da Equipe
+        </p>
+        {allowed ? (
+          <Link
+            to="/historico"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#042C53]/15 bg-white px-3 text-sm font-medium text-[#042C53] transition-colors hover:bg-[#185FA5]/10 hover:text-[#185FA5]"
+          >
+            <ScrollText className="h-4 w-4" />
+            Histórico de Ações
+          </Link>
+        ) : null}
+      </div>
+    </footer>
+  );
+}
 
 function NavItem({ to, children }: { to: string; children: ReactNode }) {
   return (
