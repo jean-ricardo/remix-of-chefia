@@ -198,6 +198,17 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
           taskId: activity.id,
         });
         toast.success("Atividade marcada como concluída");
+        dispatchWhatsApp(
+          "complete",
+          activity.title,
+          activity.assigned_user_id,
+          formatDateBR(
+            view.effectiveDate
+              ? `${view.effectiveDate.getFullYear()}-${String(view.effectiveDate.getMonth() + 1).padStart(2, "0")}-${String(view.effectiveDate.getDate()).padStart(2, "0")}`
+              : activity.due_date,
+          ),
+        );
+
       } else if (next !== "done" && view.completed) {
         const { error } = await supabase
           .from("completions")
