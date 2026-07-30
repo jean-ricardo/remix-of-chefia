@@ -280,7 +280,7 @@ function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           <HistoryButton />
-          <RoleSwitcher />
+          <RoleBadge />
           <UserMenu />
         </div>
 
@@ -289,10 +289,10 @@ function SiteHeader() {
   );
 }
 
-/** Opens the realtime audit feed. Visible to admin/gestor only. */
+/** Opens the realtime audit feed. Visible to diretor/adm only. */
 function HistoryButton() {
   const [open, setOpen] = useState(false);
-  const user = useMockUser();
+  const user = useCurrentUser();
   if (!hasGlobalScope(user.role)) return null;
   return (
     <>
@@ -311,7 +311,9 @@ function HistoryButton() {
 
 
 function UserMenu() {
-  const user = useMockUser();
+  const user = useCurrentUser();
+  const { signOut } = useAuth();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const initials = (user?.name || "U")
     .trim()
@@ -320,12 +322,13 @@ function UserMenu() {
     .map((p: string) => p[0]?.toUpperCase() ?? "")
     .join("") || "U";
 
-  function handleLogout() {
-    // Mocked logout — clears role state, no backend sign-out.
-    setMockRole("admin");
-    setMockMemberId(null);
-    navigate({ to: "/login" });
+  async function handleLogout() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await signOut();
+    navigate({ to: "/login", replace: true });
   }
+
 
   return (
     <DropdownMenu>
