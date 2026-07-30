@@ -172,6 +172,16 @@ const PUBLIC_ROUTES = ["/login", "/cadastrar"];
 function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isPublic = PUBLIC_ROUTES.includes(pathname);
+  const navigate = useNavigate();
+
+  // Deep link global (?taskId=... vindo do WhatsApp): sempre resolve no painel.
+  useEffect(() => {
+    if (isPublic || pathname === "/" || typeof window === "undefined") return;
+    const taskId = new URLSearchParams(window.location.search).get("taskId");
+    if (taskId) {
+      navigate({ to: "/", search: { taskId }, replace: true });
+    }
+  }, [pathname, isPublic, navigate]);
 
   if (isPublic) {
     return <Outlet />;
