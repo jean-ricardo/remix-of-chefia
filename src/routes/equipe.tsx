@@ -98,7 +98,7 @@ function EquipePage() {
 
   return (
     <>
-      <Toaster position="top-right" richColors />
+      <Toaster richColors />
       <div className="space-y-8">
         <header className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
           <div className="min-w-0">

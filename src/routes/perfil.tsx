@@ -130,7 +130,7 @@ function PerfilPage() {
 
   return (
     <div className="w-full max-w-3xl mx-auto py-6 sm:py-8 px-4">
-      <Toaster position="top-right" richColors />
+      <Toaster richColors />
 
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-[#042C53] sm:text-3xl">

@@ -6,6 +6,10 @@ export interface WhatsAppNotifyInput {
   startDate: string;
   endDate: string;
   platformLink: string;
+  /** Nome real do usuário autenticado que executou a ação. */
+  actorName?: string;
+  /** Tipo de evento que originou a notificação. */
+  action?: "create" | "update";
 }
 
 function sanitizeNumber(raw: string): string {
@@ -13,10 +17,20 @@ function sanitizeNumber(raw: string): string {
 }
 
 function buildMessage(input: WhatsAppNotifyInput): string {
+  const actor = (input.actorName ?? "").trim();
+  const verb = input.action === "update" ? "atualizou" : "criou";
+  const headline =
+    input.action === "update"
+      ? "🔄 *Atividade Atualizada no Chef.IA*"
+      : "🔔 *Nova Atividade Atribuída no Chef.IA*";
+
   return [
-    "🔔 *Nova Atividade Atribuída no Chef.IA*",
+    headline,
     "",
-    `*Tarefa:* ${input.taskTitle}`,
+    actor
+      ? `👤 *${actor}* acabou de ${verb} a atividade: *${input.taskTitle}*`
+      : `*Tarefa:* ${input.taskTitle}`,
+    "",
     `📅 *Início:* ${input.startDate}`,
     `⏳ *Prazo:* ${input.endDate}`,
     "",
@@ -49,6 +63,8 @@ export const sendWhatsAppNotification = createServerFn({ method: "POST" })
           number: cleaned,
           text: buildMessage(data),
         }),
+        // Timeout curto: a notificação nunca pode segurar o worker.
+        signal: AbortSignal.timeout(10_000),
       });
       if (!res.ok) {
         const body = await res.text().catch(() => "");

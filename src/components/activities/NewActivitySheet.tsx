@@ -19,31 +19,18 @@ import { useTeamMembers } from "@/lib/useRotina";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
+import { useCurrentUser } from "@/lib/auth";
+import { formatDateBR, platformLink, resolveMemberWhatsApp } from "@/lib/taskNotify";
 
 interface Props {
   trigger: React.ReactNode;
-}
-
-function getMemberWhatsApp(memberId: string | undefined | null): string | null {
-  if (!memberId || typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(`chefia_whatsapp_${memberId}`);
-  } catch {
-    return null;
-  }
-}
-
-function formatDateBR(iso: string | undefined): string {
-  if (!iso) return "Sem data";
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
 }
 
 export function NewActivitySheet({ trigger }: Props) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const members = useTeamMembers();
+  const currentUser = useCurrentUser();
   const notify = useServerFn(sendWhatsAppNotification);
 
   const [title, setTitle] = useState("");
@@ -90,28 +77,33 @@ export function NewActivitySheet({ trigger }: Props) {
       return;
     }
 
-    // Fire-and-forget WhatsApp notification — never block or fail the UI.
-    const number = getMemberWhatsApp(assignedUserId);
-    if (number) {
-      const platformLink =
-        typeof window !== "undefined" ? window.location.origin : "https://chef.ia";
-      void notify({
-        data: {
-          number,
-          taskTitle: title.trim(),
-          startDate: formatDateBR(effectiveDate),
-          endDate: formatDateBR(effectiveDate),
-          platformLink,
-        },
-      }).catch((err) => {
-        console.error("[whatsapp-notify] dispatch failed", err);
-      });
-    }
+    // Dados garantidos: libera a UI antes de qualquer chamada externa.
+    const createdTitle = title.trim();
+    const dueLabel = formatDateBR(effectiveDate);
+    const number = resolveMemberWhatsApp(assignedUserId, members.data);
+    const actorName = currentUser.name;
 
     toast.success("Atividade criada com sucesso!");
     setOpen(false);
     reset();
     setSubmitting(false);
+
+    // Fire-and-forget: falha de WhatsApp nunca afeta o dado nem a tela.
+    if (number) {
+      void notify({
+        data: {
+          number,
+          taskTitle: createdTitle,
+          startDate: dueLabel,
+          endDate: dueLabel,
+          platformLink: platformLink(),
+          actorName,
+          action: "create",
+        },
+      }).catch((err) => {
+        console.error("[whatsapp-notify] dispatch failed", err);
+      });
+    }
   }
 
   const inputClass =
