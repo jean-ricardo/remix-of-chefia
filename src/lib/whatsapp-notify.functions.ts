@@ -1,9 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 
-const EVOLUTION_URL =
-  "https://evolution-api-evolution-api.6dy4wv.easypanel.host/message/sendText/Chef.IA";
-const EVOLUTION_API_KEY = "F7D074EA5FEB-49D6-B182-1ABF6B7B4890";
-
 export interface WhatsAppNotifyInput {
   number: string;
   taskTitle: string;
