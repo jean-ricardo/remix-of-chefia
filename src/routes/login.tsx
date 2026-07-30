@@ -42,11 +42,11 @@ function AuthPage() {
   }, [loading, session, navigate]);
 
   return (
-    <div className="min-h-screen bg-white font-sans lg:grid lg:grid-cols-[1.05fr_1fr]">
+    <div className="flex min-h-screen flex-col bg-white font-sans md:flex-row">
       <Toaster position="top-right" richColors />
 
       {/* Content panel — desktop only */}
-      <aside className="relative hidden overflow-hidden px-14 py-16 lg:flex lg:flex-col lg:justify-between">
+      <aside className="relative hidden w-full overflow-hidden px-14 py-16 md:flex md:w-1/2 md:flex-col md:justify-between">
         <div
           aria-hidden
           className="absolute inset-0 bg-[linear-gradient(150deg,#0B1220_0%,#0E1A2B_38%,#123css)]"
@@ -98,9 +98,9 @@ function AuthPage() {
       </aside>
 
       {/* Form panel */}
-      <main className="flex min-h-screen flex-col justify-center bg-white px-6 py-10 sm:px-12 lg:min-h-0 lg:px-16">
+      <main className="flex w-full flex-col justify-center bg-white px-6 py-10 sm:px-12 md:w-1/2 md:px-16">
         <div className="mx-auto w-full max-w-[380px]">
-          <div className="mb-10 flex justify-center lg:hidden">
+          <div className="mb-10 flex justify-center md:hidden">
             <ChefiaLogo className="h-28 w-auto" />
           </div>
 
@@ -117,7 +117,7 @@ function AuthPage() {
             </>
           )}
 
-          <p className="mt-12 text-center text-[11px] text-[#9a9a95] lg:hidden">
+          <p className="mt-12 text-center text-[11px] text-[#9a9a95] md:hidden">
             © {new Date().getFullYear()} Chef.IA
           </p>
         </div>
