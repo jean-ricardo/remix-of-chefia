@@ -168,7 +168,7 @@ function RootComponent() {
   );
 }
 
-const PUBLIC_ROUTES = ["/login"];
+const PUBLIC_ROUTES = ["/login", "/cadastrar"];
 
 function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
