@@ -49,34 +49,37 @@ function AuthPage() {
       <aside className="relative hidden w-full overflow-hidden px-14 py-16 md:flex md:w-1/2 md:flex-col md:justify-between">
         <div
           aria-hidden
-          className="absolute inset-0 bg-[linear-gradient(150deg,#0B1220_0%,#0E1A2B_38%,#123css)]"
+          className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(155deg, #070A0F 0%, #0C1524 40%, #123A66 78%, #185FA5 100%)",
+              "linear-gradient(145deg, #FFFFFF 0%, #F7F6F2 35%, #E8F1F8 70%, #FDF8F3 100%)",
           }}
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-40 -top-40 h-[28rem] w-[28rem] rounded-full bg-[#185FA5]/25 blur-3xl"
+          className="pointer-events-none absolute -right-32 -top-32 h-[26rem] w-[26rem] rounded-full bg-[#185FA5]/12 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-48 -left-32 h-[30rem] w-[30rem] rounded-full bg-[#D85A30]/10 blur-3xl"
+          className="pointer-events-none absolute -bottom-40 -left-28 h-[28rem] w-[28rem] rounded-full bg-[#D85A30]/10 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/3 top-1/2 h-[20rem] w-[20rem] -translate-y-1/2 rounded-full bg-[#185FA5]/6 blur-3xl"
         />
 
         <div className="relative">
-          <ChefiaLogo className="h-24 w-auto opacity-95 mix-blend-screen" />
+          <ChefiaLogo className="h-28 w-auto" />
         </div>
 
         <div className="relative max-w-lg">
-          <h2 className="text-[2.6rem] font-semibold leading-[1.1] tracking-tight text-white">
+          <h2 className="text-[2.6rem] font-semibold leading-[1.1] tracking-tight text-[#042C53]">
             A rotina da sua equipe,
             <br />
             sob controle.
           </h2>
-          <p className="mt-5 max-w-md text-[0.95rem] leading-relaxed text-white/60">
-            Atividades, responsáveis e prazos em um painel em tempo real — com
-            histórico de auditoria e permissões por cargo.
+          <p className="mt-5 max-w-md text-[0.95rem] leading-relaxed text-[#444441]">
+            Atividades, responsáveis e prazos organizados em um painel dinâmico. Controle total da sua operação com histórico de auditoria e permissões avançadas.
           </p>
 
           <ul className="mt-12 space-y-6">
@@ -92,7 +95,7 @@ function AuthPage() {
           </ul>
         </div>
 
-        <p className="relative text-xs tracking-wide text-white/35">
+        <p className="relative text-xs tracking-wide text-[#6B6B67]">
           © {new Date().getFullYear()} Chef.IA · Gestão de rotina para equipes
         </p>
       </aside>
@@ -128,8 +131,8 @@ function AuthPage() {
 
 function Benefit({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <li className="flex items-center gap-4 text-[0.95rem] text-white/80">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.06] text-white/90 backdrop-blur-sm">
+    <li className="flex items-center gap-4 text-[0.95rem] font-medium text-[#042C53]">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#185FA5]/10 bg-[#185FA5]/[0.06] text-[#185FA5] backdrop-blur-sm">
         {icon}
       </span>
       {children}
