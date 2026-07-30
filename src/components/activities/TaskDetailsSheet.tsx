@@ -38,6 +38,7 @@ import {
   useTeamMembers,
 } from "@/lib/useRotina";
 import { hasGlobalScope, useMockUser } from "@/lib/mockUser";
+import { logActivity } from "@/lib/activityLog";
 
 export type TaskStatus = "todo" | "in_progress" | "done";
 
