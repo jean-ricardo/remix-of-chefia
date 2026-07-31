@@ -1,7 +1,11 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Clock3, LogOut } from "lucide-react";
+import { Clock3, Loader2, LogOut, Pencil } from "lucide-react";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+
 
 /** Chave usada para preservar o ?taskId=... do WhatsApp durante o login. */
 export const PENDING_TASK_KEY = "chefia:pendingTaskId";
