@@ -34,6 +34,8 @@ export interface CurrentUser {
   cargo: string | null;
   /** True when the e-mail was found in team_members. */
   mapped: boolean;
+  /** Cadastro aguardando aprovação do Adm/Diretor (cargo_principal = 'pendente'). */
+  pending: boolean;
 }
 
 export interface AuthState {
@@ -41,6 +43,14 @@ export interface AuthState {
   session: Session | null;
   user: CurrentUser | null;
   signOut: () => Promise<void>;
+}
+
+/** Marcador de cadastro pendente (sem alterar schema: usa cargo_principal). */
+export const PENDING_CARGO = "pendente";
+
+/** Usuários antigos (cargo nulo ou qualquer outro valor) contam como aprovados. */
+export function isPendingCargo(cargo: unknown): boolean {
+  return String(cargo ?? "").trim().toLowerCase() === PENDING_CARGO;
 }
 
 export function mapCargoToRole(cargo: unknown): AppRole {
@@ -104,6 +114,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         role: mapCargoToRole(data.cargo_principal),
         cargo: data.cargo_principal ?? null,
         mapped: true,
+        pending: isPendingCargo(data.cargo_principal),
       };
     }
   }
@@ -115,6 +126,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     role: "usuario",
     cargo: null,
     mapped: false,
+    pending: false,
   };
 }
 
@@ -188,6 +200,7 @@ export function useCurrentUser(): CurrentUser {
       role: "usuario",
       cargo: null,
       mapped: false,
+      pending: false,
     }
   );
 }

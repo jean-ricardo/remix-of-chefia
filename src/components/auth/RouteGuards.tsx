@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { Clock3, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 /** Chave usada para preservar o ?taskId=... do WhatsApp durante o login. */
@@ -39,8 +40,44 @@ export function AuthSplash({ label = "Carregando" }: { label?: string }) {
  * e redireciona para /login. Enquanto a sessão está sendo verificada, mostra a
  * tela neutra em vez de piscar o login.
  */
+/**
+ * Sala de espera: novos cadastros ficam sem navegação até um Adm/Diretor
+ * aprovar o vínculo com a equipe.
+ */
+export function PendingApprovalScreen() {
+  const { user, signOut } = useAuth();
+  return (
+    <div className="grid min-h-screen place-items-center bg-[#F7F6F2] px-5 py-10">
+      <div className="w-full max-w-[440px] rounded-2xl bg-white p-7 text-center shadow-[0_18px_40px_-28px_rgba(4,44,83,0.45)] ring-1 ring-black/[0.04] sm:p-9">
+        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#185FA5]/10 text-[#185FA5]">
+          <Clock3 className="h-6 w-6" />
+        </div>
+        <h1 className="mt-5 text-xl font-bold tracking-tight text-[#042C53] sm:text-2xl">
+          Cadastro realizado com sucesso!
+        </h1>
+        <p className="mt-3 text-[0.92rem] leading-relaxed text-[#6f6f6a]">
+          Aguarde a aprovação do Administrador da equipe para acessar suas tarefas.
+        </p>
+        {user?.email ? (
+          <p className="mt-4 rounded-lg bg-[#F7F6F2] px-3 py-2 text-xs text-[#8b8b86]">
+            Conta: <span className="font-medium text-[#042C53]">{user.email}</span>
+          </p>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-[#185FA5]/30 px-4 text-sm font-medium text-[#185FA5] transition-colors hover:bg-[#185FA5]/10"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { loading, session } = useAuth();
+  const { loading, session, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,6 +88,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }, [loading, session, navigate]);
 
   if (loading || !session) return <AuthSplash />;
+
+  if (user?.pending) return <PendingApprovalScreen />;
 
   return <>{children}</>;
 }

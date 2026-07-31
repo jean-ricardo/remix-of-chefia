@@ -16,7 +16,9 @@ export function useTeamMembers() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("team_members")
-        .select("id,name,role,telefone")
+        .select("id,name,role,telefone,cargo_principal")
+        // Cadastros pendentes de aprovação não aparecem em listas/atribuições.
+        .or("cargo_principal.is.null,cargo_principal.neq.pendente")
         .order("name");
       if (error) throw error;
       return (data ?? []) as TeamMember[];

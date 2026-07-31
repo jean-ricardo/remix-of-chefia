@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Link2, Mail, Trash2, UserPlus, Users } from "lucide-react";
+import { Check, Copy, Link2, Mail, Trash2, UserPlus, UserRoundCheck, Users, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
@@ -58,23 +60,76 @@ function EquipePage() {
   const members = useTeamMembers();
   const activities = useActivities();
 
+  const queryClient = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"member" | "admin">("member");
   const [inviteBusy, setInviteBusy] = useState(false);
 
-  async function copyInviteLink() {
-    const url =
-      typeof window !== "undefined" ? `${window.location.origin}/cadastrar` : "/cadastrar";
+  const teamCode = currentUser.id;
+  const signupUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/cadastrar` : "/cadastrar";
+
+  async function copyValue(value: string, kind: "code" | "link") {
     try {
-      await navigator.clipboard.writeText(url);
-      setInviteLink("");
-      toast.success("Link de convite copiado para a área de transferência!");
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 1800);
+      toast.success(
+        kind === "code" ? "Código da equipe copiado!" : "Link de cadastro copiado!",
+      );
     } catch {
-      setInviteLink(url);
-      toast.warning("Não foi possível copiar automaticamente. Copie o link abaixo.");
+      setInviteLink(value);
+      toast.warning("Não foi possível copiar automaticamente. Copie manualmente abaixo.");
     }
+  }
+
+  const pending = useQuery({
+    queryKey: ["team_members", "pending"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("id,name,email,role,created_at")
+        .eq("cargo_principal", "pendente")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  async function approve(id: string, name: string) {
+    setBusyId(id);
+    const { error } = await supabase
+      .from("team_members")
+      .update({ cargo_principal: "membro", role: "Membro" })
+      .eq("id", id);
+    setBusyId(null);
+    if (error) {
+      toast.error("Não foi possível aprovar agora. Tente novamente.");
+      return;
+    }
+    toast.success(`${name} aprovado e vinculado à equipe!`);
+    await Promise.all([
+      pending.refetch(),
+      queryClient.invalidateQueries({ queryKey: ["team_members"] }),
+    ]);
+  }
+
+  async function reject(id: string, name: string) {
+    setBusyId(id);
+    const { error } = await supabase.from("team_members").delete().eq("id", id);
+    setBusyId(null);
+    if (error) {
+      toast.error("Não foi possível recusar agora. Tente novamente.");
+      return;
+    }
+    toast.success(`Solicitação de ${name} recusada.`);
+    await pending.refetch();
   }
 
   const counts = useMemo(() => {
@@ -141,7 +196,7 @@ function EquipePage() {
               <>
                 <Button
                   variant="outline"
-                  onClick={copyInviteLink}
+                  onClick={() => setCodeOpen(true)}
                   className="h-10 rounded-lg border-navy/20 px-4 font-medium text-navy hover:bg-navy/5"
                 >
                   <Link2 className="h-4 w-4" />
@@ -171,6 +226,56 @@ function EquipePage() {
               className="mt-2 h-11 bg-white text-sm"
             />
           </div>
+        ) : null}
+
+        {isAdmin && (pending.data?.length ?? 0) > 0 ? (
+          <section className="rounded-2xl border border-amber/40 bg-warning/10 p-4 sm:p-5">
+            <div className="flex items-center gap-2">
+              <UserRoundCheck className="h-4 w-4 text-amber" />
+              <h2 className="text-sm font-bold uppercase tracking-wide text-navy">
+                Aguardando aprovação ({pending.data?.length})
+              </h2>
+            </div>
+            <ul className="mt-4 flex flex-col gap-2">
+              {(pending.data ?? []).map((p) => (
+                <li
+                  key={p.id}
+                  className="flex flex-col gap-3 rounded-lg bg-white p-4 shadow-sm ring-1 ring-border/60 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar name={p.name ?? "Membro"} />
+                    <div className="min-w-0">
+                      <div className="truncate font-semibold text-[#042C53]">
+                        {p.name || "Novo membro"}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {p.email || "Sem e-mail"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex w-full items-center gap-2 sm:w-auto">
+                    <Button
+                      onClick={() => void approve(p.id, p.name || "Membro")}
+                      disabled={busyId === p.id}
+                      className="h-11 flex-1 rounded-lg bg-success font-medium text-white hover:bg-success/90 sm:flex-none"
+                    >
+                      <Check className="h-4 w-4" />
+                      Aprovar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => void reject(p.id, p.name || "Membro")}
+                      disabled={busyId === p.id}
+                      className="h-11 flex-1 rounded-lg border-danger/30 font-medium text-danger hover:bg-danger/10 sm:flex-none"
+                    >
+                      <X className="h-4 w-4" />
+                      Recusar
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
 
         {/* Responsive list — NO tables */}
@@ -246,6 +351,67 @@ function EquipePage() {
           </ul>
         )}
       </div>
+
+      <Dialog open={codeOpen} onOpenChange={setCodeOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-navy">Convidar Membro</DialogTitle>
+            <DialogDescription>
+              Envie o link de cadastro e o Código da Equipe. O novo membro só acessa a
+              plataforma após sua aprovação.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Código da Equipe</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={teamCode}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="h-11 font-mono text-xs"
+                />
+                <Button
+                  type="button"
+                  onClick={() => void copyValue(teamCode, "code")}
+                  className="h-11 shrink-0 rounded-lg bg-[#D85A30] px-3 font-medium text-white hover:bg-[#c14e28]"
+                >
+                  {copied === "code" ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  Copiar
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Link de cadastro</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={signupUrl}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="h-11 text-xs"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void copyValue(signupUrl, "link")}
+                  className="h-11 shrink-0 rounded-lg border-navy/20 px-3 font-medium text-navy hover:bg-navy/5"
+                >
+                  {copied === "link" ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Link2 className="h-4 w-4" />
+                  )}
+                  Copiar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent className="sm:max-w-md">
