@@ -89,18 +89,21 @@ function EquipePage() {
   }
 
   const pending = useQuery({
-    queryKey: ["team_members", "pending"],
+    queryKey: ["team_members", "pending", teamCode],
     enabled: isAdmin,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("team_members")
         .select("id,name,email,role,created_at")
         .eq("cargo_principal", "pendente")
+        // Só solicitações que informaram exatamente o código desta equipe.
+        .eq("role", `equipe:${teamCode}`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   async function approve(id: string, name: string) {
     setBusyId(id);
