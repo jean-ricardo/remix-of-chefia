@@ -74,25 +74,18 @@ function CadastrarPage() {
 
     setBusy(true);
 
-    // Valida o código contra a equipe existente (sem alterar dados).
-    const { data: team } = await supabase
-      .from("team_members")
-      .select("id,cargo_principal")
-      .eq("id", cleanCode)
-      .maybeSingle();
-
-    if (!team) {
-      setBusy(false);
-      toast.error("Código da Equipe inválido. Confira o código com seu administrador.");
-      return;
-    }
-
+    // O código NÃO é validado contra o banco (RLS bloqueia anônimos).
+    // Ele é aceito às cegas e guardado no metadata + no perfil pendente.
     const { data, error } = await supabase.auth.signUp({
       email: cleanEmail,
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: cleanName },
+        data: {
+          full_name: cleanName,
+          team_code_pending: cleanCode,
+          status: "pendente",
+        },
       },
     });
 
@@ -102,7 +95,8 @@ function CadastrarPage() {
       return;
     }
 
-    // Garante o perfil na tabela de equipe com o cargo de membro.
+    // Perfil aguardando aprovação. `role` guarda apenas texto livre
+    // (equipe:<código>), nunca uma coluna relacional.
     try {
       const { data: existing } = await supabase
         .from("team_members")
@@ -135,6 +129,7 @@ function CadastrarPage() {
     } catch (err) {
       console.error("[cadastrar] falha ao gravar perfil na equipe", err);
     }
+
 
     if (!data.session) {
       // E-mail com confirmação obrigatória: tenta login imediato.
