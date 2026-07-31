@@ -47,6 +47,7 @@ function CadastrarPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("1234");
+  const [teamCode, setTeamCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -65,7 +66,27 @@ function CadastrarPage() {
       return;
     }
 
+    const cleanCode = teamCode.trim();
+    if (!cleanCode) {
+      toast.warning("Informe o Código da Equipe fornecido pelo administrador.");
+      return;
+    }
+
     setBusy(true);
+
+    // Valida o código contra a equipe existente (sem alterar dados).
+    const { data: team } = await supabase
+      .from("team_members")
+      .select("id,cargo_principal")
+      .eq("id", cleanCode)
+      .maybeSingle();
+
+    if (!team) {
+      setBusy(false);
+      toast.error("Código da Equipe inválido. Confira o código com seu administrador.");
+      return;
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: cleanEmail,
       password,
@@ -85,21 +106,30 @@ function CadastrarPage() {
     try {
       const { data: existing } = await supabase
         .from("team_members")
-        .select("id")
+        .select("id,cargo_principal")
         .ilike("email", cleanEmail)
         .limit(1)
         .maybeSingle();
 
       if (existing?.id) {
-        await supabase
-          .from("team_members")
-          .update({ name: cleanName, cargo_principal: "membro" })
-          .eq("id", existing.id);
+        // Membros já aprovados nunca voltam para pendente (retrocompatibilidade).
+        if (String(existing.cargo_principal ?? "").toLowerCase() === "pendente") {
+          await supabase
+            .from("team_members")
+            .update({ name: cleanName, role: `equipe:${cleanCode}` })
+            .eq("id", existing.id);
+        } else {
+          await supabase
+            .from("team_members")
+            .update({ name: cleanName })
+            .eq("id", existing.id);
+        }
       } else {
         await supabase.from("team_members").insert({
           name: cleanName,
           email: cleanEmail,
-          cargo_principal: "membro",
+          cargo_principal: "pendente",
+          role: `equipe:${cleanCode}`,
         });
       }
     } catch (err) {
@@ -115,7 +145,9 @@ function CadastrarPage() {
     setBusy(false);
 
     if (after.session) {
-      toast.success("Bem-vindo ao Chef.IA! Seu acesso foi criado com sucesso.");
+      toast.success(
+        "Cadastro realizado! Aguarde a aprovação do administrador da equipe.",
+      );
       navigate({ to: "/", replace: true });
       return;
     }
@@ -139,7 +171,8 @@ function CadastrarPage() {
             Criar meu acesso
           </h1>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-[#6f6f6a]">
-            Você foi convidado para a equipe. Preencha os dados abaixo para começar.
+            Você foi convidado para a equipe. Preencha os dados abaixo — seu acesso
+            será liberado após a aprovação do administrador.
           </p>
 
           {!loading && session ? (
@@ -179,6 +212,16 @@ function CadastrarPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="voce@empresa.com"
+            />
+
+            <Field
+              id="cd-team"
+              label="Código da Equipe"
+              required
+              disabled={busy}
+              value={teamCode}
+              onChange={(e) => setTeamCode(e.target.value)}
+              placeholder="Cole aqui o código enviado pelo administrador"
             />
 
             <div className="relative">
