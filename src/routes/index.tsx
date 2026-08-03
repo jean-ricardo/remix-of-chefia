@@ -813,8 +813,11 @@ function OccurrenceCard({
             </span>
           )}
           {recurrenceDetail && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-1 text-xs text-gray-600">
-              <RotateCw className="h-3 w-3" />
+            <span
+              className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-1 text-xs text-gray-500"
+              title={`Tarefa recorrente · ${recurrenceDetail}`}
+            >
+              <Repeat className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
               {recurrenceDetail}
             </span>
           )}
