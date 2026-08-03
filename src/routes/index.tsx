@@ -16,6 +16,7 @@ import {
   Inbox,
 
   Plus,
+  Repeat,
   RotateCw,
 
 } from "lucide-react";
@@ -38,6 +39,11 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  RECURRENCE_LABEL_PT,
+  advanceDate,
+  normalizeRecurrence,
+} from "@/lib/recurrence";
 import {
   useActivities,
   useCompletions,
@@ -619,6 +625,10 @@ function OccurrenceCard({
 
   const canAct = canActOnActivity(currentUser, occ.activity);
 
+  const cardRecurrence = normalizeRecurrence(
+    (occ.activity as { recurrence?: string | null }).recurrence,
+  );
+
   const recurrenceDetail = (() => {
     const a = occ.activity;
     switch (a.recurrence_type) {
@@ -629,9 +639,32 @@ function OccurrenceCard({
       case "mensal":
         return a.month_day != null ? `Mensal · dia ${a.month_day}` : "Mensal";
       case "unica":
-        return "Única";
+        return cardRecurrence === "none" ? null : RECURRENCE_LABEL_PT[cardRecurrence];
     }
   })();
+
+  /** Clona a tarefa recorrente adiante, a partir do prazo ORIGINAL. */
+  async function cloneRecurring() {
+    const a = occ.activity;
+    if (cardRecurrence === "none") return;
+    const nextDue = advanceDate(a.due_date ?? occ.originalKey, cardRecurrence);
+    if (!nextDue) return;
+    const { error } = await supabase.from("activities").insert({
+      title: a.title,
+      assigned_user_id: a.assigned_user_id,
+      priority: a.priority,
+      recurrence_type: a.recurrence_type,
+      weekday: a.weekday,
+      month_day: a.month_day,
+      due_date: nextDue,
+      recurrence: cardRecurrence,
+    });
+    if (error) {
+      console.error("[activities] recurrence clone failed", error);
+      return;
+    }
+    toast.success(`Próxima ocorrência criada para ${format(new Date(`${nextDue}T00:00:00`), "dd/MM/yyyy")}`);
+  }
 
   async function complete() {
     setBusy(true);
@@ -642,6 +675,7 @@ function OccurrenceCard({
       },
       { onConflict: "activity_id,occurrence_key" },
     );
+    if (!error) await cloneRecurring();
     setBusy(false);
     if (error) toast.error("Não foi possível concluir: " + error.message);
     else toast.success("Atividade concluída");
@@ -779,8 +813,11 @@ function OccurrenceCard({
             </span>
           )}
           {recurrenceDetail && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-1 text-xs text-gray-600">
-              <RotateCw className="h-3 w-3" />
+            <span
+              className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-1 text-xs text-gray-500"
+              title={`Tarefa recorrente · ${recurrenceDetail}`}
+            >
+              <Repeat className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
               {recurrenceDetail}
             </span>
           )}

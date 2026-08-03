@@ -20,6 +20,8 @@ export interface Activity {
   weekday: number | null;
   month_day: number | null;
   due_date: string | null;
+  /** Recorrência simples: none | daily | weekly | monthly (legado = none). */
+  recurrence?: string | null;
 }
 
 export interface Completion {

@@ -19,6 +19,11 @@ import { useCurrentUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
 import { formatDateBR, platformLink, resolveMemberWhatsApp } from "@/lib/taskNotify";
+import {
+  RECURRENCE_OPTIONS,
+  normalizeRecurrence,
+  type Recurrence,
+} from "@/lib/recurrence";
 import type { OccurrenceView, Priority } from "@/lib/rotina";
 
 export type EditMode = "edit" | "reschedule";
@@ -60,6 +65,7 @@ export function EditActivitySheet({
   const [priority, setPriority] = useState<Priority>("media");
   const [assignee, setAssignee] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
+  const [recurrence, setRecurrence] = useState<Recurrence>("none");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -70,6 +76,7 @@ export function EditActivitySheet({
     setPriority((a?.priority as Priority) ?? "media");
     setAssignee(a?.assigned_user_id ?? "");
     setDueDate(toYmd(occurrence?.effectiveDate));
+    setRecurrence(normalizeRecurrence(a?.recurrence));
     setReason("");
     setSubmitting(false);
   }, [open, occurrence]);
@@ -175,11 +182,13 @@ export function EditActivitySheet({
       title: string;
       priority: Priority;
       assigned_user_id: string | null;
+      recurrence: Recurrence;
       due_date?: string | null;
     } = {
       title: title.trim(),
       priority,
       assigned_user_id: assignee || null,
+      recurrence,
     };
     // due_date só é reescrita em atividades únicas; recorrentes usam reschedules.
     if (activity.recurrence_type === "unica") {
@@ -359,6 +368,26 @@ export function EditActivitySheet({
                       "ring-2 ring-[#185FA5]/40 border-[#185FA5]",
                   )}
                 />
+              </div>
+
+              <div>
+                <label className={labelClass}>Recorrência</label>
+                <Select
+                  value={recurrence}
+                  onValueChange={(v) => setRecurrence(v as Recurrence)}
+                  disabled={submitting || mode === "reschedule"}
+                >
+                  <SelectTrigger className="h-11 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RECURRENCE_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>

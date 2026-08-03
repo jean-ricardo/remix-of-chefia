@@ -9,6 +9,7 @@ import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
 import { logActivity } from "@/lib/activityLog";
 import { useCurrentUser } from "@/lib/auth";
 import { formatDateBR, platformLink, resolveMemberWhatsApp } from "@/lib/taskNotify";
+import { RECURRENCE_OPTIONS, type Recurrence } from "@/lib/recurrence";
 
 interface Props {
   isOpen: boolean;
@@ -23,6 +24,7 @@ const INITIAL = {
   startDate: "",
   dueDate: "",
   description: "",
+  recurrence: "none" as Recurrence,
 };
 
 export function NewTaskModal({ isOpen, onClose }: Props) {
@@ -92,6 +94,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
         priority: form.priority,
         recurrence_type: "unica",
         due_date: effectiveDate,
+        recurrence: form.recurrence,
       })
       .select("id")
       .maybeSingle();
@@ -255,6 +258,23 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
                     onChange={(e) => set("dueDate", e.target.value)}
                     className={inputClass}
                   />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="nt-recurrence" className={labelClass}>
+                    Recorrência
+                  </label>
+                  <select
+                    id="nt-recurrence"
+                    value={form.recurrence}
+                    onChange={(e) => set("recurrence", e.target.value as Recurrence)}
+                    className={inputClass}
+                  >
+                    {RECURRENCE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
