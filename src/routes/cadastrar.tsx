@@ -74,6 +74,14 @@ function CadastrarPage() {
       return;
     }
 
+    if (password.length < MIN_PASSWORD) {
+      const msg = `A senha deve ter no mínimo ${MIN_PASSWORD} caracteres.`;
+      setPasswordError(msg);
+      toast.warning(msg);
+      return;
+    }
+    setPasswordError(null);
+
     setBusy(true);
 
     // O código NÃO é validado contra o banco (RLS bloqueia anônimos).
