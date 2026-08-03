@@ -235,10 +235,32 @@ function CadastrarPage() {
                 label="Senha"
                 type={showPassword ? "text" : "password"}
                 required
+                minLength={MIN_PASSWORD}
                 autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="text"
                 disabled={busy}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setPassword(next);
+                  setPasswordError(
+                    next.length >= MIN_PASSWORD
+                      ? null
+                      : passwordError
+                        ? `A senha deve ter no mínimo ${MIN_PASSWORD} caracteres.`
+                        : null,
+                  );
+                }}
+                onBlur={() =>
+                  setPasswordError(
+                    password.length >= MIN_PASSWORD
+                      ? null
+                      : `A senha deve ter no mínimo ${MIN_PASSWORD} caracteres.`,
+                  )
+                }
                 className="pr-11"
               />
               <button
@@ -254,8 +276,14 @@ function CadastrarPage() {
                 )}
               </button>
             </div>
-            <p className="-mt-2 text-[11px] text-[#9a9a95]">
-              Você pode alterar a senha sugerida antes de continuar.
+            <p
+              className={cn(
+                "-mt-2 text-[11px]",
+                passwordError ? "text-[#D85A30]" : "text-[#9a9a95]",
+              )}
+            >
+              {passwordError ??
+                `Mínimo de ${MIN_PASSWORD} caracteres. Você pode alterar a senha sugerida.`}
             </p>
 
             <button
