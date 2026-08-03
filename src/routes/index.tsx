@@ -40,6 +40,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  RECURRENCE_LABEL_PT,
+  advanceDate,
+  normalizeRecurrence,
+} from "@/lib/recurrence";
+import {
   useActivities,
   useCompletions,
   useReschedules,
