@@ -30,14 +30,15 @@ export const Route = createFileRoute("/cadastrar")({
   component: CadastrarPage,
 });
 
+const MIN_PASSWORD = 6;
+
 function friendlyError(message: string) {
   const m = message.toLowerCase();
   if (m.includes("already registered") || m.includes("already been registered"))
     return "Este e-mail já possui conta. Faça login para continuar.";
-  if (m.includes("password"))
-    return "Senha muito curta para as regras de segurança. Escolha uma senha maior.";
   if (m.includes("invalid") && m.includes("email")) return "E-mail inválido.";
-  return "Não foi possível concluir o cadastro. Tente novamente.";
+  // Qualquer outro erro real da API é exibido na íntegra.
+  return message;
 }
 
 function CadastrarPage() {
@@ -46,10 +47,11 @@ function CadastrarPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("1234");
+  const [password, setPassword] = useState("123456");
   const [teamCode, setTeamCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
