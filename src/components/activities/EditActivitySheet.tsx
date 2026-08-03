@@ -371,6 +371,26 @@ export function EditActivitySheet({
               </div>
 
               <div>
+                <label className={labelClass}>Recorrência</label>
+                <Select
+                  value={recurrence}
+                  onValueChange={(v) => setRecurrence(v as Recurrence)}
+                  disabled={submitting || mode === "reschedule"}
+                >
+                  <SelectTrigger className="h-11 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RECURRENCE_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <label htmlFor="edit-reason" className={labelClass}>
                   Justificativa da reprogramação (opcional)
                 </label>
