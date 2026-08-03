@@ -9,6 +9,7 @@ import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
 import { logActivity } from "@/lib/activityLog";
 import { useCurrentUser } from "@/lib/auth";
 import { formatDateBR, platformLink, resolveMemberWhatsApp } from "@/lib/taskNotify";
+import { RECURRENCE_OPTIONS, type Recurrence } from "@/lib/recurrence";
 
 interface Props {
   isOpen: boolean;
@@ -23,6 +24,7 @@ const INITIAL = {
   startDate: "",
   dueDate: "",
   description: "",
+  recurrence: "none" as Recurrence,
 };
 
 export function NewTaskModal({ isOpen, onClose }: Props) {
