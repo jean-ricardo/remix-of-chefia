@@ -94,6 +94,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
         priority: form.priority,
         recurrence_type: "unica",
         due_date: effectiveDate,
+        recurrence: form.recurrence,
       })
       .select("id")
       .maybeSingle();
