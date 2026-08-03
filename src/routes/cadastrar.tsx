@@ -30,14 +30,15 @@ export const Route = createFileRoute("/cadastrar")({
   component: CadastrarPage,
 });
 
+const MIN_PASSWORD = 6;
+
 function friendlyError(message: string) {
   const m = message.toLowerCase();
   if (m.includes("already registered") || m.includes("already been registered"))
     return "Este e-mail já possui conta. Faça login para continuar.";
-  if (m.includes("password"))
-    return "Senha muito curta para as regras de segurança. Escolha uma senha maior.";
   if (m.includes("invalid") && m.includes("email")) return "E-mail inválido.";
-  return "Não foi possível concluir o cadastro. Tente novamente.";
+  // Qualquer outro erro real da API é exibido na íntegra.
+  return message;
 }
 
 function CadastrarPage() {
@@ -46,10 +47,11 @@ function CadastrarPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("1234");
+  const [password, setPassword] = useState("123456");
   const [teamCode, setTeamCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -71,6 +73,14 @@ function CadastrarPage() {
       toast.warning("Informe o Código da Equipe fornecido pelo administrador.");
       return;
     }
+
+    if (password.length < MIN_PASSWORD) {
+      const msg = `A senha deve ter no mínimo ${MIN_PASSWORD} caracteres.`;
+      setPasswordError(msg);
+      toast.warning(msg);
+      return;
+    }
+    setPasswordError(null);
 
     setBusy(true);
 
@@ -225,10 +235,32 @@ function CadastrarPage() {
                 label="Senha"
                 type={showPassword ? "text" : "password"}
                 required
+                minLength={MIN_PASSWORD}
                 autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="text"
                 disabled={busy}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setPassword(next);
+                  setPasswordError(
+                    next.length >= MIN_PASSWORD
+                      ? null
+                      : passwordError
+                        ? `A senha deve ter no mínimo ${MIN_PASSWORD} caracteres.`
+                        : null,
+                  );
+                }}
+                onBlur={() =>
+                  setPasswordError(
+                    password.length >= MIN_PASSWORD
+                      ? null
+                      : `A senha deve ter no mínimo ${MIN_PASSWORD} caracteres.`,
+                  )
+                }
                 className="pr-11"
               />
               <button
@@ -244,8 +276,14 @@ function CadastrarPage() {
                 )}
               </button>
             </div>
-            <p className="-mt-2 text-[11px] text-[#9a9a95]">
-              Você pode alterar a senha sugerida antes de continuar.
+            <p
+              className={cn(
+                "-mt-2 text-[11px]",
+                passwordError ? "text-[#D85A30]" : "text-[#9a9a95]",
+              )}
+            >
+              {passwordError ??
+                `Mínimo de ${MIN_PASSWORD} caracteres. Você pode alterar a senha sugerida.`}
             </p>
 
             <button
