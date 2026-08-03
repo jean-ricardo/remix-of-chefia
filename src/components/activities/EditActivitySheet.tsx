@@ -19,6 +19,11 @@ import { useCurrentUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
 import { formatDateBR, platformLink, resolveMemberWhatsApp } from "@/lib/taskNotify";
+import {
+  RECURRENCE_OPTIONS,
+  normalizeRecurrence,
+  type Recurrence,
+} from "@/lib/recurrence";
 import type { OccurrenceView, Priority } from "@/lib/rotina";
 
 export type EditMode = "edit" | "reschedule";
