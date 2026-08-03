@@ -182,11 +182,13 @@ export function EditActivitySheet({
       title: string;
       priority: Priority;
       assigned_user_id: string | null;
+      recurrence: Recurrence;
       due_date?: string | null;
     } = {
       title: title.trim(),
       priority,
       assigned_user_id: assignee || null,
+      recurrence,
     };
     // due_date só é reescrita em atividades únicas; recorrentes usam reschedules.
     if (activity.recurrence_type === "unica") {
