@@ -65,6 +65,7 @@ export function EditActivitySheet({
   const [priority, setPriority] = useState<Priority>("media");
   const [assignee, setAssignee] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
+  const [recurrence, setRecurrence] = useState<Recurrence>("none");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -75,6 +76,7 @@ export function EditActivitySheet({
     setPriority((a?.priority as Priority) ?? "media");
     setAssignee(a?.assigned_user_id ?? "");
     setDueDate(toYmd(occurrence?.effectiveDate));
+    setRecurrence(normalizeRecurrence(a?.recurrence));
     setReason("");
     setSubmitting(false);
   }, [open, occurrence]);
