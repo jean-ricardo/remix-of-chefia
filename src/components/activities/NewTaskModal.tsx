@@ -259,6 +259,23 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
                     className={inputClass}
                   />
                 </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="nt-recurrence" className={labelClass}>
+                    Recorrência
+                  </label>
+                  <select
+                    id="nt-recurrence"
+                    value={form.recurrence}
+                    onChange={(e) => set("recurrence", e.target.value as Recurrence)}
+                    className={inputClass}
+                  >
+                    {RECURRENCE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
