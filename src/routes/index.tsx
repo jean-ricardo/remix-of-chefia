@@ -1077,6 +1077,7 @@ function KanbanBoard({
         emptyIconClass="text-gray-400"
         emptyTitle="Nada a fazer"
         emptyMessage="Sua fila está vazia."
+        detailsTaskId={detailsTaskId}
       />
       <KanbanColumn
         title="Em Andamento"
@@ -1091,6 +1092,7 @@ function KanbanBoard({
         emptyIconClass="text-gray-400"
         emptyTitle="Nada em andamento"
         emptyMessage="Comece uma tarefa quando estiver pronto."
+        detailsTaskId={detailsTaskId}
       />
       <KanbanColumn
         title="Concluído"
@@ -1106,6 +1108,7 @@ function KanbanBoard({
         emptyIconClass="text-emerald-500"
         emptyTitle="Nada concluído ainda"
         emptyMessage="As entregas de hoje aparecem aqui."
+        detailsTaskId={detailsTaskId}
       />
     </div>
   );
@@ -1125,6 +1128,7 @@ function KanbanColumn({
   emptyIconClass,
   emptyTitle,
   emptyMessage,
+  detailsTaskId,
 }: {
   title: string;
   accent: string;
@@ -1139,6 +1143,7 @@ function KanbanColumn({
   emptyIconClass: string;
   emptyTitle: string;
   emptyMessage: string;
+  detailsTaskId: string | null;
 }) {
   const totalPages = Math.max(1, Math.ceil(items.length / COLUMN_PAGE_SIZE));
   const safePage = Math.min(Math.max(1, page), totalPages);
@@ -1178,6 +1183,7 @@ function KanbanColumn({
                   memberById={memberById}
                   completed={!!completedStyle || occ.status === "concluida"}
                   currentUser={currentUser}
+                  detailsTaskId={detailsTaskId}
                 />
               ))}
             </ul>
