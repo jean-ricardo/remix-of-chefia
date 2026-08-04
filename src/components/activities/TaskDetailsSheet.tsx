@@ -231,9 +231,19 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
         });
         toast.success("Conclusão desfeita");
       } else if (next === "in_progress") {
-        toast.message("Marcada em andamento (visual)", {
-          description: "Sincronizamos com o servidor quando a coluna estiver disponível.",
+        // BUG 2 Fix: Execute real UPDATE for in_progress status
+        const { error } = await supabase
+          .from("activities")
+          .update({ status: "in_progress" } as any)
+          .eq("id", activity.id);
+        if (error) throw error;
+        void logActivity({
+          actorName: currentUser.name,
+          actionType: "status",
+          details: `Iniciou a atividade "${activity.title}".`,
+          taskId: activity.id,
         });
+        toast.success("Atividade marcada como em andamento");
       }
 
       await Promise.all([
@@ -424,21 +434,29 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                   Descrição
                   {isReadOnly && <Lock className="h-3 w-3 text-gray-400" />}
                 </div>
-                {description ? (
-                  isReadOnly ? (
-                    <ReadOnlyBlock>
+                {isReadOnly ? (
+                  <ReadOnlyBlock>
+                    {description ? (
                       <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#042C53]">
                         {description}
                       </p>
-                    </ReadOnlyBlock>
-                  ) : (
-                    <div className="whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
-                      {description}
-                    </div>
-                  )
+                    ) : (
+                      <p className="text-sm italic text-gray-400">
+                        Nenhuma descrição informada
+                      </p>
+                    )}
+                  </ReadOnlyBlock>
                 ) : (
-                  <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm italic text-gray-400">
-                    Nenhuma descrição informada
+                  <div className="space-y-2">
+                    {description ? (
+                      <div className="whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
+                        {description}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm italic text-gray-400">
+                        Nenhuma descrição informada
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

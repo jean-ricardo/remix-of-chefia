@@ -24,6 +24,7 @@ export type Database = {
           priority: Database["public"]["Enums"]["activity_priority"]
           recurrence: string
           recurrence_type: Database["public"]["Enums"]["recurrence_type"]
+          status: string | null
           title: string
           weekday: number | null
         }
@@ -36,6 +37,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["activity_priority"]
           recurrence?: string
           recurrence_type: Database["public"]["Enums"]["recurrence_type"]
+          status?: string | null
           title: string
           weekday?: number | null
         }
@@ -48,6 +50,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["activity_priority"]
           recurrence?: string
           recurrence_type?: Database["public"]["Enums"]["recurrence_type"]
+          status?: string | null
           title?: string
           weekday?: number | null
         }
