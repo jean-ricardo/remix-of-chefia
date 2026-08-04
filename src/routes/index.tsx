@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -74,6 +75,12 @@ export const Route = createFileRoute("/")({
 });
 
 function DashboardPage() {
+  const qc = useQueryClient();
+  // Expose qc to window for direct access in sub-components if needed (though using props/context is better, 
+  // here we ensure the logic requested is met).
+  useEffect(() => {
+    (window as any).queryClient = qc;
+  }, [qc]);
   useRotinaRealtime();
   const members = useTeamMembers();
   const activities = useActivities();
@@ -674,8 +681,16 @@ function OccurrenceCard({
       .update({ status: "in_progress" } as any)
       .eq("id", occ.activity.id);
     setBusy(false);
-    if (error) toast.error("Não foi possível iniciar: " + error.message);
-    else toast.success("Atividade em andamento");
+    if (error) {
+      toast.error("Não foi possível iniciar: " + error.message);
+    } else {
+      toast.success("Atividade em andamento");
+      // OBRIGATÓRIO: Invalidar cache para que o Kanban re-renderize e mova o card.
+      const qc = (window as any).queryClient;
+      if (qc) {
+        qc.invalidateQueries({ queryKey: ["activities"] });
+      }
+    }
   }
 
   async function complete() {
@@ -693,6 +708,12 @@ function OccurrenceCard({
         .update({ status: "done" } as any)
         .eq("id", occ.activity.id);
       await cloneRecurring();
+      
+      const qc = (window as any).queryClient;
+      if (qc) {
+        qc.invalidateQueries({ queryKey: ["completions"] });
+        qc.invalidateQueries({ queryKey: ["activities"] });
+      }
     }
     setBusy(false);
     if (error) toast.error("Não foi possível concluir: " + error.message);

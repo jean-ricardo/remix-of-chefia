@@ -95,6 +95,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
         due_date: effectiveDate,
         recurrence: form.recurrence,
         description: form.description.trim(),
+        created_by: currentUser.id, // Garante que o autor seja vinculado
       })
       .select("id")
       .maybeSingle();
