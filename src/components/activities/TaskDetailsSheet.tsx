@@ -466,14 +466,12 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                 </div>
               )}
 
-
-            {/* Status Select Removed - Status changes are now done via Kanban card buttons */}
-          </div>
-        )}
-      </SheetContent>
-    </Sheet>
-  );
-}
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
 function MetaField({
   label,
