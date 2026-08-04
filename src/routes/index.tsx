@@ -771,6 +771,7 @@ function OccurrenceCard({
   const assigneeLabel = member?.name ?? null;
 
   const stop = (fn: () => void) => (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     fn();
   };
