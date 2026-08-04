@@ -191,8 +191,8 @@ function AppShell() {
     <ProtectedRoute>
       <div className="flex min-h-screen flex-col bg-background">
         <SiteHeader />
-        <main className="w-full flex-1 pb-8">
-          <div className="mx-auto max-w-7xl px-4 pt-5 md:px-8 md:pt-8">
+        <main className="flex w-full flex-1 flex-col pb-8">
+          <div className="mx-auto w-full max-w-7xl flex-1 px-4 pt-5 md:px-8 md:pt-8">
             <Outlet />
           </div>
         </main>

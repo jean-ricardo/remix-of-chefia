@@ -168,6 +168,8 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
                 Preencha os dados para criar uma nova tarefa
               </p>
             </div>
+            {/* O botão de fechar nativo do Dialog Content ou Sheet Content já cuida disso.
+                Aqui, como é um modal customizado, mantemos apenas o X posicionado no topo. */}
             <button
               type="button"
               onClick={handleClose}
