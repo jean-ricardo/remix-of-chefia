@@ -919,7 +919,7 @@ function OccurrenceCard({
         </div>
       )}
 
-      {!detailsTaskId && (
+      {(!detailsTaskId || detailsTaskId !== occ.activity.id) && (
         <EditActivitySheet
           open={editOpen}
           onOpenChange={setEditOpen}
