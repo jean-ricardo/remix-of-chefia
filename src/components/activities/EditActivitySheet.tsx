@@ -278,15 +278,7 @@ export function EditActivitySheet({
                 {subheading}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[#042C53]/70 hover:bg-[#042C53]/5 disabled:opacity-50"
-              aria-label="Fechar"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            {/* Botão X duplicado removido: o SheetContent nativo já fornece um botão de fechar no topo. */}
           </div>
 
           {/* Scrollable Body */}

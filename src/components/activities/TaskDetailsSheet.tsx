@@ -368,14 +368,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                   })()}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Fechar"
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              {/* Botão X duplicado removido: o SheetContent nativo já fornece um botão de fechar no topo. */}
             </div>
 
             {/* Scrollable body */}
