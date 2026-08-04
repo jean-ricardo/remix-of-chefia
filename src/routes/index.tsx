@@ -461,6 +461,7 @@ function Section({
   emptyMessage,
   showCompletedStyle,
   currentUser,
+  detailsTaskId,
 }: {
   title: string;
   tone: "danger" | "warning" | "navy" | "success";
