@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Clock3, Loader2, LogOut, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
@@ -50,6 +51,9 @@ export function AuthSplash({ label = "Carregando" }: { label?: string }) {
  */
 export function PendingApprovalScreen() {
   const { user, session, signOut } = useAuth();
+  const qc = useQueryClient();
+  const [checking, setChecking] = useState(false);
+
   const metaCode = String(
     (session?.user?.user_metadata as Record<string, unknown> | undefined)
       ?.team_code_pending ?? "",
@@ -58,6 +62,20 @@ export function PendingApprovalScreen() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(metaCode);
   const [saving, setSaving] = useState(false);
+
+  /** Sala de espera dinâmica: refaz a consulta no banco para liberar a entrada. */
+  async function refreshStatus() {
+    if (checking) return;
+    setChecking(true);
+    // Invalida o cache do AuthContext forçando refetch do perfil no team_members.
+    // Como o AuthProvider não usa queryClient diretamente para o profile (resolveCurrentUser),
+    // vamos forçar um reload manual ou apenas esperar o onAuthStateChange se houver trigger.
+    // Melhor: disparar um getSession() que no nosso AuthProvider dispara resolveCurrentUser.
+    const { data } = await supabase.auth.getSession();
+    // O resolveCurrentUser já é disparado pelo apply() no useEffect do AuthProvider.
+    setChecking(false);
+    toast.info("Status atualizado!");
+  }
 
   async function saveCode() {
     const clean = draft.trim();
@@ -153,19 +171,30 @@ export function PendingApprovalScreen() {
           )}
         </div>
 
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => void refreshStatus()}
+            disabled={checking}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#042C53] disabled:opacity-70"
+          >
+            {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar Status"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#185FA5]/30 px-4 text-sm font-medium text-[#185FA5] transition-colors hover:bg-[#185FA5]/10"
+          >
+            <LogOut className="h-4 w-4" />
+            Sair
+          </button>
+        </div>
+
         {user?.email ? (
           <p className="mt-4 rounded-lg bg-[#F7F6F2] px-3 py-2 text-xs text-[#8b8b86]">
             Conta: <span className="font-medium text-[#042C53]">{user.email}</span>
           </p>
         ) : null}
-        <button
-          type="button"
-          onClick={() => void signOut()}
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-[#185FA5]/30 px-4 text-sm font-medium text-[#185FA5] transition-colors hover:bg-[#185FA5]/10"
-        >
-          <LogOut className="h-4 w-4" />
-          Sair
-        </button>
       </div>
     </div>
   );

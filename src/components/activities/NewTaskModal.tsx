@@ -84,8 +84,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
     const effectiveDate =
       form.dueDate || form.startDate || new Date().toISOString().slice(0, 10);
 
-    // Payload strictly mapped to the current DB schema — unmapped premium
-    // UX fields (startDate, description) are intentionally NOT sent.
+    // Payload strictly mapped to the current DB schema.
     const { data: inserted, error } = await supabase
       .from("activities")
       .insert({

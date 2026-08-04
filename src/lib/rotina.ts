@@ -22,6 +22,8 @@ export interface Activity {
   due_date: string | null;
   /** Recorrência simples: none | daily | weekly | monthly (legado = none). */
   recurrence?: string | null;
+  created_by?: string | null;
+  description?: string | null;
 }
 
 export interface Completion {
