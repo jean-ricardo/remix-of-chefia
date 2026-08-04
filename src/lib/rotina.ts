@@ -36,6 +36,7 @@ export interface Reschedule {
   original_occurrence_key: string;
   new_date: string;
   justification: string;
+  created_at?: string;
 }
 
 export const PRIORITY_LABEL: Record<Priority, string> = {

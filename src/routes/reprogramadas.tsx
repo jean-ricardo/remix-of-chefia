@@ -51,8 +51,12 @@ function ReprogramadasPage() {
         return { ...r, activity };
       })
       .filter((x): x is NonNullable<typeof x> => !!x);
-    // Sort by new_date ASC (prazo mais perto para o mais longe)
-    list.sort((a, b) => (a.new_date > b.new_date ? 1 : -1));
+    // Sort by created_at DESC (Mais recentes no topo absoluto)
+    list.sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
+    });
     return list;
   }, [reschedules.data, activityById, filter]);
 
