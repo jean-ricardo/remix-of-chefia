@@ -345,11 +345,12 @@ function DashboardPage() {
               hoje={hoje}
               proximas={proximas}
               concluidas={concluidas}
-              memberById={memberById}
-              isLoading={false}
-              currentUser={currentUser}
-              today={today}
-            />
+          memberById={memberById}
+          isLoading={false}
+          currentUser={currentUser}
+          today={today}
+          detailsTaskId={detailsTaskId}
+        />
 
           </>
         )}
@@ -448,6 +449,7 @@ function Section({
   emptyMessage: string;
   showCompletedStyle?: boolean;
   currentUser: ReturnType<typeof useCurrentUser>;
+  detailsTaskId: string | null;
 }) {
   const dotClass = {
     danger: "bg-danger",
@@ -479,6 +481,7 @@ function Section({
           memberById={memberById}
           completed={!!showCompletedStyle}
           currentUser={currentUser}
+          detailsTaskId={detailsTaskId}
         />
       )}
     </section>
@@ -543,11 +546,13 @@ function PaginatedTaskList({
   memberById,
   completed,
   currentUser,
+  detailsTaskId,
 }: {
   items: OccurrenceView[];
   memberById: Map<string, TeamMember>;
   completed: boolean;
   currentUser: ReturnType<typeof useCurrentUser>;
+  detailsTaskId: string | null;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -571,6 +576,7 @@ function PaginatedTaskList({
             memberById={memberById}
             completed={completed}
             currentUser={currentUser}
+            detailsTaskId={detailsTaskId}
           />
         ))}
       </ul>
@@ -612,11 +618,13 @@ function OccurrenceCard({
   memberById,
   completed,
   currentUser,
+  detailsTaskId,
 }: {
   occ: OccurrenceView;
   memberById: Map<string, TeamMember>;
   completed: boolean;
   currentUser: ReturnType<typeof useCurrentUser>;
+  detailsTaskId: string | null;
 }) {
   const [busy, setBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -994,6 +1002,7 @@ function KanbanBoard({
   isLoading,
   currentUser,
   today,
+  detailsTaskId,
 }: {
   atrasadas: OccurrenceView[];
   hoje: OccurrenceView[];
@@ -1003,6 +1012,7 @@ function KanbanBoard({
   isLoading: boolean;
   currentUser: ReturnType<typeof useCurrentUser>;
   today: Date;
+  detailsTaskId: string | null;
 }) {
   const columns = useMemo(() => {
     const todo: OccurrenceView[] = [];
