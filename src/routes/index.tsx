@@ -1,20 +1,21 @@
-/* Execute esta instrucao no projeto: REVERSÃO E CORREÇÃO ABSOLUTA DOS MODAIS (BUG CRÍTICO DE UI)
+/* Execute esta instrucao no projeto: DESTRUA A LÓGICA ATUAL DE MODAIS E CRIE UM FLUXO SIMPLIFICADO
 
-A tentativa anterior falhou. O sistema está abrindo os modais de "Detalhes" e "Reprogramar" ao mesmo tempo, e o DatePicker está renderizando no z-index/DOM errado, impossibilitando a ação.
+A sua tentativa de usar window.closeDetails foi uma péssima prática arquitetural em React. Os modais continuam sobrepostos, o Z-index está quebrado e o sistema travou.
 
-APLIQUE ESTA ARQUITETURA IMEDIATAMENTE:
+Pare de tentar consertar o que está quebrado e APAGUE a lógica de modais duplos. Execute exatamente as instruções abaixo:
 
-1. Separação de Estados (Isolamento Absoluto):
-Os estados isDetailsOpen e isRescheduleModalOpen NÃO PODEM estar ativos ao mesmo tempo a partir do clique no card.
-No botão de "Reprogramar", o evento de clique deve ser EXATAMENTE assim:
-onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsRescheduleModalOpen(true); }}. Se o botão estiver dentro do modal de detalhes, ao clicar em reprogramar, você DEVE fechar o modal de detalhes automaticamente.
+1. Exclua o Modal Sobreposto:
+Remova completamente qualquer fluxo que tente abrir um "Modal de Reprogramação" por cima do "Modal de Detalhes". O clique no card do Kanban deve abrir APENAS UM MODAL: o de Detalhes da Atividade.
 
-2. Correção do DatePicker (Popover):
-O calendário está vazando para o modal de baixo. Encontre o componente do calendário (PopoverContent do shadcn/Radix) dentro do modal de reprogramação e force a renderização dele fora da hierarquia atual.
-Adicione a classe className="z-[99999] pointer-events-auto" no PopoverContent. Se necessário, envolva o PopoverContent em um <Portal> do Radix para garantir que ele flutue acima do overlay escuro.
+2. Reprogramação Embutida (Single Modal):
+Coloque a funcionalidade de reprogramar DENTRO do Modal de Detalhes da Atividade. Crie uma aba (Tabs), um Accordion, ou simplesmente um botão "Reprogramar" que, ao ser clicado, esconde os detalhes da tarefa e mostra o formulário de reprogramação (Data Nova e Justificativa) no mesmo espaço, sem abrir novas janelas.
 
-3. Limpeza Visual:
-O usuário precisa de APENAS UM modal na tela para realizar a reprogramação. Se o modal de Reprogramar estiver aberto, o modal de Detalhes da Atividade não pode estar visível por baixo atrapalhando o z-index do calendário. */
+3. Abandone o Popover (Use Calendário Nativo):
+Como o componente de DatePicker do Radix/shadcn está quebrando o z-index e travando a tela, remova-o deste formulário.
+Substitua o campo de data de reprogramação por um input HTML nativo absolutamente simples: <input type="date" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />. Isso garante 100% que o calendário não vai sofrer com problemas de camadas.
+
+4. Botões Claros:
+No novo formulário embutido, coloque apenas dois botões: "Cancelar" (que volta a mostrar os detalhes da atividade) e "Confirmar nova data" (que faz o UPDATE/INSERT no banco e fecha o modal único). */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -133,13 +134,6 @@ function DashboardPage() {
       navigate({ search: (prev: { taskId?: string }) => ({ ...prev, taskId: undefined }), replace: true });
     }
   }
-
-  useEffect(() => {
-    (window as any).closeDetails = closeDetails;
-    return () => {
-      delete (window as any).closeDetails;
-    };
-  }, [closeDetails]);
 
 
   // Dynamic RBAC schema adaptability: admin + gestor + legacy director aliases
@@ -653,7 +647,6 @@ function OccurrenceCard({
 }) {
   const [busy, setBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editMode, setEditMode] = useState<EditMode>("edit");
   const pointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const member = occ.activity.assigned_user_id
@@ -765,14 +758,7 @@ function OccurrenceCard({
     else toast.success("Conclusão desfeita");
   }
 
-  function openEdit(mode: EditMode) {
-    // 1. Separação de Estados (Isolamento Absoluto):
-    // Se o modal de detalhes estiver aberto, ele deve ser fechado antes de abrir o de reprogramação.
-    if (detailsTaskId) {
-      const closeFn = (window as any).closeDetails;
-      if (closeFn) closeFn();
-    }
-    setEditMode(mode);
+  function openEdit() {
     setEditOpen(true);
   }
 
@@ -941,23 +927,21 @@ function OccurrenceCard({
           <button
             type="button"
             disabled={busy}
-            onClick={stop(() => openEdit("reschedule"))}
+            onClick={stop(openEdit)}
             className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-[#185FA5]/30 hover:bg-[#185FA5]/10 hover:text-[#185FA5] disabled:opacity-50"
           >
             <RotateCw className="h-4 w-4" />
-            Reprogramar
+            Editar
           </button>
         </div>
       )}
 
-      {(!detailsTaskId || detailsTaskId !== occ.activity.id) && (
-        <EditActivitySheet
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          occurrence={occ}
-          mode={editMode}
-        />
-      )}
+      <EditActivitySheet
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        occurrence={occ}
+        mode="edit"
+      />
     </li>
   );
 }
