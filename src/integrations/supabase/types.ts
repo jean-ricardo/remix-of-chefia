@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           assigned_user_id: string | null
           created_at: string
+          description: string | null
           due_date: string | null
           id: string
           month_day: number | null
@@ -31,6 +32,7 @@ export type Database = {
         Insert: {
           assigned_user_id?: string | null
           created_at?: string
+          description?: string | null
           due_date?: string | null
           id?: string
           month_day?: number | null
@@ -44,6 +46,7 @@ export type Database = {
         Update: {
           assigned_user_id?: string | null
           created_at?: string
+          description?: string | null
           due_date?: string | null
           id?: string
           month_day?: number | null
