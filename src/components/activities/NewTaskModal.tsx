@@ -96,13 +96,14 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
         recurrence: form.recurrence,
         description: form.description.trim(),
         created_by: currentUser.id,
-      } as any)
+        status: "todo",
+      })
       .select("id")
       .maybeSingle();
 
     if (error) {
       console.error("[activities] insert failed", error);
-      toast.error("Não foi possível criar a atividade");
+      toast.error(error.message || "Não foi possível criar a atividade");
       setSubmitting(false);
       return;
     }
