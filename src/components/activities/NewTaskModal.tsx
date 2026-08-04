@@ -94,8 +94,6 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
         recurrence_type: "unica",
         due_date: effectiveDate,
         recurrence: form.recurrence,
-        description: form.description.trim() || null,
-        created_by: currentUser.id,
       })
       .select("id")
       .maybeSingle();

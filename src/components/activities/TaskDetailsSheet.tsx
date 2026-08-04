@@ -115,7 +115,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,created_by,description")
+        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date")
         .eq("id", taskId!)
         .maybeSingle();
       if (error) throw error;
