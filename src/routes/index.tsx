@@ -911,12 +911,14 @@ function OccurrenceCard({
         </div>
       )}
 
-      <EditActivitySheet
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        occurrence={occ}
-        mode={editMode}
-      />
+      {!detailsTaskId && (
+        <EditActivitySheet
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          occurrence={occ}
+          mode={editMode}
+        />
+      )}
     </li>
   );
 }
