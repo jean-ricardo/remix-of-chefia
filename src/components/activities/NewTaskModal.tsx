@@ -95,7 +95,8 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
         due_date: effectiveDate,
         recurrence: form.recurrence,
         description: form.description.trim(),
-      })
+        created_by: currentUser.id,
+      } as any)
       .select("id")
       .maybeSingle();
 
@@ -108,7 +109,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
 
     // Silent audit trail.
     void logActivity({
-      actorName: currentUser.name,
+      actorName: currentUser.name || "Usuário",
       actionType: "create",
       details: `Criou a atividade "${form.title.trim()}" com vencimento em ${formatDateBR(effectiveDate)}.`,
       taskId: inserted?.id ?? null,
