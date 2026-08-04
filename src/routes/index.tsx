@@ -345,12 +345,12 @@ function DashboardPage() {
               hoje={hoje}
               proximas={proximas}
               concluidas={concluidas}
-          memberById={memberById}
-          isLoading={false}
-          currentUser={currentUser}
-          today={today}
-          detailsTaskId={detailsTaskId}
-        />
+              memberById={memberById}
+              isLoading={false}
+              currentUser={currentUser}
+              today={today}
+              detailsTaskId={detailsTaskId}
+            />
 
           </>
         )}
