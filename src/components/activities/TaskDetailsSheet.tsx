@@ -244,6 +244,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
           taskId: activity.id,
         });
         toast.success("Atividade marcada como em andamento");
+      }
 
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["completions"] }),
