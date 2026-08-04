@@ -9,17 +9,8 @@ import {
   Lock,
   RotateCw,
   User as UserIcon,
-  X,
 } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import {
@@ -38,11 +29,6 @@ import {
   useTeamMembers,
 } from "@/lib/useRotina";
 import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
-import { logActivity } from "@/lib/activityLog";
-import { useServerFn } from "@tanstack/react-start";
-import { sendWhatsAppNotification } from "@/lib/whatsapp-notify.functions";
-import { formatDateBR, platformLink, resolveMemberWhatsApp } from "@/lib/taskNotify";
-
 
 export type TaskStatus = "todo" | "in_progress" | "done";
 
@@ -50,41 +36,25 @@ interface Props {
   taskId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  /** Optional pre-built occurrence (from dashboard click). If absent, we fetch by id. */
   occurrence?: OccurrenceView | null;
 }
 
-/**
- * Premium Task Details Sheet.
- * - RBAC:
- *   - admin/gestor: full edit affordances.
- *   - usuario: locked read-only text for title/description/assignee.
- *     Status + reschedule (date + justification) remain editable.
- * - Reschedule is DB-safe (PATCH-only): inserts into `reschedules`
- *   using only { activity_id, original_occurrence_key, new_date, justification }.
- *   The parent `activities` row is NEVER rewritten from this sheet.
- * - When the current status is "done", the reschedule action is disabled
- *   with premium micro-copy — enforced reactively on local status state.
- */
 export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props) {
-  const qc = useQueryClient();
   const activities = useActivities();
   const completions = useCompletions();
   const reschedules = useReschedules();
   const members = useTeamMembers();
   const currentUser = useCurrentUser();
-  const notify = useServerFn(sendWhatsAppNotification);
 
   const today = useMemo(() => new Date(), [isOpen, taskId]);
 
-  // If deep-linked and the activity is not yet in the cached list, fetch it.
   const deepFetch = useQuery({
     queryKey: ["activity", taskId],
     enabled: !!taskId && isOpen && !occurrence && !(activities.data ?? []).some((a) => a.id === taskId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,description,status")
+        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,description,status,created_by")
         .eq("id", taskId!)
         .maybeSingle();
       if (error) throw error;
@@ -102,35 +72,11 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
     );
   }, [occurrence, taskId, activities.data, deepFetch.data]);
 
-  // RBAC: Edit restricted if not Admin/Director and not the author (created_by)
   const isGlobal = hasGlobalScope(currentUser.role);
   const authorId = (activity as any)?.created_by;
   const isAuthor = authorId === currentUser.id;
   const canEditBase = isGlobal || isAuthor;
   const isReadOnly = !canEditBase;
-
-  /** Fire-and-forget: falha de WhatsApp nunca reverte o banco nem quebra a UI. */
-  function dispatchWhatsApp(
-    action: "complete" | "reschedule",
-    taskTitle: string,
-    memberId: string | null,
-    dueLabel: string,
-    linkTaskId?: string | null,
-  ) {
-    const number = resolveMemberWhatsApp(memberId, members.data);
-    if (!number) return;
-    void notify({
-      data: {
-        number,
-        taskTitle,
-        startDate: dueLabel,
-        endDate: dueLabel,
-        platformLink: platformLink(linkTaskId),
-        actorName: currentUser.name,
-        action,
-      },
-    }).catch((err) => console.error("[whatsapp-notify] dispatch failed", err));
-  }
 
   const view: OccurrenceView | null = useMemo(() => {
     if (occurrence) return occurrence;
@@ -151,160 +97,10 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
     ? (members.data ?? []).find((m) => m.id === activity.assigned_user_id) ?? null
     : null;
 
-  const initialStatus: TaskStatus = view?.completed ? "done" : "todo";
-  const [status, setStatus] = useState<TaskStatus>(initialStatus);
-  const [saving, setSaving] = useState(false);
+  const loading = (!activity && (deepFetch.isLoading || activities.isLoading)) || !view;
 
-  // Reschedule local state (PATCH payload only)
-  const [rescheduleDate, setRescheduleDate] = useState<string>("");
-  const [rescheduleReason, setRescheduleReason] = useState<string>("");
-  const [rescheduling, setRescheduling] = useState(false);
-
-  useEffect(() => {
-    setStatus(initialStatus);
-  }, [initialStatus, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    // Prefill with the current effective date so the picker is anchored.
-    const d = view?.effectiveDate;
-    setRescheduleDate(
-      d
-        ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-            d.getDate(),
-          ).padStart(2, "0")}`
-        : "",
-    );
-    setRescheduleReason("");
-  }, [isOpen, view?.effectiveDate]);
-
-  const loading =
-    (!activity && (deepFetch.isLoading || activities.isLoading)) || !view;
-
-  // Reactive lock: derives instantly from local status without waiting for refetch.
-  const rescheduleLocked = status === "done";
-
-  async function handleStatusChange(next: TaskStatus) {
-    if (!activity || !view) return;
-    const prev = status;
-    setStatus(next);
-    setSaving(true);
-    try {
-      if (next === "done" && !view.completed) {
-        // PATCH-safe: only id + occurrence key inserted into completions.
-        const { error } = await supabase.from("completions").upsert(
-          { activity_id: activity.id, occurrence_key: view.originalKey },
-          { onConflict: "activity_id,occurrence_key" },
-        );
-        if (error) throw error;
-        void logActivity({
-          actorName: currentUser.name,
-          actionType: "status",
-          details: `Concluiu a atividade "${activity.title}".`,
-          taskId: activity.id,
-        });
-        toast.success("Atividade marcada como concluída");
-        dispatchWhatsApp(
-          "complete",
-          activity.title,
-          activity.assigned_user_id,
-          formatDateBR(
-            view.effectiveDate
-              ? `${view.effectiveDate.getFullYear()}-${String(view.effectiveDate.getMonth() + 1).padStart(2, "0")}-${String(view.effectiveDate.getDate()).padStart(2, "0")}`
-              : activity.due_date,
-          ),
-          activity.id,
-        );
-
-      } else if (next !== "done" && view.completed) {
-        const { error } = await supabase
-          .from("completions")
-          .delete()
-          .eq("activity_id", activity.id)
-          .eq("occurrence_key", view.originalKey);
-        if (error) throw error;
-        void logActivity({
-          actorName: currentUser.name,
-          actionType: "status",
-          details: `Reabriu a atividade "${activity.title}".`,
-          taskId: activity.id,
-        });
-        toast.success("Conclusão desfeita");
-      } else if (next === "in_progress") {
-        // BUG 2 Fix: Execute real UPDATE for in_progress status
-        const { error } = await supabase
-          .from("activities")
-          .update({ status: "in_progress" } as any)
-          .eq("id", activity.id);
-        if (error) throw error;
-        void logActivity({
-          actorName: currentUser.name,
-          actionType: "status",
-          details: `Iniciou a atividade "${activity.title}".`,
-          taskId: activity.id,
-        });
-        toast.success("Atividade marcada como em andamento");
-      }
-
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ["completions"] }),
-        qc.invalidateQueries({ queryKey: ["activities"] }),
-      ]);
-    } catch (e) {
-      setStatus(prev);
-      toast.error("Não foi possível atualizar: " + (e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleReschedule() {
-    if (!activity || !view) return;
-    if (rescheduleLocked) return;
-    if (!rescheduleDate) {
-      toast.error("Selecione a nova data.");
-      return;
-    }
-    setRescheduling(true);
-    try {
-      // PATCH-safe: ONLY the minimal payload — never rewrites the activity row.
-      const { error } = await supabase.from("reschedules").insert({
-        activity_id: activity.id,
-        original_occurrence_key: view.originalKey,
-        new_date: rescheduleDate,
-        justification: rescheduleReason.trim(),
-      });
-      if (error) throw error;
-      void logActivity({
-        actorName: currentUser.name,
-        actionType: "reschedule",
-        details: `Reprogramou "${activity.title}" para ${rescheduleDate.split("-").reverse().join("/")}${
-          rescheduleReason.trim() ? ` — ${rescheduleReason.trim()}` : ""
-        }.`,
-        taskId: activity.id,
-      });
-      toast.success("Atividade reprogramada");
-      await qc.invalidateQueries({ queryKey: ["reschedules"] });
-      dispatchWhatsApp(
-        "reschedule",
-        activity.title,
-        activity.assigned_user_id,
-        formatDateBR(rescheduleDate),
-        activity.id,
-      );
-
-    } catch (e) {
-      toast.error("Não foi possível reprogramar: " + (e as Error).message);
-    } finally {
-      setRescheduling(false);
-    }
-  }
-
-  // Legacy schema doesn't include description/start/end — polished fallbacks.
-  const description =
-    (activity as (Activity & { description?: string | null }) | null)?.description ?? null;
-  const startDate =
-    (activity as (Activity & { start_date?: string | null }) | null)?.start_date ?? null;
+  const description = (activity as any)?.description ?? null;
+  const startDate = (activity as any)?.start_date ?? null;
   const endDate = view?.effectiveDate
     ? format(view.effectiveDate, "d 'de' MMM, yyyy", { locale: ptBR })
     : activity?.due_date
@@ -322,18 +118,13 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
 
   return (
     <Sheet open={isOpen} onOpenChange={(o) => (!o ? onClose() : null)}>
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
-      >
+      <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
         {loading || !activity || !view ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-[#185FA5]" />
           </div>
         ) : (
           <div className="flex h-full flex-col">
-
-            {/* Sticky header */}
             <div className="flex items-start justify-between gap-3 border-b border-border/60 bg-white px-5 py-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -358,8 +149,6 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                     {activity.title}
                   </h2>
                 )}
-                
-                {/* Selo de Autoria Inteligente */}
                 <div className="mt-1 truncate text-xs text-gray-500">
                   {(() => {
                     const creatorId = activity?.created_by;
@@ -369,10 +158,8 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                   })()}
                 </div>
               </div>
-              {/* Botão X duplicado removido: o SheetContent nativo já fornece um botão de fechar no topo. */}
             </div>
 
-            {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto bg-[#F7F6F2] px-5 py-5">
               <dl className="grid grid-cols-2 gap-4">
                 <MetaField
@@ -392,20 +179,11 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                   }
                   className="col-span-2"
                 />
-                <MetaField
-                  label="Prioridade"
-                  value={<PriorityBadge priority={activity.priority} />}
-                />
+                <MetaField label="Prioridade" value={<PriorityBadge priority={activity.priority} />} />
                 <MetaField
                   label="Início"
                   icon={<CalendarIcon className="h-3.5 w-3.5" />}
-                  value={
-                    startDate ? (
-                      format(new Date(startDate), "d 'de' MMM, yyyy", { locale: ptBR })
-                    ) : (
-                      <Empty>Não informado</Empty>
-                    )
-                  }
+                  value={startDate ? format(new Date(startDate), "d 'de' MMM, yyyy", { locale: ptBR }) : <Empty>Não informado</Empty>}
                 />
                 <MetaField
                   label="Vencimento"
@@ -431,25 +209,17 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                 {isReadOnly ? (
                   <ReadOnlyBlock>
                     {description ? (
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#042C53]">
-                        {description}
-                      </p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#042C53]">{description}</p>
                     ) : (
-                      <p className="text-sm italic text-gray-400">
-                        Nenhuma descrição informada
-                      </p>
+                      <p className="text-sm italic text-gray-400">Nenhuma descrição informada</p>
                     )}
                   </ReadOnlyBlock>
                 ) : (
                   <div className="space-y-2">
                     {description ? (
-                      <div className="whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
-                        {description}
-                      </div>
+                      <div className="whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-sm text-gray-700">{description}</div>
                     ) : (
-                      <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm italic text-gray-400">
-                        Nenhuma descrição informada
-                      </div>
+                      <div className="rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm italic text-gray-400">Nenhuma descrição informada</div>
                     )}
                   </div>
                 )}
@@ -461,32 +231,18 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                     <RotateCw className="h-3 w-3" />
                     Justificativa da reprogramação
                   </div>
-                  <p className="whitespace-pre-wrap text-sm text-[#042C53]">
-                    {view.rescheduleJustification}
-                  </p>
+                  <p className="whitespace-pre-wrap text-sm text-[#042C53]">{view.rescheduleJustification}</p>
                 </div>
               )}
-
             </div>
-          )}
-        </SheetContent>
-      </Sheet>
-    );
-  }
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
 
-function MetaField({
-  label,
-  value,
-  icon,
-  className,
-  locked,
-}: {
-  label: string;
-  value: React.ReactNode;
-  icon?: React.ReactNode;
-  className?: string;
-  locked?: boolean;
-}) {
+function MetaField({ label, value, icon, className, locked }: { label: string; value: React.ReactNode; icon?: React.ReactNode; className?: string; locked?: boolean }) {
   return (
     <div className={cn("min-w-0", className)}>
       <dt className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
@@ -499,27 +255,8 @@ function MetaField({
   );
 }
 
-/**
- * High-contrast read-only block for `usuario` role — replaces disabled inputs
- * that would otherwise look washed-out on mobile.
- */
-function ReadOnlyBlock({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-lg border border-[#042C53]/10 bg-white px-3 py-2.5 shadow-[inset_0_1px_0_rgba(4,44,83,0.03)]",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
+function ReadOnlyBlock({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("rounded-lg border border-[#042C53]/10 bg-white px-3 py-2.5 shadow-[inset_0_1px_0_rgba(4,44,83,0.03)]", className)}>{children}</div>;
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
@@ -532,14 +269,5 @@ function PriorityBadge({ priority }: { priority: Priority }) {
     media: "bg-yellow-50 text-yellow-700",
     baixa: "bg-blue-50 text-[#185FA5]",
   };
-  return (
-    <span
-      className={cn(
-        "inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium",
-        map[priority] ?? "bg-gray-100 text-gray-600",
-      )}
-    >
-      {PRIORITY_LABEL[priority]}
-    </span>
-  );
+  return <span className={cn("inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium", map[priority] ?? "bg-gray-100 text-gray-600")}>{PRIORITY_LABEL[priority]}</span>;
 }
