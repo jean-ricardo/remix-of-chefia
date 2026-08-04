@@ -234,7 +234,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
         // BUG 2 Fix: Execute real UPDATE for in_progress status
         const { error } = await supabase
           .from("activities")
-          .update({ status: "in_progress" })
+          .update({ status: "in_progress" } as any)
           .eq("id", activity.id);
         if (error) throw error;
         void logActivity({
