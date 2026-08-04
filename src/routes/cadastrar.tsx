@@ -84,30 +84,24 @@ function CadastrarPage() {
 
     setBusy(true);
 
-    // O código NÃO é validado contra o banco (RLS bloqueia anônimos).
-    // Ele é aceito às cegas e guardado no metadata + no perfil pendente.
-    const { data, error } = await supabase.auth.signUp({
-      email: cleanEmail,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: {
-          full_name: cleanName,
-          team_code_pending: cleanCode,
-          status: "pendente",
-        },
-      },
-    });
-
-    if (error) {
-      setBusy(false);
-      toast.error(friendlyError(error.message));
-      return;
-    }
-
-    // Perfil aguardando aprovação. `role` guarda apenas texto livre
-    // (equipe:<código>), nunca uma coluna relacional.
     try {
+      // 1. Auth Sign Up
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            full_name: cleanName,
+            team_code_pending: cleanCode,
+            status: "pendente",
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      // 2. Transação Única no Frontend: INSERT no team_members
       const { data: existing } = await supabase
         .from("team_members")
         .select("id,cargo_principal")
@@ -116,51 +110,51 @@ function CadastrarPage() {
         .maybeSingle();
 
       if (existing?.id) {
-        // Membros já aprovados nunca voltam para pendente (retrocompatibilidade).
         if (String(existing.cargo_principal ?? "").toLowerCase() === "pendente") {
-          await supabase
+          const { error: updErr } = await supabase
             .from("team_members")
             .update({ name: cleanName, role: `equipe:${cleanCode}` })
             .eq("id", existing.id);
+          if (updErr) throw updErr;
         } else {
-          await supabase
+          const { error: updErr } = await supabase
             .from("team_members")
             .update({ name: cleanName })
             .eq("id", existing.id);
+          if (updErr) throw updErr;
         }
       } else {
-        await supabase.from("team_members").insert({
+        const { error: insErr } = await supabase.from("team_members").insert({
           name: cleanName,
           email: cleanEmail,
           cargo_principal: "pendente",
           role: `equipe:${cleanCode}`,
         });
+        if (insErr) throw insErr;
       }
-    } catch (err) {
-      console.error("[cadastrar] falha ao gravar perfil na equipe", err);
+
+      // Login imediato se necessário
+      if (!data.session) {
+        await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+      }
+
+      const { data: after } = await supabase.auth.getSession();
+      setBusy(false);
+
+      if (after.session) {
+        toast.success("Cadastro realizado! Aguarde a aprovação do administrador.");
+        navigate({ to: "/", replace: true });
+        return;
+      }
+
+      toast.success("Cadastro criado! Confirme o e-mail para liberar seu acesso.");
+      navigate({ to: "/login", replace: true });
+
+    } catch (err: any) {
+      setBusy(false);
+      console.error("[cadastrar] erro na transação de cadastro", err);
+      toast.error(friendlyError(err.message || "Erro inesperado ao criar acesso."));
     }
-
-
-    if (!data.session) {
-      // E-mail com confirmação obrigatória: tenta login imediato.
-      await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-    }
-
-    const { data: after } = await supabase.auth.getSession();
-    setBusy(false);
-
-    if (after.session) {
-      toast.success(
-        "Cadastro realizado! Aguarde a aprovação do administrador da equipe.",
-      );
-      navigate({ to: "/", replace: true });
-      return;
-    }
-
-    toast.success(
-      "Cadastro criado! Confirme o e-mail que enviamos para liberar seu acesso.",
-    );
-    navigate({ to: "/login", replace: true });
   }
 
   return (

@@ -73,7 +73,13 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
   const reschedules = useReschedules();
   const members = useTeamMembers();
   const currentUser = useCurrentUser();
-  const isReadOnly = !hasGlobalScope(currentUser.role);
+  
+  // RBAC: Edit restricted if not Admin/Director and not the author (created_by)
+  const isGlobal = hasGlobalScope(currentUser.role);
+  const isAuthor = activity?.created_by === currentUser.id;
+  const canEditBase = isGlobal || isAuthor;
+  const isReadOnly = !canEditBase;
+  
   const notify = useServerFn(sendWhatsAppNotification);
 
   /** Fire-and-forget: falha de WhatsApp nunca reverte o banco nem quebra a UI. */
@@ -109,7 +115,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date")
+        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,created_by,description")
         .eq("id", taskId!)
         .maybeSingle();
       if (error) throw error;
@@ -342,6 +348,16 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                     {activity.title}
                   </h2>
                 )}
+                
+                {/* Selo de Autoria Inteligente */}
+                <div className="mt-1 truncate text-xs text-gray-500">
+                  {(() => {
+                    const creatorId = activity?.created_by;
+                    if (!creatorId) return "Criada por: Sistema";
+                    const creatorMember = (members.data ?? []).find(m => m.id === creatorId);
+                    return `Criada por: ${creatorMember?.name || "Membro"}`;
+                  })()}
+                </div>
               </div>
               <button
                 type="button"

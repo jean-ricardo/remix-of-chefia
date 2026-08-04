@@ -201,6 +201,7 @@ function DashboardPage() {
     members.isLoading;
 
   // Anti-flicker lock: block Kanban render until BOTH data and role are resolved.
+  // IMMEDIATE redirect for pending users is handled by ProtectedRoute in RouteGuards.
   const isReady = !isLoading && rawRole !== undefined;
 
   const impersonatedName =

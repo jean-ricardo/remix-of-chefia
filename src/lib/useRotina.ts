@@ -32,7 +32,7 @@ export function useActivities() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,recurrence")
+        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,recurrence,created_by,description")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Activity[];
