@@ -84,7 +84,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date")
+        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,description,status")
         .eq("id", taskId!)
         .maybeSingle();
       if (error) throw error;
@@ -552,36 +552,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
               </div>
             </div>
 
-            {/* Sticky footer */}
-            <div className="border-t border-border/60 bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Status
-              </label>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={status}
-                  onValueChange={(v) => handleStatusChange(v as TaskStatus)}
-                  disabled={saving}
-                >
-                  <SelectTrigger
-                    className={cn(
-                      "h-11 flex-1 bg-white",
-                      saving && "opacity-60",
-                    )}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todo">A Fazer</SelectItem>
-                    <SelectItem value="in_progress">Em Andamento</SelectItem>
-                    <SelectItem value="done">Concluído</SelectItem>
-                  </SelectContent>
-                </Select>
-                {saving && (
-                  <Loader2 className="h-4 w-4 animate-spin text-[#185FA5]" />
-                )}
-              </div>
-            </div>
+            {/* Status Select Removed - Status changes are now done via Kanban card buttons */}
           </div>
         )}
       </SheetContent>
