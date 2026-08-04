@@ -109,7 +109,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
 
     // Silent audit trail.
     void logActivity({
-      actorName: currentUser.name,
+      actorName: currentUser.name || "Usuário",
       actionType: "create",
       details: `Criou a atividade "${form.title.trim()}" com vencimento em ${formatDateBR(effectiveDate)}.`,
       taskId: inserted?.id ?? null,
