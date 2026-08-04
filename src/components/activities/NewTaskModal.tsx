@@ -94,6 +94,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
         recurrence_type: "unica",
         due_date: effectiveDate,
         recurrence: form.recurrence,
+        description: form.description.trim(), // Fix: Include description in the insert payload
       })
       .select("id")
       .maybeSingle();

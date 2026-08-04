@@ -667,6 +667,17 @@ function OccurrenceCard({
     toast.success(`Próxima ocorrência criada para ${format(new Date(`${nextDue}T00:00:00`), "dd/MM/yyyy")}`);
   }
 
+  async function start() {
+    setBusy(true);
+    const { error } = await supabase
+      .from("activities")
+      .update({ status: "in_progress" } as any)
+      .eq("id", occ.activity.id);
+    setBusy(false);
+    if (error) toast.error("Não foi possível iniciar: " + error.message);
+    else toast.success("Atividade em andamento");
+  }
+
   async function complete() {
     setBusy(true);
     const { error } = await supabase.from("completions").upsert(
@@ -676,7 +687,13 @@ function OccurrenceCard({
       },
       { onConflict: "activity_id,occurrence_key" },
     );
-    if (!error) await cloneRecurring();
+    if (!error) {
+      await supabase
+        .from("activities")
+        .update({ status: "done" } as any)
+        .eq("id", occ.activity.id);
+      await cloneRecurring();
+    }
     setBusy(false);
     if (error) toast.error("Não foi possível concluir: " + error.message);
     else toast.success("Atividade concluída");
@@ -826,7 +843,7 @@ function OccurrenceCard({
       )}
 
       {canAct && (
-        <div className="mt-4 flex gap-2 border-t border-gray-50 pt-3">
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-50 pt-3">
           {completed ? (
             <button
               type="button"
@@ -837,15 +854,28 @@ function OccurrenceCard({
               Desfazer
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={stop(complete)}
-              disabled={busy}
-              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              Concluir
-            </button>
+            <>
+              {resolveColumn(occ, false) === "todo" && (
+                <button
+                  type="button"
+                  onClick={stop(start)}
+                  disabled={busy}
+                  className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-[#185FA5]/30 hover:bg-[#185FA5]/10 hover:text-[#185FA5] disabled:opacity-50"
+                >
+                  <Clock className="h-4 w-4" />
+                  Iniciar
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={stop(complete)}
+                disabled={busy}
+                className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Concluir
+              </button>
+            </>
           )}
           <button
             type="button"
