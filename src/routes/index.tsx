@@ -1,3 +1,20 @@
+/* Execute esta instrucao no projeto: REVERSÃO E CORREÇÃO ABSOLUTA DOS MODAIS (BUG CRÍTICO DE UI)
+
+A tentativa anterior falhou. O sistema está abrindo os modais de "Detalhes" e "Reprogramar" ao mesmo tempo, e o DatePicker está renderizando no z-index/DOM errado, impossibilitando a ação.
+
+APLIQUE ESTA ARQUITETURA IMEDIATAMENTE:
+
+1. Separação de Estados (Isolamento Absoluto):
+Os estados isDetailsOpen e isRescheduleModalOpen NÃO PODEM estar ativos ao mesmo tempo a partir do clique no card.
+No botão de "Reprogramar", o evento de clique deve ser EXATAMENTE assim:
+onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsRescheduleModalOpen(true); }}. Se o botão estiver dentro do modal de detalhes, ao clicar em reprogramar, você DEVE fechar o modal de detalhes automaticamente.
+
+2. Correção do DatePicker (Popover):
+O calendário está vazando para o modal de baixo. Encontre o componente do calendário (PopoverContent do shadcn/Radix) dentro do modal de reprogramação e force a renderização dele fora da hierarquia atual.
+Adicione a classe className="z-[99999] pointer-events-auto" no PopoverContent. Se necessário, envolva o PopoverContent em um <Portal> do Radix para garantir que ele flutue acima do overlay escuro.
+
+3. Limpeza Visual:
+O usuário precisa de APENAS UM modal na tela para realizar a reprogramação. Se o modal de Reprogramar estiver aberto, o modal de Detalhes da Atividade não pode estar visível por baixo atrapalhando o z-index do calendário. */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -116,6 +133,13 @@ function DashboardPage() {
       navigate({ search: (prev: { taskId?: string }) => ({ ...prev, taskId: undefined }), replace: true });
     }
   }
+
+  useEffect(() => {
+    (window as any).closeDetails = closeDetails;
+    return () => {
+      delete (window as any).closeDetails;
+    };
+  }, [closeDetails]);
 
 
   // Dynamic RBAC schema adaptability: admin + gestor + legacy director aliases
@@ -741,6 +765,12 @@ function OccurrenceCard({
   }
 
   function openEdit(mode: EditMode) {
+    // 1. Separação de Estados (Isolamento Absoluto):
+    // Se o modal de detalhes estiver aberto, ele deve ser fechado antes de abrir o de reprogramação.
+    if (detailsTaskId) {
+      const closeFn = (window as any).closeDetails;
+      if (closeFn) closeFn();
+    }
     setEditMode(mode);
     setEditOpen(true);
   }
