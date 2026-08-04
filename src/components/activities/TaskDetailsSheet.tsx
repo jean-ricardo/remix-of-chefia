@@ -427,11 +427,3 @@ function PriorityBadge({ priority }: { priority: Priority }) {
   return <span className={cn("inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium", map[priority] ?? "bg-gray-100 text-gray-600")}>{PRIORITY_LABEL[priority]}</span>;
 }
 
-function PriorityBadge({ priority }: { priority: Priority }) {
-  const map: Record<Priority, string> = {
-    alta: "bg-red-50 text-red-600",
-    media: "bg-yellow-50 text-yellow-700",
-    baixa: "bg-blue-50 text-[#185FA5]",
-  };
-  return <span className={cn("inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium", map[priority] ?? "bg-gray-100 text-gray-600")}>{PRIORITY_LABEL[priority]}</span>;
-}
