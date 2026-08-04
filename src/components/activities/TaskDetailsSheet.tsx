@@ -132,30 +132,6 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
     }).catch((err) => console.error("[whatsapp-notify] dispatch failed", err));
   }
 
-
-  /** Fire-and-forget: falha de WhatsApp nunca reverte o banco nem quebra a UI. */
-  function dispatchWhatsApp(
-    action: "complete" | "reschedule",
-    taskTitle: string,
-    memberId: string | null,
-    dueLabel: string,
-    linkTaskId?: string | null,
-  ) {
-    const number = resolveMemberWhatsApp(memberId, members.data);
-    if (!number) return;
-    void notify({
-      data: {
-        number,
-        taskTitle,
-        startDate: dueLabel,
-        endDate: dueLabel,
-        platformLink: platformLink(linkTaskId),
-        actorName: currentUser.name,
-        action,
-      },
-    }).catch((err) => console.error("[whatsapp-notify] dispatch failed", err));
-  }
-
   const view: OccurrenceView | null = useMemo(() => {
     if (occurrence) return occurrence;
     if (!activity) return null;
