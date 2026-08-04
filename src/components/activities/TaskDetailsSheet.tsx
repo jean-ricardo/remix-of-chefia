@@ -332,6 +332,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
           </div>
         ) : (
           <div className="flex h-full flex-col">
+
             {/* Sticky header */}
             <div className="flex items-start justify-between gap-3 border-b border-border/60 bg-white px-5 py-4">
               <div className="min-w-0">
