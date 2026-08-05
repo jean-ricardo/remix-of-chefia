@@ -160,7 +160,9 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
 
     // Notify the CREATOR (created_by)
     const creatorPhone = creatorMember?.telefone;
-    if (creatorPhone) {
+    const isSelfAction = activity.created_by === currentUser.id;
+
+    if (creatorPhone && !isSelfAction) {
       void notify({
         data: {
           number: creatorPhone,
