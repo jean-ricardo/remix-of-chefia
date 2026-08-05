@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
-import { EditActivitySheet, type EditMode } from "@/components/activities/EditActivitySheet";
+
 import { TaskDetailsSheet } from "@/components/activities/TaskDetailsSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
