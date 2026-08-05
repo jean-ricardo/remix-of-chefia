@@ -130,8 +130,10 @@ function ReprogramadasPage() {
 
       toast.success("Registros excluídos com sucesso.");
       setSelectedIds([]);
-      qc.invalidateQueries({ queryKey: ["reschedules"] });
-      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["reschedules"] }),
+        qc.invalidateQueries({ queryKey: ["activity_logs"] }),
+      ]);
     } catch (err: any) {
       console.error("Erro ao excluir reprogramações:", err);
       toast.error("Erro ao excluir registros.");

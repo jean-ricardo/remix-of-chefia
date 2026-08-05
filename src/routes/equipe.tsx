@@ -150,12 +150,12 @@ function EquipePage() {
   async function reject(id: string, name: string) {
     setBusyId(id);
     const { error } = await supabase.from("team_members").delete().eq("id", id);
-    setBusyId(null);
+    
     if (error) {
+      setBusyId(null);
       toast.error("Não foi possível recusar agora. Tente novamente.");
       return;
     }
-    toast.success(`Solicitação de ${name} recusada.`);
     
     await logActivity({
       actorName: currentUser?.name || "Usuário",
@@ -163,7 +163,11 @@ function EquipePage() {
       details: `${currentUser?.name || "Usuário"} recusou a solicitação de ${name}.`,
     });
     
-    await pending.refetch();
+    toast.success(`Solicitação de ${name} recusada.`);
+    
+    // Invalidação agressiva
+    await queryClient.invalidateQueries({ queryKey: ["team_members", "pending"] });
+    setBusyId(null);
   }
 
   const counts = useMemo(() => {
