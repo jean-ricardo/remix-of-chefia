@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 
 import {
   ACTION_LABEL,
@@ -11,6 +11,20 @@ import {
 } from "@/lib/activityLog";
 import { hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/historico")({
   head: () => ({
@@ -68,10 +82,14 @@ function HistoricoPage() {
 
   useActivityLogsRealtime(allowed);
   const { data, isLoading } = useActivityLogs(allowed);
+  const qc = useQueryClient();
 
   const [actor, setActor] = useState("all");
   const [action, setAction] = useState("all");
   const [term, setTerm] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const logs: ActivityLog[] = useMemo(() => data ?? [], [data]);
 
@@ -100,6 +118,43 @@ function HistoricoPage() {
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
   }, [logs, actor, action, term]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filtered.map((l) => l.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
+
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("activity_logs")
+        .delete()
+        .in("id", selectedIds);
+
+      if (error) throw error;
+
+      toast.success("Registros excluídos com sucesso.");
+      setSelectedIds([]);
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    } catch (err: any) {
+      console.error("Erro ao excluir logs:", err);
+      toast.error("Erro ao excluir registros.");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
 
   if (!allowed) {
     return (
@@ -137,17 +192,45 @@ function HistoricoPage() {
             Auditoria em tempo real das atividades da equipe
           </p>
         </div>
+
+        {selectedIds.length > 0 && (
+          <Button
+            variant="destructive"
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="h-10 gap-2 shadow-sm"
+          >
+            <Trash2 className="h-4 w-4" />
+            Excluir ({selectedIds.length}) selecionados
+          </Button>
+        )}
       </header>
 
       <div className="flex flex-col gap-3 rounded-2xl border border-[#042C53]/10 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#444441]/60" />
-          <input
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Buscar por atividade ou responsável"
-            className="h-11 w-full rounded-lg border border-[#042C53]/15 bg-white pl-9 pr-3 text-sm text-[#042C53] placeholder:text-[#444441]/60 focus:outline-none focus:ring-2 focus:ring-[#185FA5]/40"
-          />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 rounded-lg border border-[#042C53]/10 bg-[#042C53]/5 px-3 py-2">
+            <Checkbox
+              id="select-all"
+              checked={
+                filtered.length > 0 && selectedIds.length === filtered.length
+              }
+              onCheckedChange={toggleSelectAll}
+            />
+            <label
+              htmlFor="select-all"
+              className="cursor-pointer text-xs font-medium text-[#042C53]"
+            >
+              Selecionar Todos
+            </label>
+          </div>
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#444441]/60" />
+            <input
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder="Buscar por atividade ou responsável"
+              className="h-11 w-full rounded-lg border border-[#042C53]/15 bg-white pl-9 pr-3 text-sm text-[#042C53] placeholder:text-[#444441]/60 focus:outline-none focus:ring-2 focus:ring-[#185FA5]/40"
+            />
+          </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
@@ -197,9 +280,21 @@ function HistoricoPage() {
           {filtered.map((log) => (
             <li
               key={log.id}
-              className="rounded-xl border border-[#042C53]/10 bg-white px-4 py-3 transition-shadow hover:shadow-sm"
+              className={cn(
+                "group relative rounded-xl border transition-all hover:shadow-sm",
+                selectedIds.includes(log.id)
+                  ? "border-[#185FA5] bg-[#185FA5]/5"
+                  : "border-[#042C53]/10 bg-white",
+              )}
             >
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+              <div className="flex items-start gap-3 p-4">
+                <div className="pt-1">
+                  <Checkbox
+                    checked={selectedIds.includes(log.id)}
+                    onCheckedChange={() => toggleSelect(log.id)}
+                  />
+                </div>
+                <div className="grid flex-1 grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
                   <p className="text-sm text-[#042C53]">
                     <span className="font-semibold">{log.actor_name}</span>{" "}
@@ -220,10 +315,37 @@ function HistoricoPage() {
                   {formatWhen(log.created_at)}
                 </time>
               </div>
+            </div>
             </li>
           ))}
         </ul>
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir registros selecionados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja apagar permanentemente estes registros do
+              histórico? Esta ação não pode ser desfeita e os dados serão
+              removidos do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Sim, excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

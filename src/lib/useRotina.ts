@@ -59,7 +59,7 @@ export function useReschedules() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reschedules")
-        .select("activity_id,original_occurrence_key,new_date,justification,created_at");
+        .select("id,activity_id,original_occurrence_key,new_date,justification,created_at");
       if (error) throw error;
       return (data ?? []) as Reschedule[];
     },
