@@ -20,6 +20,7 @@ import {
   LogOut,
   User as UserIcon,
   ScrollText,
+  AlertCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -328,6 +329,7 @@ function MainNav() {
     <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
       <NavItem to="/">Painel</NavItem>
       <NavItem to="/atividades">Atividades</NavItem>
+      <NavItem to="/atrasadas" className="text-danger hover:bg-danger/5">Atrasadas</NavItem>
       <NavItem to="/reprogramadas">Reprogramadas</NavItem>
       {canSeeHistory ? <NavItem to="/historico">Histórico</NavItem> : null}
       <NavItem to="/equipe">Equipe</NavItem>
@@ -335,12 +337,15 @@ function MainNav() {
   );
 }
 
-function NavItem({ to, children }: { to: string; children: ReactNode }) {
+function NavItem({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
   return (
     <Link
       to={to}
       activeOptions={{ exact: true }}
-      className="rounded-md px-3 py-1.5 font-medium text-[#042C53]/70 transition-colors hover:bg-[#042C53]/5 hover:text-[#042C53] [&.active]:bg-[#042C53]/10 [&.active]:text-[#042C53]"
+      className={cn(
+        "rounded-md px-3 py-1.5 font-medium text-[#042C53]/70 transition-colors hover:bg-[#042C53]/5 hover:text-[#042C53] [&.active]:bg-[#042C53]/10 [&.active]:text-[#042C53]",
+        className
+      )}
     >
       {children}
     </Link>
@@ -355,6 +360,7 @@ function MobileBottomNav() {
   const items = [
     { to: "/", label: "Painel", icon: LayoutDashboard },
     { to: "/atividades", label: "Atividades", icon: ListChecks },
+    { to: "/atrasadas", label: "Atrasadas", icon: AlertCircle },
     { to: "/reprogramadas", label: "Reprog.", icon: RotateCw },
     ...(canSeeHistory
       ? [{ to: "/historico", label: "Histórico", icon: ScrollText }]
