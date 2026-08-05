@@ -78,10 +78,6 @@ function DashboardPage() {
   const qc = useQueryClient();
   // Expose qc to window for direct access in sub-components if needed (though using props/context is better, 
   // here we ensure the logic requested is met).
-  useEffect(() => {
-    (window as any).queryClient = qc;
-    (window as any).setDetailsTaskId = setDetailsTaskId;
-  }, [qc, setDetailsTaskId]);
   useRotinaRealtime();
   const members = useTeamMembers();
   const activities = useActivities();
@@ -94,6 +90,11 @@ function DashboardPage() {
   const [filter, setFilter] = useState<string>("all");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (window as any).queryClient = qc;
+    (window as any).setDetailsTaskId = setDetailsTaskId;
+  }, [qc, setDetailsTaskId]);
 
   const today = useMemo(() => new Date(), []);
 
@@ -741,8 +742,8 @@ function OccurrenceCard({
     else toast.success("Conclusão desfeita");
   }
 
-  function openEdit() {
-    setEditOpen(true);
+  function openDetails() {
+    setDetailsTaskId(occ.activity.id);
   }
 
   // Mobile-safe click: ignore when the pointer moved (scroll gesture).
