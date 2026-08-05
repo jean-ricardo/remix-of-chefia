@@ -244,6 +244,7 @@ function ReprogramadasPage() {
                     {r.justification || "(sem justificativa)"}
                   </p>
                 </div>
+              </div>
               </li>
             );
           })}

@@ -192,17 +192,45 @@ function HistoricoPage() {
             Auditoria em tempo real das atividades da equipe
           </p>
         </div>
+
+        {selectedIds.length > 0 && (
+          <Button
+            variant="destructive"
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="h-10 gap-2 shadow-sm"
+          >
+            <Trash2 className="h-4 w-4" />
+            Excluir ({selectedIds.length}) selecionados
+          </Button>
+        )}
       </header>
 
       <div className="flex flex-col gap-3 rounded-2xl border border-[#042C53]/10 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#444441]/60" />
-          <input
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Buscar por atividade ou responsável"
-            className="h-11 w-full rounded-lg border border-[#042C53]/15 bg-white pl-9 pr-3 text-sm text-[#042C53] placeholder:text-[#444441]/60 focus:outline-none focus:ring-2 focus:ring-[#185FA5]/40"
-          />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 rounded-lg border border-[#042C53]/10 bg-[#042C53]/5 px-3 py-2">
+            <Checkbox
+              id="select-all"
+              checked={
+                filtered.length > 0 && selectedIds.length === filtered.length
+              }
+              onCheckedChange={toggleSelectAll}
+            />
+            <label
+              htmlFor="select-all"
+              className="cursor-pointer text-xs font-medium text-[#042C53]"
+            >
+              Selecionar Todos
+            </label>
+          </div>
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#444441]/60" />
+            <input
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder="Buscar por atividade ou responsável"
+              className="h-11 w-full rounded-lg border border-[#042C53]/15 bg-white pl-9 pr-3 text-sm text-[#042C53] placeholder:text-[#444441]/60 focus:outline-none focus:ring-2 focus:ring-[#185FA5]/40"
+            />
+          </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
@@ -287,6 +315,7 @@ function HistoricoPage() {
                   {formatWhen(log.created_at)}
                 </time>
               </div>
+            </div>
             </li>
           ))}
         </ul>
