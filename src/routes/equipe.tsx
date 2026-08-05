@@ -37,6 +37,7 @@ import {
 import { useActivities, useRotinaRealtime, useTeamMembers } from "@/lib/useRotina";
 import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { logActivity } from "@/lib/activityLog";
 
 export const Route = createFileRoute("/equipe")({
   component: EquipePage,
@@ -129,6 +130,13 @@ function EquipePage() {
       return;
     }
     toast.success(`${name} aprovado e vinculado à equipe!`);
+    
+    await logActivity({
+      actorName: currentUser?.name || "Usuário",
+      actionType: "update",
+      details: `${currentUser?.name || "Usuário"} aprovou a entrada de ${name} na equipe.`,
+    });
+
     await Promise.all([
       pending.refetch(),
       queryClient.invalidateQueries({ queryKey: ["team_members"] }),
@@ -144,6 +152,13 @@ function EquipePage() {
       return;
     }
     toast.success(`Solicitação de ${name} recusada.`);
+    
+    await logActivity({
+      actorName: currentUser?.name || "Usuário",
+      actionType: "delete",
+      details: `${currentUser?.name || "Usuário"} recusou a solicitação de ${name}.`,
+    });
+    
     await pending.refetch();
   }
 
@@ -192,10 +207,18 @@ function EquipePage() {
 
       if (memberError) throw memberError;
 
+      // 3. Auditoria
+      await logActivity({
+        actorName: currentUser?.name || "Usuário",
+        actionType: "delete",
+        details: `${currentUser?.name || "Usuário"} excluiu o membro ${memberToDelete.name} da plataforma.`,
+      });
+
       toast.success("Membro e dados removidos com sucesso.");
       
-      // 3. Atualização de estado e cache
+      // 4. Atualização de estado e cache
       await queryClient.invalidateQueries({ queryKey: ["team_members"] });
+      await queryClient.invalidateQueries({ queryKey: ["activity_logs"] });
       setMemberToDelete(null);
     } catch (error: any) {
       console.error("Erro ao excluir membro:", error);

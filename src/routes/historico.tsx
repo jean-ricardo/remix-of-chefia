@@ -7,6 +7,7 @@ import {
   ACTION_LABEL,
   useActivityLogs,
   useActivityLogsRealtime,
+  logActivity,
   type ActivityLog,
 } from "@/lib/activityLog";
 import { hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
@@ -137,12 +138,23 @@ function HistoricoPage() {
     if (selectedIds.length === 0) return;
     setIsDeleting(true);
     try {
+      // 1. SELECT para saber o que está sendo excluído (Auditoria)
+      const count = selectedIds.length;
+      
+      // 2. DELETE real no banco
       const { error } = await supabase
         .from("activity_logs")
         .delete()
         .in("id", selectedIds);
 
       if (error) throw error;
+
+      // 3. Auditoria
+      await logActivity({
+        actorName: user?.name || "Usuário",
+        actionType: "delete",
+        details: `${user?.name || "Usuário"} excluiu ${count} registro(s) do histórico de auditoria.`,
+      });
 
       toast.success("Registros excluídos com sucesso.");
       setSelectedIds([]);
