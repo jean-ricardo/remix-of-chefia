@@ -363,6 +363,7 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       placeholder="Descreva o motivo da alteração..."
+                      required
                       className="flex min-h-[120px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                     />
                   </div>
@@ -376,10 +377,10 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                       {submitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Salvando...
+                          Confirmando...
                         </>
                       ) : (
-                        "Confirmar nova data"
+                        "Confirmar"
                       )}
                     </Button>
                     <Button
@@ -387,10 +388,9 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
                       variant="ghost"
                       onClick={() => setIsRescheduling(false)}
                       disabled={submitting}
-                      className="h-12 w-full gap-2 text-gray-500 font-medium hover:bg-gray-100"
+                      className="h-12 w-full text-gray-500 font-medium hover:bg-gray-100"
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                      Cancelar e voltar
+                      Cancelar
                     </Button>
                   </div>
                 </form>
