@@ -124,12 +124,12 @@ function EquipePage() {
       .from("team_members")
       .update({ cargo_principal: "membro", role: "Membro" })
       .eq("id", id);
-    setBusyId(null);
+    
     if (error) {
+      setBusyId(null);
       toast.error("Não foi possível aprovar agora. Tente novamente.");
       return;
     }
-    toast.success(`${name} aprovado e vinculado à equipe!`);
     
     await logActivity({
       actorName: currentUser?.name || "Usuário",
@@ -137,10 +137,14 @@ function EquipePage() {
       details: `${currentUser?.name || "Usuário"} aprovou a entrada de ${name} na equipe.`,
     });
 
+    toast.success(`${name} aprovado e vinculado à equipe!`);
+    
+    // Invalidação agressiva para atualização instantânea
     await Promise.all([
-      pending.refetch(),
       queryClient.invalidateQueries({ queryKey: ["team_members"] }),
+      queryClient.invalidateQueries({ queryKey: ["team_members", "pending"] }),
     ]);
+    setBusyId(null);
   }
 
   async function reject(id: string, name: string) {
@@ -654,7 +658,12 @@ function RoleSelect({
       });
 
       toast.success("Cargo atualizado com sucesso. As permissões foram aplicadas.");
-      qc.invalidateQueries({ queryKey: ["team_members"] });
+      
+      // Invalida a lista de membros e o usuário atual se for ele mesmo
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["team_members"] }),
+        currentUser.id === memberId ? supabase.auth.refreshSession() : Promise.resolve(),
+      ]);
     } catch (err) {
       console.error("Erro ao atualizar cargo:", err);
       toast.error("Não foi possível atualizar o cargo.");
