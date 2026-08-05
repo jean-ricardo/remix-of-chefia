@@ -80,7 +80,8 @@ function DashboardPage() {
   // here we ensure the logic requested is met).
   useEffect(() => {
     (window as any).queryClient = qc;
-  }, [qc]);
+    (window as any).setDetailsTaskId = setDetailsTaskId;
+  }, [qc, setDetailsTaskId]);
   useRotinaRealtime();
   const members = useTeamMembers();
   const activities = useActivities();
@@ -909,7 +910,12 @@ function OccurrenceCard({
           <button
             type="button"
             disabled={busy}
-            onClick={stop(openEdit)}
+            onClick={stop(() => {
+              if (occ.activity.id) {
+                // Now we open the details sheet which contains the reschedule form
+                (window as any).setDetailsTaskId?.(occ.activity.id);
+              }
+            })}
             className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-[#185FA5]/30 hover:bg-[#185FA5]/10 hover:text-[#185FA5] disabled:opacity-50"
           >
             <RotateCw className="h-4 w-4" />
@@ -917,13 +923,6 @@ function OccurrenceCard({
           </button>
         </div>
       )}
-
-      <EditActivitySheet
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        occurrence={occ}
-        mode="edit"
-      />
     </li>
   );
 }
