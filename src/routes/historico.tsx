@@ -138,6 +138,10 @@ function HistoricoPage() {
     if (selectedIds.length === 0) return;
     setIsDeleting(true);
     try {
+      // 1. SELECT para saber o que está sendo excluído (Auditoria)
+      const count = selectedIds.length;
+      
+      // 2. DELETE real no banco
       const { error } = await supabase
         .from("activity_logs")
         .delete()
@@ -145,11 +149,11 @@ function HistoricoPage() {
 
       if (error) throw error;
 
-      // Inserção de Log de Auditoria para a exclusão em massa
+      // 3. Auditoria
       await logActivity({
         actorName: user?.name || "Usuário",
         actionType: "delete",
-        details: `${user?.name || "Usuário"} excluiu ${selectedIds.length} registro(s) do histórico.`,
+        details: `${user?.name || "Usuário"} excluiu ${count} registro(s) do histórico de auditoria.`,
       });
 
       toast.success("Registros excluídos com sucesso.");

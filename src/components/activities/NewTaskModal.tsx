@@ -108,11 +108,11 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
       return;
     }
 
-    // Silent audit trail.
-    void logActivity({
+    // Auditoria obrigatória (await para garantir registro antes de fechar UI)
+    await logActivity({
       actorName: currentUser.name || "Usuário",
       actionType: "create",
-      details: `Criou a atividade "${form.title.trim()}" com vencimento em ${formatDateBR(effectiveDate)}.`,
+      details: `${currentUser.name || "Usuário"} criou a atividade "${form.title.trim()}" com vencimento em ${formatDateBR(effectiveDate)}.`,
       taskId: inserted?.id ?? null,
     });
 

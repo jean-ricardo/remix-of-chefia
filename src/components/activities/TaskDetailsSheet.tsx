@@ -149,11 +149,11 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
       return;
     }
 
-    void logActivity({
+    await logActivity({
       actorName: currentUser.name,
       actionType: "reschedule",
-      details: `Reprogramou "${activity.title}" para ${formatDateBR(dueDate)}${
-        reason.trim() ? ` — ${reason.trim()}` : ""
+      details: `${currentUser.name} reprogramou "${activity.title}" para ${formatDateBR(dueDate)}${
+        reason.trim() ? ` — Justificativa: ${reason.trim()}` : ""
       }.`,
       taskId: activity.id,
     });

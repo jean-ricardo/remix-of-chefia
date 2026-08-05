@@ -130,6 +130,13 @@ function EquipePage() {
       return;
     }
     toast.success(`${name} aprovado e vinculado à equipe!`);
+    
+    await logActivity({
+      actorName: currentUser?.name || "Usuário",
+      actionType: "update",
+      details: `${currentUser?.name || "Usuário"} aprovou a entrada de ${name} na equipe.`,
+    });
+
     await Promise.all([
       pending.refetch(),
       queryClient.invalidateQueries({ queryKey: ["team_members"] }),
@@ -145,6 +152,13 @@ function EquipePage() {
       return;
     }
     toast.success(`Solicitação de ${name} recusada.`);
+    
+    await logActivity({
+      actorName: currentUser?.name || "Usuário",
+      actionType: "delete",
+      details: `${currentUser?.name || "Usuário"} recusou a solicitação de ${name}.`,
+    });
+    
     await pending.refetch();
   }
 

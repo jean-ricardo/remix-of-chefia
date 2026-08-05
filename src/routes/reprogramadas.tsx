@@ -113,6 +113,7 @@ function ReprogramadasPage() {
     if (selectedIds.length === 0) return;
     setIsDeleting(true);
     try {
+      const count = selectedIds.length;
       const { error } = await supabase
         .from("reschedules")
         .delete()
@@ -124,7 +125,7 @@ function ReprogramadasPage() {
       await logActivity({
         actorName: user?.name || "Usuário",
         actionType: "delete",
-        details: `${user?.name || "Usuário"} excluiu ${selectedIds.length} registro(s) de reprogramações.`,
+        details: `${user?.name || "Usuário"} excluiu ${count} registro(s) de atividades reprogramadas.`,
       });
 
       toast.success("Registros excluídos com sucesso.");
