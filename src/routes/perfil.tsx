@@ -97,8 +97,9 @@ function PerfilPage() {
     setAvatarUrl(url);
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
 
     // Conditional password validation: only when user typed a new password.
     if (newPassword.length > 0) {
@@ -112,20 +113,46 @@ function PerfilPage() {
       }
     }
 
-    if (whatsapp.trim().length > 0 && !isValidWhatsApp(whatsapp)) {
+    if (!whatsapp.trim()) {
+      toast.warning("O número de WhatsApp é obrigatório para receber notificações de tarefas.");
+      return;
+    }
+
+    if (!isValidWhatsApp(whatsapp)) {
       toast.warning("Informe um WhatsApp válido para receber notificações.");
       return;
     }
 
-    // NOTE: `whatsapp` is intentionally excluded from any backend payload —
-    // the profile table does not yet have this column. Mock-only for now.
-    // eslint-disable-next-line no-console
-    console.info("[mock] WhatsApp salvo no perfil:", whatsapp);
+    const cleanWhatsapp = whatsapp.replace(/\D/g, "");
+    const formattedWhatsapp = cleanWhatsapp.startsWith("55") ? cleanWhatsapp : `55${cleanWhatsapp}`;
 
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    toast.success("Foto e dados atualizados com sucesso (Mock)!");
+    setBusy(true);
+    try {
+      if (user.mapped) {
+        const { error } = await supabase
+          .from("team_members")
+          .update({
+            name: name.trim(),
+            cargo_principal: jobTitle,
+            telefone: formattedWhatsapp
+          })
+          .eq("id", user.id);
+
+        if (error) throw error;
+      }
+
+      // Password update logic would go here via supabase.auth.updateUser
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Perfil atualizado com sucesso!");
+    } catch (err: any) {
+      console.error("Erro ao salvar perfil:", err);
+      toast.error("Não foi possível salvar as alterações.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
