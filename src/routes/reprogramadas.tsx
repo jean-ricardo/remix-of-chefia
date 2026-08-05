@@ -161,6 +161,7 @@ function ReprogramadasPage() {
             </SelectContent>
           </Select>
         </div>
+        </div>
       </header>
 
       <div className="flex items-center gap-2 rounded-lg border border-navy/10 bg-white p-3 shadow-sm">
