@@ -258,21 +258,21 @@ function PerfilPage() {
                 id="whatsapp"
                 type="tel"
                 inputMode="numeric"
-                pattern="[0-9\-\+\s\(\)]*"
+                required
                 autoComplete="tel"
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))}
-                placeholder="+55 (11) 91234-5678"
+                placeholder="(11) 99999-9999"
                 className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-[#042C53] focus:border-[#185FA5] focus:outline-none focus:ring-2 focus:ring-[#185FA5]/30"
               />
               {hasSavedWhatsapp ? (
                 <p className="mt-1 text-xs text-gray-500">
-                  Usado exclusivamente para receber notificações da plataforma.
+                  Obrigatório para receber notificações de tarefas.
                 </p>
               ) : (
                 <p className="mt-1 flex items-center gap-1 text-xs text-[#D85A30]">
                   <AlertCircle aria-hidden="true" className="h-3.5 w-3.5" />
-                  Complete seu cadastro para receber avisos.
+                  O número de WhatsApp é obrigatório para receber notificações.
                 </p>
               )}
             </Field>
