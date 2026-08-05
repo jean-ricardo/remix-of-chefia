@@ -32,6 +32,7 @@ export interface Completion {
 }
 
 export interface Reschedule {
+  id: string;
   activity_id: string;
   original_occurrence_key: string;
   new_date: string;
