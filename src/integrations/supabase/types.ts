@@ -196,7 +196,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_user_account: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       activity_priority: "alta" | "media" | "baixa"
