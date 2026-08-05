@@ -290,7 +290,8 @@ function OccurrenceCard({
       const dy = Math.abs(e.clientY - p.y);
       if (dx > 8 || dy > 8) return;
     }
-    navigate({ search: (prev: { taskId?: string }) => ({ ...prev, taskId: occ.activity.id }), replace: true });
+    // @ts-ignore
+    navigate({ search: (prev: any) => ({ ...prev, taskId: occ.activity.id }), replace: true });
   }
 
   const effective = occ.effectiveDate;
