@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 
 import { hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
 import { useNavigate, Link } from "@tanstack/react-router";
+import { logActivity } from "@/lib/activityLog";
 
 export const Route = createFileRoute("/reprogramadas")({
   component: ReprogramadasPage,
@@ -119,9 +120,17 @@ function ReprogramadasPage() {
 
       if (error) throw error;
 
+      // Inserção de Log de Auditoria
+      await logActivity({
+        actorName: user?.full_name || user?.name || "Usuário",
+        actionType: "delete",
+        details: `${user?.full_name || user?.name || "Usuário"} excluiu ${selectedIds.length} registro(s) de reprogramações.`,
+      });
+
       toast.success("Registros excluídos com sucesso.");
       setSelectedIds([]);
       qc.invalidateQueries({ queryKey: ["reschedules"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
     } catch (err: any) {
       console.error("Erro ao excluir reprogramações:", err);
       toast.error("Erro ao excluir registros.");

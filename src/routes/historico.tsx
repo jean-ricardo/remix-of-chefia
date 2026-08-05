@@ -7,6 +7,7 @@ import {
   ACTION_LABEL,
   useActivityLogs,
   useActivityLogsRealtime,
+  logActivity,
   type ActivityLog,
 } from "@/lib/activityLog";
 import { hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
@@ -143,6 +144,13 @@ function HistoricoPage() {
         .in("id", selectedIds);
 
       if (error) throw error;
+
+      // Inserção de Log de Auditoria para a exclusão em massa
+      await logActivity({
+        actorName: user?.full_name || user?.name || "Usuário",
+        actionType: "delete",
+        details: `${user?.full_name || user?.name || "Usuário"} excluiu ${selectedIds.length} registro(s) do histórico.`,
+      });
 
       toast.success("Registros excluídos com sucesso.");
       setSelectedIds([]);
