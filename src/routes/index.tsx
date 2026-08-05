@@ -913,7 +913,7 @@ function OccurrenceCard({
             className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-[#185FA5]/30 hover:bg-[#185FA5]/10 hover:text-[#185FA5] disabled:opacity-50"
           >
             <RotateCw className="h-4 w-4" />
-            Editar
+            Reprogramar
           </button>
         </div>
       )}

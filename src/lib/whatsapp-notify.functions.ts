@@ -10,6 +10,8 @@ export interface WhatsAppNotifyInput {
   actorName?: string;
   /** Tipo de evento que originou a notificação. */
   action?: "create" | "update" | "complete" | "reschedule";
+  /** Justificativa opcional para reprogramação. */
+  justification?: string;
 }
 
 function sanitizeNumber(raw: string): string {
@@ -51,6 +53,7 @@ function buildMessage(input: WhatsAppNotifyInput): string {
     case "reschedule":
       bodyLines.push(
         `${actorLine} alterou os prazos da atividade: *${input.taskTitle}*`,
+        input.justification ? `*Motivo:* ${input.justification}` : "",
       );
       break;
     case "complete":
