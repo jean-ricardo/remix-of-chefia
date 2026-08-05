@@ -1,3 +1,26 @@
+Execute esta instrucao no projeto: CORREÇÃO DE UX/ESTADO 2/3: ATUALIZAÇÃO EM TEMPO REAL (FIM DO F5)
+
+A plataforma está com uma falha de reatividade na interface. As ações funcionam no banco de dados, mas a tela não atualiza sozinha, obrigando o usuário a dar um "F5" (recarregar a página) para ver o resultado após aprovar um membro ou alterar um cargo.
+
+Corrija a reatividade nos seguintes fluxos, usando as melhores práticas do React Query (invalidando os caches corretos):
+
+1. Aprovação de Novos Membros (Sala de Espera):
+
+Quando um Diretor/Admin aceitar a solicitação de um membro pendente, garanta que no bloco onSuccess da mutação haja um queryClient.invalidateQueries apontando para as chaves da lista de equipe.
+
+A UI deve atualizar instantaneamente: o card do membro deve sair da "espera" e ir para a lista de "ativos".
+
+2. Mudança de Cargos (Diretor <-> Admin <-> Membro):
+
+Ao alterar o cargo no componente <Select>, a requisição deve invalidar o cache da lista de equipe assim que finalizar com sucesso.
+
+A interface deve refletir o novo cargo imediatamente, sem que o diretor precise dar F5. E se a pessoa alterada era um Admin e virou Membro, os poderes dela devem ser revogados no estado da aplicação instantaneamente.
+
+3. Exclusão de Membros (Via RPC):
+
+Garanta que a chamada para a função RPC (delete_user_account) que implementamos também esteja invalidando a query da lista de usuários ao terminar com sucesso, fazendo o card da pessoa sumir na mesma hora.
+
+Regra de Ouro: Nenhuma ação de escrita (UPDATE/DELETE/APPROVE) na página de Equipe deve exigir refresh manual do navegador para exibir os dados corretos.
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
