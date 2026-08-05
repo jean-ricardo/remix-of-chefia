@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarClock, RotateCw, User as UserIcon, Trash2 } from "lucide-react";
@@ -34,11 +34,25 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+import { hasGlobalScope, useAuth, useCurrentUser } from "@/lib/auth";
+import { useNavigate, Link } from "@tanstack/react-router";
+
 export const Route = createFileRoute("/reprogramadas")({
   component: ReprogramadasPage,
 });
 
 function ReprogramadasPage() {
+  const { loading } = useAuth();
+  const user = useCurrentUser();
+  const allowed = hasGlobalScope(user.role);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading || allowed) return;
+    toast.error("Acesso restrito à diretoria e administradores.");
+    navigate({ to: "/", replace: true });
+  }, [loading, allowed, navigate]);
+
   useRotinaRealtime();
   const members = useTeamMembers();
   const activities = useActivities();
@@ -118,6 +132,23 @@ function ReprogramadasPage() {
   };
 
   const isLoading = activities.isLoading || reschedules.isLoading || members.isLoading;
+
+  if (!allowed) {
+    return (
+      <div className="mx-auto max-w-md rounded-2xl border border-[#042C53]/10 bg-white p-8 text-center">
+        <h1 className="text-lg font-semibold text-[#042C53]">Acesso restrito</h1>
+        <p className="mt-2 text-sm text-[#444441]">
+          O histórico de reprogramações está disponível apenas para diretores e administradores.
+        </p>
+        <Link
+          to="/"
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-lg bg-[#185FA5] px-4 text-sm font-medium text-white"
+        >
+          Voltar ao painel
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
