@@ -102,6 +102,7 @@ function CadastrarPage() {
           data: {
             full_name: cleanName,
             team_code_pending: cleanCode,
+            whatsapp: formattedWhatsapp,
             status: "pendente",
           },
         },
