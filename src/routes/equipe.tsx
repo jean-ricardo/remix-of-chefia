@@ -621,8 +621,31 @@ function RoleSelect({
   const handleRoleChange = async (newCargo: string) => {
     if (!canEdit || updating) return;
     
+    // REGRA DE SEGURANÇA (ANTI-LOCKOUT):
+    // Se o usuário está tentando mudar o PRÓPRIO cargo e ele é Diretor...
+    const isSelf = currentUser.id === memberId;
+    const isDemotingSelfFromDiretor = isSelf && 
+      normalizedValue === "diretor" && 
+      newCargo !== "diretor";
+
     setUpdating(true);
     try {
+      // Se for auto-rebaixamento, precisamos verificar se existe outro Diretor
+      if (isDemotingSelfFromDiretor) {
+        const { count, error: countError } = await supabase
+          .from("team_members")
+          .select("*", { count: 'exact', head: true })
+          .eq("cargo_principal", "diretor");
+
+        if (countError) throw countError;
+
+        if (count !== null && count <= 1) {
+          toast.error("Ação negada: Você é o único Diretor ativo. Promova outro membro a Diretor antes de alterar o seu próprio cargo.");
+          setUpdating(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from("team_members")
         .update({ 
