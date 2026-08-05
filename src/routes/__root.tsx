@@ -196,9 +196,6 @@ function AppShell() {
             <Outlet />
           </div>
         </main>
-        <SiteFooter />
-        {/* Espaço para a barra inferior fixa (mobile) */}
-        <div className="h-[76px] md:hidden" aria-hidden />
         <MobileBottomNav />
       </div>
     </ProtectedRoute>
@@ -320,18 +317,6 @@ function UserMenu() {
 
 
 
-/** Rodapé global. */
-function SiteFooter() {
-  return (
-    <footer className="mt-auto border-t border-[#042C53]/10 bg-[#F7F6F2]/70">
-      <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-6 sm:flex-row sm:justify-between md:px-8">
-        <p className="text-xs text-[#444441]/80">
-          Chef.IA — Rotina da Equipe
-        </p>
-      </div>
-    </footer>
-  );
-}
 
 /** Navegação principal (desktop). Histórico só para diretor/adm. */
 function MainNav() {
