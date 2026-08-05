@@ -158,7 +158,7 @@ function HistoricoPage() {
 
       toast.success("Registros excluídos com sucesso.");
       setSelectedIds([]);
-      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+      await qc.invalidateQueries({ queryKey: ["activity_logs"] });
     } catch (err: any) {
       console.error("Erro ao excluir logs:", err);
       toast.error("Erro ao excluir registros.");
