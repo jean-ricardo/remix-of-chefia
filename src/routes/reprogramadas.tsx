@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarClock, RotateCw, User as UserIcon } from "lucide-react";
+import { CalendarClock, RotateCw, User as UserIcon, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -17,6 +17,23 @@ import {
   useTeamMembers,
 } from "@/lib/useRotina";
 import type { Activity, TeamMember } from "@/lib/rotina";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import type { Activity, TeamMember } from "@/lib/rotina";
 
 export const Route = createFileRoute("/reprogramadas")({
   component: ReprogramadasPage,
@@ -27,8 +44,12 @@ function ReprogramadasPage() {
   const members = useTeamMembers();
   const activities = useActivities();
   const reschedules = useReschedules();
+  const qc = useQueryClient();
 
   const [filter, setFilter] = useState<string>("all");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const activityById = useMemo(() => {
     const m = new Map<string, Activity>();
@@ -60,6 +81,43 @@ function ReprogramadasPage() {
     return list;
   }, [reschedules.data, activityById, filter]);
 
+  const toggleSelectAll = () => {
+    if (selectedIds.length === rows.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(rows.map((r) => r.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
+
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("reschedules")
+        .delete()
+        .in("id", selectedIds);
+
+      if (error) throw error;
+
+      toast.success("Registros excluídos com sucesso.");
+      setSelectedIds([]);
+      qc.invalidateQueries({ queryKey: ["reschedules"] });
+    } catch (err: any) {
+      console.error("Erro ao excluir reprogramações:", err);
+      toast.error("Erro ao excluir registros.");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
   const isLoading = activities.isLoading || reschedules.isLoading || members.isLoading;
 
   return (
@@ -76,7 +134,18 @@ function ReprogramadasPage() {
             Todas as ocorrências com nova data e a justificativa registrada.
           </p>
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap items-end gap-3">
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="h-10 gap-2 shadow-sm"
+            >
+              <Trash2 className="h-4 w-4" />
+              Excluir ({selectedIds.length}) selecionados
+            </Button>
+          )}
+          <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-muted-foreground">Responsável</label>
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-[240px] bg-card">
@@ -93,6 +162,20 @@ function ReprogramadasPage() {
           </Select>
         </div>
       </header>
+
+      <div className="flex items-center gap-2 rounded-lg border border-navy/10 bg-white p-3 shadow-sm">
+        <Checkbox
+          id="select-all"
+          checked={rows.length > 0 && selectedIds.length === rows.length}
+          onCheckedChange={toggleSelectAll}
+        />
+        <label
+          htmlFor="select-all"
+          className="cursor-pointer text-xs font-medium text-navy"
+        >
+          Selecionar Todos
+        </label>
+      </div>
 
       {isLoading ? (
         <div className="rounded-xl border border-border/60 bg-card p-8 text-center text-sm text-muted-foreground">
@@ -112,10 +195,22 @@ function ReprogramadasPage() {
             const newDate = parseISO(r.new_date);
             return (
               <li
-                key={`${r.activity_id}-${r.original_occurrence_key}`}
-                className="rounded-xl border border-navy/20 bg-card p-4 shadow-sm"
+                key={r.id}
+                className={cn(
+                  "relative flex gap-3 rounded-xl border p-4 shadow-sm transition-all",
+                  selectedIds.includes(r.id)
+                    ? "border-navy bg-navy/5"
+                    : "border-navy/20 bg-card",
+                )}
               >
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="pt-1">
+                  <Checkbox
+                    checked={selectedIds.includes(r.id)}
+                    onCheckedChange={() => toggleSelect(r.id)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full border border-navy/25 bg-navy/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy">
                     <RotateCw className="h-3 w-3" />
                     Reprogramada
@@ -154,6 +249,32 @@ function ReprogramadasPage() {
           })}
         </ul>
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir registros selecionados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja apagar permanentemente estes registros?
+              Esta ação não pode ser desfeita e os dados serão removidos do
+              sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Sim, excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
