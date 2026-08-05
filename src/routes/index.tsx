@@ -1,21 +1,17 @@
-/* Execute esta instrucao no projeto: DESTRUA A LÓGICA ATUAL DE MODAIS E CRIE UM FLUXO SIMPLIFICADO
+/* Execute esta instrucao no projeto: CORREÇÃO DE LAYOUT: RODAPÉ FLUTUANDO SOBRE O CONTEÚDO
 
-A sua tentativa de usar window.closeDetails foi uma péssima prática arquitetural em React. Os modais continuam sobrepostos, o Z-index está quebrado e o sistema travou.
+A tela principal do Dashboard está com um bug de responsividade crítico. O componente de rodapé (com o texto "Chef.IA - Rotina da Equipe") está flutuando no meio da tela e sobrepondo os cards do Kanban.
 
-Pare de tentar consertar o que está quebrado e APAGUE a lógica de modais duplos. Execute exatamente as instruções abaixo:
+Aplique esta estrutura CSS (Tailwind) imediatamente para consertar o layout:
 
-1. Exclua o Modal Sobreposto:
-Remova completamente qualquer fluxo que tente abrir um "Modal de Reprogramação" por cima do "Modal de Detalhes". O clique no card do Kanban deve abrir APENAS UM MODAL: o de Detalhes da Atividade.
+1. Container Principal (Wrapper da Página):
+O elemento raiz (main/div) que engloba toda a página do Dashboard DEVE ser um flex container que ocupa a tela toda. Adicione as classes: min-h-screen flex flex-col.
 
-2. Reprogramação Embutida (Single Modal):
-Coloque a funcionalidade de reprogramar DENTRO do Modal de Detalhes da Atividade. Crie uma aba (Tabs), um Accordion, ou simplesmente um botão "Reprogramar" que, ao ser clicado, esconde os detalhes da tarefa e mostra o formulário de reprogramação (Data Nova e Justificativa) no mesmo espaço, sem abrir novas janelas.
+2. Área de Conteúdo (Kanban):
+O container que segura o Kanban e os cards precisa expandir para preencher o espaço disponível. Adicione a classe: flex-1 (ou flex-grow). Isso é obrigatório para empurrar o rodapé para baixo.
 
-3. Abandone o Popover (Use Calendário Nativo):
-Como o componente de DatePicker do Radix/shadcn está quebrando o z-index e travando a tela, remova-o deste formulário.
-Substitua o campo de data de reprogramação por um input HTML nativo absolutamente simples: <input type="date" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />. Isso garante 100% que o calendário não vai sofrer com problemas de camadas.
-
-4. Botões Claros:
-No novo formulário embutido, coloque apenas dois botões: "Cancelar" (que volta a mostrar os detalhes da atividade) e "Confirmar nova data" (que faz o UPDATE/INSERT no banco e fecha o modal único). */
+3. Rodapé (Footer):
+Certifique-se de que o rodapé não esteja com posicionamento que quebre o fluxo (absolute ou fixed no lugar errado). Ele deve ser apenas um bloco no final do flex container. Adicione a classe mt-auto no container do rodapé para garantir que ele cole no final da tela, abaixo de todo o conteúdo. */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -244,7 +240,7 @@ function DashboardPage() {
   return (
     <>
       <Toaster richColors />
-      <div className="space-y-6 pb-24 md:space-y-8 md:pb-8">
+      <div className="flex flex-1 flex-col space-y-6 pb-24 md:space-y-8 md:pb-8">
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
