@@ -122,13 +122,20 @@ function CadastrarPage() {
         if (String(existing.cargo_principal ?? "").toLowerCase() === "pendente") {
           const { error: updErr } = await supabase
             .from("team_members")
-            .update({ name: cleanName, role: `equipe:${cleanCode}` })
+            .update({ 
+              name: cleanName, 
+              role: `equipe:${cleanCode}`,
+              whatsapp: formattedWhatsapp
+            })
             .eq("id", existing.id);
           if (updErr) throw updErr;
         } else {
           const { error: updErr } = await supabase
             .from("team_members")
-            .update({ name: cleanName })
+            .update({ 
+              name: cleanName,
+              whatsapp: formattedWhatsapp
+            })
             .eq("id", existing.id);
           if (updErr) throw updErr;
         }
@@ -136,6 +143,7 @@ function CadastrarPage() {
         const { error: insErr } = await supabase.from("team_members").insert({
           name: cleanName,
           email: cleanEmail,
+          whatsapp: formattedWhatsapp,
           cargo_principal: "pendente",
           role: `equipe:${cleanCode}`,
         });
