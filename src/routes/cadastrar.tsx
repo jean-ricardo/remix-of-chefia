@@ -47,6 +47,7 @@ function CadastrarPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [password, setPassword] = useState("123456");
   const [teamCode, setTeamCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
