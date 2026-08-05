@@ -18,6 +18,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -65,10 +75,12 @@ function EquipePage() {
   const [codeOpen, setCodeOpen] = useState(false);
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
   const [inviteLink, setInviteLink] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"member" | "admin">("member");
   const [inviteBusy, setInviteBusy] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const teamCode = currentUser.id;
   const signupUrl =
@@ -159,13 +171,38 @@ function EquipePage() {
     toast.success("Convite enviado com sucesso!");
   }
 
-  function removeMock(e: React.MouseEvent, name: string) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isAdmin) return;
-    toast.success(`Membro removido (Mock)`, {
-      description: name ? `${name} foi removido apenas nesta simulação.` : undefined,
-    });
+  async function handleDeleteMember() {
+    if (!memberToDelete || !isAdmin) return;
+    
+    setIsDeleting(true);
+    try {
+      // 1. Limpeza de atividades onde ele é o responsável
+      const { error: activitiesError } = await supabase
+        .from("activities")
+        .delete()
+        .eq("assigned_user_id", memberToDelete.id);
+        
+      if (activitiesError) throw activitiesError;
+
+      // 2. Exclusão do membro na tabela team_members
+      const { error: memberError } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("id", memberToDelete.id);
+
+      if (memberError) throw memberError;
+
+      toast.success("Membro e dados removidos com sucesso.");
+      
+      // 3. Atualização de estado e cache
+      await queryClient.invalidateQueries({ queryKey: ["team_members"] });
+      setMemberToDelete(null);
+    } catch (error: any) {
+      console.error("Erro ao excluir membro:", error);
+      toast.error("Não foi possível remover o membro. Tente novamente.");
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -339,7 +376,11 @@ function EquipePage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={(e) => removeMock(e, name)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setMemberToDelete({ id: m.id, name: name });
+                          }}
                           className="h-10 w-10 shrink-0 text-danger hover:bg-danger/10 hover:text-danger"
                           aria-label={`Remover ${name}`}
                         >
@@ -473,6 +514,33 @@ function EquipePage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog 
+        open={!!memberToDelete} 
+        onOpenChange={(open) => !open && !isDeleting && setMemberToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir membro da equipe?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover este membro? Todas as atividades e dados vinculados a ele serão permanentemente apagados da plataforma. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteMember();
+              }}
+              className="bg-danger text-white hover:bg-danger/90"
+            >
+              {isDeleting ? "Excluindo..." : "Sim, excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
