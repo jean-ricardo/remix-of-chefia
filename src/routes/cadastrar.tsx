@@ -231,6 +231,16 @@ function CadastrarPage() {
             />
 
             <Field
+              id="cd-whatsapp"
+              label="WhatsApp"
+              required
+              disabled={busy}
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="(11) 99999-9999"
+            />
+
+            <Field
               id="cd-team"
               label="Código da Equipe"
               required
