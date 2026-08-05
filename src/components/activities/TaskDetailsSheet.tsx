@@ -182,7 +182,12 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
       taskId: activity.id,
     });
 
-    const number = resolveMemberWhatsApp(activity.assigned_user_id, members.data);
+    const creatorId = (activity as any)?.created_by;
+    const targetMember = creatorId
+      ? (members.data ?? []).find((m) => m.id === creatorId) ?? null
+      : null;
+    const number = targetMember?.telefone || null;
+
     if (number) {
       void notify({
         data: {
@@ -193,13 +198,14 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
           platformLink: platformLink(activity.id),
           actorName: currentUser.name,
           action: "reschedule",
+          justification: reason.trim(),
         },
       }).catch(console.error);
     }
 
     await qc.invalidateQueries({ queryKey: ["reschedules"] });
     setSubmitting(false);
-    toast.success("Atividade reprogramada!");
+    toast.success("Atividade reprogramada com sucesso!");
     setIsRescheduling(false);
     onClose();
   }
