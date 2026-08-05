@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as CadastrarRouteImport } from './routes/cadastrar'
+import { Route as AtrasadasRouteImport } from './routes/atrasadas'
 import { Route as AtividadesRouteImport } from './routes/atividades'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -48,6 +49,11 @@ const CadastrarRoute = CadastrarRouteImport.update({
   path: '/cadastrar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtrasadasRoute = AtrasadasRouteImport.update({
+  id: '/atrasadas',
+  path: '/atrasadas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AtividadesRoute = AtividadesRouteImport.update({
   id: '/atividades',
   path: '/atividades',
@@ -62,6 +68,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/atividades': typeof AtividadesRoute
+  '/atrasadas': typeof AtrasadasRoute
   '/cadastrar': typeof CadastrarRoute
   '/equipe': typeof EquipeRoute
   '/historico': typeof HistoricoRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/atividades': typeof AtividadesRoute
+  '/atrasadas': typeof AtrasadasRoute
   '/cadastrar': typeof CadastrarRoute
   '/equipe': typeof EquipeRoute
   '/historico': typeof HistoricoRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/atividades': typeof AtividadesRoute
+  '/atrasadas': typeof AtrasadasRoute
   '/cadastrar': typeof CadastrarRoute
   '/equipe': typeof EquipeRoute
   '/historico': typeof HistoricoRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/atividades'
+    | '/atrasadas'
     | '/cadastrar'
     | '/equipe'
     | '/historico'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/atividades'
+    | '/atrasadas'
     | '/cadastrar'
     | '/equipe'
     | '/historico'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/atividades'
+    | '/atrasadas'
     | '/cadastrar'
     | '/equipe'
     | '/historico'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtividadesRoute: typeof AtividadesRoute
+  AtrasadasRoute: typeof AtrasadasRoute
   CadastrarRoute: typeof CadastrarRoute
   EquipeRoute: typeof EquipeRoute
   HistoricoRoute: typeof HistoricoRoute
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastrarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/atrasadas': {
+      id: '/atrasadas'
+      path: '/atrasadas'
+      fullPath: '/atrasadas'
+      preLoaderRoute: typeof AtrasadasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/atividades': {
       id: '/atividades'
       path: '/atividades'
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtividadesRoute: AtividadesRoute,
+  AtrasadasRoute: AtrasadasRoute,
   CadastrarRoute: CadastrarRoute,
   EquipeRoute: EquipeRoute,
   HistoricoRoute: HistoricoRoute,
@@ -208,3 +229,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
