@@ -630,7 +630,7 @@ function OccurrenceCard({
   detailsTaskId: string | null;
 }) {
   const [busy, setBusy] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  
   const pointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const member = occ.activity.assigned_user_id
@@ -743,7 +743,7 @@ function OccurrenceCard({
   }
 
   function openDetails() {
-    setDetailsTaskId(occ.activity.id);
+    (window as any).setDetailsTaskId?.(occ.activity.id);
   }
 
   // Mobile-safe click: ignore when the pointer moved (scroll gesture).
