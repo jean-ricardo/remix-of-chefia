@@ -145,21 +145,21 @@ function ReprogramadasPage() {
             </Button>
           )}
           <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground">Responsável</label>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[240px] bg-card">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toda a equipe</SelectItem>
-              {(members.data ?? []).map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            <label className="text-xs font-medium text-muted-foreground">Responsável</label>
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="w-[240px] bg-card">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toda a equipe</SelectItem>
+                {(members.data ?? []).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </header>
 
@@ -211,40 +211,40 @@ function ReprogramadasPage() {
                 </div>
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-navy/25 bg-navy/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy">
-                    <RotateCw className="h-3 w-3" />
-                    Reprogramada
-                  </span>
-                </div>
-                <h3 className="mt-1.5 text-base font-semibold text-navy">
-                  {r.activity.title}
-                </h3>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <UserIcon className="h-3 w-3" />
-                    {member?.name ?? "Sem responsável"}
-                    {member?.role ? (
-                      <span className="text-muted-foreground/70">· {member.role}</span>
-                    ) : null}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarClock className="h-3 w-3" />
-                    De {format(originalDate, "d MMM yyyy", { locale: ptBR })} →{" "}
-                    <strong className="text-navy">
-                      {format(newDate, "d MMM yyyy", { locale: ptBR })}
-                    </strong>
-                  </span>
-                </div>
-                <div className="mt-3 rounded-md border border-navy/20 bg-navy/5 p-2 text-xs text-navy">
-                  <div className="mb-0.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-navy/80">
-                    <RotateCw className="h-3 w-3" />
-                    Justificativa
+                    <span className="inline-flex items-center gap-1 rounded-full border border-navy/25 bg-navy/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy">
+                      <RotateCw className="h-3 w-3" />
+                      Reprogramada
+                    </span>
                   </div>
-                  <p className="whitespace-pre-wrap text-navy/90">
-                    {r.justification || "(sem justificativa)"}
-                  </p>
+                  <h3 className="mt-1.5 text-base font-semibold text-navy">
+                    {r.activity.title}
+                  </h3>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <UserIcon className="h-3 w-3" />
+                      {member?.name ?? "Sem responsável"}
+                      {member?.role ? (
+                        <span className="text-muted-foreground/70">· {member.role}</span>
+                      ) : null}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarClock className="h-3 w-3" />
+                      De {format(originalDate, "d MMM yyyy", { locale: ptBR })} →{" "}
+                      <strong className="text-navy">
+                        {format(newDate, "d MMM yyyy", { locale: ptBR })}
+                      </strong>
+                    </span>
+                  </div>
+                  <div className="mt-3 rounded-md border border-navy/20 bg-navy/5 p-2 text-xs text-navy">
+                    <div className="mb-0.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-navy/80">
+                      <RotateCw className="h-3 w-3" />
+                      Justificativa
+                    </div>
+                    <p className="whitespace-pre-wrap text-navy/90">
+                      {r.justification || "(sem justificativa)"}
+                    </p>
+                  </div>
                 </div>
-              </div>
               </li>
             );
           })}
@@ -279,3 +279,5 @@ function ReprogramadasPage() {
     </div>
   );
 }
+
+export default ReprogramadasPage;
