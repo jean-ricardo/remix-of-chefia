@@ -112,6 +112,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         id: data.id,
         name: data.name || fallbackName,
         email,
+        telefone: data.telefone ?? undefined,
         role: mapCargoToRole(data.cargo_principal),
         cargo: data.cargo_principal ?? null,
         mapped: true,
