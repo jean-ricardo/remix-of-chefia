@@ -69,6 +69,13 @@ function CadastrarPage() {
       return;
     }
 
+    const cleanWhatsapp = whatsapp.replace(/\D/g, "");
+    if (!cleanWhatsapp || cleanWhatsapp.length < 10) {
+      toast.warning("O número de WhatsApp é obrigatório para receber notificações de tarefas.");
+      return;
+    }
+    const formattedWhatsapp = cleanWhatsapp.startsWith("55") ? cleanWhatsapp : `55${cleanWhatsapp}`;
+
     const cleanCode = teamCode.trim();
     if (!cleanCode) {
       toast.warning("Informe o Código da Equipe fornecido pelo administrador.");
