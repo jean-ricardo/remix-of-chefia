@@ -329,7 +329,7 @@ function MainNav() {
     <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
       <NavItem to="/">Painel</NavItem>
       <NavItem to="/atividades">Atividades</NavItem>
-      <NavItem to="/atrasadas" className="text-danger hover:bg-danger/5">Atrasadas</NavItem>
+      <NavItem to="/atrasadas">Atrasadas</NavItem>
       <NavItem to="/reprogramadas">Reprogramadas</NavItem>
       {canSeeHistory ? <NavItem to="/historico">Histórico</NavItem> : null}
       <NavItem to="/equipe">Equipe</NavItem>

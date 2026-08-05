@@ -132,13 +132,13 @@ function AtrasadasPage() {
     <div className="flex min-h-screen flex-col bg-background p-4 md:p-8">
       <Toaster richColors />
       <header className="mb-8">
-        <div className="flex items-center gap-2 text-[#D85A30]">
-          <AlertCircle className="h-6 w-6" />
-          <h1 className="font-display text-2xl font-bold tracking-tight text-navy md:text-3xl">
-            Atividades Atrasadas
-          </h1>
-        </div>
-        <p className="mt-2 text-muted-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#D85A30]">
+          {isAdmin ? "STATUS" : "ATIVIDADES"}
+        </p>
+        <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-[#042C53] md:text-[32px]">
+          Atividades atrasadas
+        </h1>
+        <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
           {isAdmin 
             ? "Gestão de todas as atividades pendentes da equipe que já passaram do prazo."
             : "Suas atividades que estão com o prazo vencido."}
