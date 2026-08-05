@@ -48,6 +48,7 @@ function initialsOf(name: string | undefined) {
 
 function PerfilPage() {
   const user = useCurrentUser();
+  const [busy, setBusy] = useState(false);
 
   const [name, setName] = useState<string>(user?.name || "");
   const [email] = useState<string>(user?.email || "");
@@ -57,8 +58,7 @@ function PerfilPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  // WhatsApp: mocked only — NOT sent to backend (schema pending).
-  const [whatsapp, setWhatsapp] = useState<string>("");
+  const [whatsapp, setWhatsapp] = useState<string>(user?.telefone || "");
   const hasSavedWhatsapp = whatsapp.trim().length > 0;
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
