@@ -1,17 +1,3 @@
-/* Execute esta instrucao no projeto: CORREÇÃO DE LAYOUT: RODAPÉ FLUTUANDO SOBRE O CONTEÚDO
-
-A tela principal do Dashboard está com um bug de responsividade crítico. O componente de rodapé (com o texto "Chef.IA - Rotina da Equipe") está flutuando no meio da tela e sobrepondo os cards do Kanban.
-
-Aplique esta estrutura CSS (Tailwind) imediatamente para consertar o layout:
-
-1. Container Principal (Wrapper da Página):
-O elemento raiz (main/div) que engloba toda a página do Dashboard DEVE ser um flex container que ocupa a tela toda. Adicione as classes: min-h-screen flex flex-col.
-
-2. Área de Conteúdo (Kanban):
-O container que segura o Kanban e os cards precisa expandir para preencher o espaço disponível. Adicione a classe: flex-1 (ou flex-grow). Isso é obrigatório para empurrar o rodapé para baixo.
-
-3. Rodapé (Footer):
-Certifique-se de que o rodapé não esteja com posicionamento que quebre o fluxo (absolute ou fixed no lugar errado). Ele deve ser apenas um bloco no final do flex container. Adicione a classe mt-auto no container do rodapé para garantir que ele cole no final da tela, abaixo de todo o conteúdo. */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
