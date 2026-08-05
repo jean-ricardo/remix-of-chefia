@@ -47,6 +47,7 @@ function CadastrarPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [password, setPassword] = useState("123456");
   const [teamCode, setTeamCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -67,6 +68,13 @@ function CadastrarPage() {
       toast.warning("Informe um e-mail válido.");
       return;
     }
+
+    const cleanWhatsapp = whatsapp.replace(/\D/g, "");
+    if (!cleanWhatsapp || cleanWhatsapp.length < 10) {
+      toast.warning("O número de WhatsApp é obrigatório para receber notificações de tarefas.");
+      return;
+    }
+    const formattedWhatsapp = cleanWhatsapp.startsWith("55") ? cleanWhatsapp : `55${cleanWhatsapp}`;
 
     const cleanCode = teamCode.trim();
     if (!cleanCode) {
@@ -94,6 +102,7 @@ function CadastrarPage() {
           data: {
             full_name: cleanName,
             team_code_pending: cleanCode,
+            whatsapp: formattedWhatsapp,
             status: "pendente",
           },
         },
@@ -113,13 +122,20 @@ function CadastrarPage() {
         if (String(existing.cargo_principal ?? "").toLowerCase() === "pendente") {
           const { error: updErr } = await supabase
             .from("team_members")
-            .update({ name: cleanName, role: `equipe:${cleanCode}` })
+            .update({ 
+              name: cleanName, 
+              role: `equipe:${cleanCode}`,
+              telefone: formattedWhatsapp
+            })
             .eq("id", existing.id);
           if (updErr) throw updErr;
         } else {
           const { error: updErr } = await supabase
             .from("team_members")
-            .update({ name: cleanName })
+            .update({ 
+              name: cleanName,
+              telefone: formattedWhatsapp
+            })
             .eq("id", existing.id);
           if (updErr) throw updErr;
         }
@@ -127,6 +143,7 @@ function CadastrarPage() {
         const { error: insErr } = await supabase.from("team_members").insert({
           name: cleanName,
           email: cleanEmail,
+          telefone: formattedWhatsapp,
           cargo_principal: "pendente",
           role: `equipe:${cleanCode}`,
         });
@@ -211,6 +228,16 @@ function CadastrarPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="voce@empresa.com"
+            />
+
+            <Field
+              id="cd-whatsapp"
+              label="WhatsApp"
+              required
+              disabled={busy}
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="(11) 99999-9999"
             />
 
             <Field

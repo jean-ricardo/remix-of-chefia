@@ -29,6 +29,7 @@ export interface CurrentUser {
   id: string;
   name: string;
   email: string;
+  telefone?: string;
   role: AppRole;
   /** Raw value from team_members.cargo_principal (null when unmapped). */
   cargo: string | null;
@@ -101,7 +102,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
   if (email) {
     const { data, error } = await supabase
       .from("team_members")
-      .select("id,name,email,cargo_principal")
+      .select("id,name,email,cargo_principal,telefone")
       .ilike("email", email)
       .limit(1)
       .maybeSingle();
@@ -111,6 +112,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         id: data.id,
         name: data.name || fallbackName,
         email,
+        telefone: data.telefone ?? undefined,
         role: mapCargoToRole(data.cargo_principal),
         cargo: data.cargo_principal ?? null,
         mapped: true,

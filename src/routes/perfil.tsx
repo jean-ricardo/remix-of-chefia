@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/auth";
 import { formatWhatsApp, isValidWhatsApp } from "@/lib/whatsapp";
 
@@ -48,6 +49,7 @@ function initialsOf(name: string | undefined) {
 
 function PerfilPage() {
   const user = useCurrentUser();
+  const [busy, setBusy] = useState(false);
 
   const [name, setName] = useState<string>(user?.name || "");
   const [email] = useState<string>(user?.email || "");
@@ -57,8 +59,7 @@ function PerfilPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  // WhatsApp: mocked only — NOT sent to backend (schema pending).
-  const [whatsapp, setWhatsapp] = useState<string>("");
+  const [whatsapp, setWhatsapp] = useState<string>(user?.telefone || "");
   const hasSavedWhatsapp = whatsapp.trim().length > 0;
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -97,8 +98,9 @@ function PerfilPage() {
     setAvatarUrl(url);
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
 
     // Conditional password validation: only when user typed a new password.
     if (newPassword.length > 0) {
@@ -112,20 +114,46 @@ function PerfilPage() {
       }
     }
 
-    if (whatsapp.trim().length > 0 && !isValidWhatsApp(whatsapp)) {
+    if (!whatsapp.trim()) {
+      toast.warning("O número de WhatsApp é obrigatório para receber notificações de tarefas.");
+      return;
+    }
+
+    if (!isValidWhatsApp(whatsapp)) {
       toast.warning("Informe um WhatsApp válido para receber notificações.");
       return;
     }
 
-    // NOTE: `whatsapp` is intentionally excluded from any backend payload —
-    // the profile table does not yet have this column. Mock-only for now.
-    // eslint-disable-next-line no-console
-    console.info("[mock] WhatsApp salvo no perfil:", whatsapp);
+    const cleanWhatsapp = whatsapp.replace(/\D/g, "");
+    const formattedWhatsapp = cleanWhatsapp.startsWith("55") ? cleanWhatsapp : `55${cleanWhatsapp}`;
 
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    toast.success("Foto e dados atualizados com sucesso (Mock)!");
+    setBusy(true);
+    try {
+      if (user.mapped) {
+        const { error } = await supabase
+          .from("team_members")
+          .update({
+            name: name.trim(),
+            cargo_principal: jobTitle,
+            telefone: formattedWhatsapp
+          })
+          .eq("id", user.id);
+
+        if (error) throw error;
+      }
+
+      // Password update logic would go here via supabase.auth.updateUser
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Perfil atualizado com sucesso!");
+    } catch (err: any) {
+      console.error("Erro ao salvar perfil:", err);
+      toast.error("Não foi possível salvar as alterações.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -230,21 +258,21 @@ function PerfilPage() {
                 id="whatsapp"
                 type="tel"
                 inputMode="numeric"
-                pattern="[0-9\-\+\s\(\)]*"
+                required
                 autoComplete="tel"
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))}
-                placeholder="+55 (11) 91234-5678"
+                placeholder="(11) 99999-9999"
                 className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-[#042C53] focus:border-[#185FA5] focus:outline-none focus:ring-2 focus:ring-[#185FA5]/30"
               />
               {hasSavedWhatsapp ? (
                 <p className="mt-1 text-xs text-gray-500">
-                  Usado exclusivamente para receber notificações da plataforma.
+                  Obrigatório para receber notificações de tarefas.
                 </p>
               ) : (
                 <p className="mt-1 flex items-center gap-1 text-xs text-[#D85A30]">
                   <AlertCircle aria-hidden="true" className="h-3.5 w-3.5" />
-                  Complete seu cadastro para receber avisos.
+                  O número de WhatsApp é obrigatório para receber notificações.
                 </p>
               )}
             </Field>
@@ -301,9 +329,10 @@ function PerfilPage() {
         <div className="mt-6 flex justify-end">
           <button
             type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-[#185FA5] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#042C53] focus:outline-none focus:ring-2 focus:ring-[#185FA5] focus:ring-offset-2"
+            disabled={busy}
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-[#185FA5] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#042C53] focus:outline-none focus:ring-2 focus:ring-[#185FA5] focus:ring-offset-2 disabled:opacity-50"
           >
-            Salvar Alterações
+            {busy ? "Salvando..." : "Salvar Alterações"}
           </button>
         </div>
       </form>
