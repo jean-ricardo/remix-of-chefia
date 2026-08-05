@@ -329,9 +329,10 @@ function PerfilPage() {
         <div className="mt-6 flex justify-end">
           <button
             type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-[#185FA5] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#042C53] focus:outline-none focus:ring-2 focus:ring-[#185FA5] focus:ring-offset-2"
+            disabled={busy}
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-[#185FA5] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#042C53] focus:outline-none focus:ring-2 focus:ring-[#185FA5] focus:ring-offset-2 disabled:opacity-50"
           >
-            Salvar Alterações
+            {busy ? "Salvando..." : "Salvar Alterações"}
           </button>
         </div>
       </form>
