@@ -180,7 +180,7 @@ function EquipePage() {
       const { error: activitiesError } = await supabase
         .from("activities")
         .delete()
-        .eq("assigned_to", memberToDelete.id);
+        .eq("assigned_user_id", memberToDelete.id);
         
       if (activitiesError) throw activitiesError;
 
