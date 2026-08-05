@@ -387,7 +387,12 @@ function EquipePage() {
                     </div>
 
                     <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
-                      <RoleBadge role="Membro" />
+                      <RoleSelect 
+                        memberId={m.id} 
+                        memberName={name} 
+                        currentCargo={m.role || "Membro"} 
+                        canEdit={currentUser.cargo?.toLowerCase() === "diretor"} 
+                      />
                       <StatusBadge status={status} />
                       <span className="text-xs text-muted-foreground">
                         <span className="font-bold tabular-nums text-navy">
@@ -590,11 +595,83 @@ function Avatar({ name, src }: { name: string; src?: string }) {
   );
 }
 
-function RoleBadge({ role }: { role: string }) {
+function RoleSelect({ 
+  memberId, 
+  memberName, 
+  currentCargo, 
+  canEdit 
+}: { 
+  memberId: string; 
+  memberName: string; 
+  currentCargo: string; 
+  canEdit: boolean; 
+}) {
+  const qc = useQueryClient();
+  const currentUser = useCurrentUser();
+  const [updating, setUpdating] = useState(false);
+
+  // Normalize current value to match select options
+  const normalizedValue = useMemo(() => {
+    const v = currentCargo.toLowerCase();
+    if (v === "diretor") return "diretor";
+    if (v === "admin" || v === "adm") return "adm";
+    return "membro";
+  }, [currentCargo]);
+
+  const handleRoleChange = async (newCargo: string) => {
+    if (!canEdit || updating) return;
+    
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("team_members")
+        .update({ 
+          cargo_principal: newCargo,
+          role: newCargo.charAt(0).toUpperCase() + newCargo.slice(1) 
+        })
+        .eq("id", memberId);
+
+      if (error) throw error;
+
+      await logActivity({
+        actorName: currentUser.name || "Diretor",
+        actionType: "update",
+        details: `O Diretor ${currentUser.name} alterou o cargo de ${memberName} para ${newCargo.charAt(0).toUpperCase() + newCargo.slice(1)}.`,
+      });
+
+      toast.success("Cargo atualizado com sucesso. As permissões foram aplicadas.");
+      qc.invalidateQueries({ queryKey: ["team_members"] });
+    } catch (err) {
+      console.error("Erro ao atualizar cargo:", err);
+      toast.error("Não foi possível atualizar o cargo.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  if (!canEdit) {
+    return (
+      <span className="inline-flex h-6 items-center rounded-full border border-navy/15 bg-navy/5 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-navy">
+        {currentCargo}
+      </span>
+    );
+  }
+
   return (
-    <span className="inline-flex h-6 items-center rounded-full border border-navy/15 bg-navy/5 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-navy">
-      {role}
-    </span>
+    <Select 
+      value={normalizedValue} 
+      onValueChange={handleRoleChange} 
+      disabled={updating}
+    >
+      <SelectTrigger className="h-7 w-[130px] rounded-full border-navy/20 bg-surface px-3 text-[10px] font-bold uppercase tracking-wider text-navy hover:bg-navy/5 focus:ring-0">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="membro" className="text-[11px] font-semibold uppercase tracking-wide">Membro</SelectItem>
+        <SelectItem value="adm" className="text-[11px] font-semibold uppercase tracking-wide">Administrador</SelectItem>
+        <SelectItem value="diretor" className="text-[11px] font-semibold uppercase tracking-wide">Diretor</SelectItem>
+      </SelectContent>
+    </Select>
   );
 }
 
