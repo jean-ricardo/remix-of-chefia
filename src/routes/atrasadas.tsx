@@ -11,7 +11,15 @@ import {
   Clock,
   Eye,
   RotateCw,
+  User,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TaskDetailsSheet } from "@/components/activities/TaskDetailsSheet";
 import { EditActivitySheet } from "@/components/activities/EditActivitySheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +76,7 @@ function AtrasadasPage() {
   const navigate = useNavigate({ from: "/atrasadas" });
 
   const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null);
+  const [selectedAssignee, setSelectedAssignee] = useState("all");
 
   const today = useMemo(() => new Date(), []);
 
@@ -122,6 +131,29 @@ function AtrasadasPage() {
     return m;
   }, [members.data]);
 
+  const assignees = useMemo(() => {
+    const set = new Set<string>();
+    const list: { id: string; name: string }[] = [];
+    
+    atrasadas.forEach(occ => {
+      const id = occ.activity.assigned_user_id;
+      if (id) {
+        const name = memberById.get(id)?.name || "Sem nome";
+        if (!set.has(id)) {
+          set.add(id);
+          list.push({ id, name });
+        }
+      }
+    });
+    
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, [atrasadas, memberById]);
+
+  const filteredAtrasadas = useMemo(() => {
+    if (selectedAssignee === "all") return atrasadas;
+    return atrasadas.filter(occ => occ.activity.assigned_user_id === selectedAssignee);
+  }, [atrasadas, selectedAssignee]);
+
   const isLoading =
     activities.isLoading ||
     completions.isLoading ||
@@ -131,18 +163,41 @@ function AtrasadasPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background p-4 md:p-8">
       <Toaster richColors />
-      <header className="mb-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#D85A30]">
-          {isAdmin ? "STATUS" : "ATIVIDADES"}
-        </p>
-        <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-[#042C53] md:text-[32px]">
-          Atividades atrasadas
-        </h1>
-        <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-          {isAdmin 
-            ? "Gestão de todas as atividades pendentes da equipe que já passaram do prazo."
-            : "Suas atividades que estão com o prazo vencido."}
-        </p>
+      <header className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start">
+        <div className="flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#D85A30]">
+            {isAdmin ? "STATUS" : "ATIVIDADES"}
+          </p>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-[#042C53] md:text-[32px]">
+            Atividades atrasadas
+          </h1>
+          <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
+            {isAdmin 
+              ? "Gestão de todas as atividades pendentes da equipe que já passaram do prazo."
+              : "Suas atividades que estão com o prazo vencido."}
+          </p>
+        </div>
+
+        {isAdmin && (
+          <div className="flex flex-col gap-1.5 min-w-[200px]">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+              Responsável
+            </label>
+            <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+              <SelectTrigger className="h-10 border-[#042C53]/15 bg-white text-[#042C53] shadow-none focus:ring-[#185FA5]/40">
+                <SelectValue placeholder="Selecione um responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toda a equipe</SelectItem>
+                {assignees.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </header>
 
       {isLoading ? (
@@ -151,7 +206,7 @@ function AtrasadasPage() {
             <div key={i} className="h-48 animate-pulse rounded-2xl bg-muted" />
           ))}
         </div>
-      ) : atrasadas.length === 0 ? (
+      ) : filteredAtrasadas.length === 0 ? (
         <div className="flex flex-1 items-center justify-center py-12">
           <div className="flex flex-col items-center text-center">
             <div className="mb-4 rounded-full bg-emerald-100 p-4 text-emerald-600">
@@ -165,7 +220,7 @@ function AtrasadasPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {atrasadas.map((occ) => (
+          {filteredAtrasadas.map((occ) => (
             <OccurrenceCard
               key={`${occ.activity.id}-${occ.originalKey}`}
               occ={occ}
