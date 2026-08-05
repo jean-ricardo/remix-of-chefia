@@ -125,6 +125,12 @@ function AtrasadasPage() {
     return list.sort(sortOccurrences);
   }, [activities.data, completions.data, reschedules.data, today, isAdmin, effectiveUserId]);
 
+  const memberById = useMemo(() => {
+    const m = new Map<string, TeamMember>();
+    (members.data ?? []).forEach((x) => m.set(x.id, x));
+    return m;
+  }, [members.data]);
+
   const assignees = useMemo(() => {
     const set = new Set<string>();
     const list: { id: string; name: string }[] = [];
@@ -147,12 +153,6 @@ function AtrasadasPage() {
     if (selectedAssignee === "all") return atrasadas;
     return atrasadas.filter(occ => occ.activity.assigned_user_id === selectedAssignee);
   }, [atrasadas, selectedAssignee]);
-
-  const memberById = useMemo(() => {
-    const m = new Map<string, TeamMember>();
-    (members.data ?? []).forEach((x) => m.set(x.id, x));
-    return m;
-  }, [members.data]);
 
   const isLoading =
     activities.isLoading ||
