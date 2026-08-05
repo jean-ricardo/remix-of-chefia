@@ -102,7 +102,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
   if (email) {
     const { data, error } = await supabase
       .from("team_members")
-      .select("id,name,email,cargo_principal")
+      .select("id,name,email,cargo_principal,telefone")
       .ilike("email", email)
       .limit(1)
       .maybeSingle();
