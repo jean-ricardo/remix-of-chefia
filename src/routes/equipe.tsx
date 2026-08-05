@@ -191,38 +191,29 @@ function EquipePage() {
     
     setIsDeleting(true);
     try {
-      // 1. Limpeza de atividades onde ele é o responsável
-      const { error: activitiesError } = await supabase
-        .from("activities")
-        .delete()
-        .eq("assigned_user_id", memberToDelete.id);
-        
-      if (activitiesError) throw activitiesError;
-
-      // 2. Exclusão do membro na tabela team_members
-      const { error: memberError } = await supabase
-        .from("team_members")
-        .delete()
-        .eq("id", memberToDelete.id);
-
-      if (memberError) throw memberError;
-
-      // 3. Auditoria
+      // 1. Auditoria (Registrado antes da exclusão para garantir que os dados do ator existam)
       await logActivity({
         actorName: currentUser?.name || "Usuário",
         actionType: "delete",
-        details: `${currentUser?.name || "Usuário"} excluiu o membro ${memberToDelete.name} da plataforma.`,
+        details: `${currentUser?.name || "Usuário"} excluiu permanentemente a conta e o perfil do membro ${memberToDelete.name} da plataforma.`,
       });
 
-      toast.success("Membro e dados removidos com sucesso.");
+      // 2. Chamar a nova função RPC para exclusão total (incluindo auth.users)
+      const { error } = await supabase.rpc('delete_user_account', { 
+        target_user_id: memberToDelete.id 
+      });
+
+      if (error) throw error;
+
+      toast.success("Membro e conta de acesso removidos com sucesso.");
       
-      // 4. Atualização de estado e cache
+      // 3. Atualização de estado e cache
       await queryClient.invalidateQueries({ queryKey: ["team_members"] });
       await queryClient.invalidateQueries({ queryKey: ["activity_logs"] });
       setMemberToDelete(null);
     } catch (error: any) {
       console.error("Erro ao excluir membro:", error);
-      toast.error("Não foi possível remover o membro. Tente novamente.");
+      toast.error(error.message || "Não foi possível remover o membro. Tente novamente.");
     } finally {
       setIsDeleting(false);
     }
