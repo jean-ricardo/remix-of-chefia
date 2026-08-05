@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/auth";
 import { formatWhatsApp, isValidWhatsApp } from "@/lib/whatsapp";
 
