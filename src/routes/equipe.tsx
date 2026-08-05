@@ -195,9 +195,9 @@ function EquipePage() {
 
       // 3. Auditoria
       await logActivity({
-        actorName: currentUser?.full_name || currentUser?.name || "Usuário",
+        actorName: currentUser?.name || "Usuário",
         actionType: "delete",
-        details: `${currentUser?.full_name || currentUser?.name || "Usuário"} excluiu o membro ${memberToDelete.name} da plataforma.`,
+        details: `${currentUser?.name || "Usuário"} excluiu o membro ${memberToDelete.name} da plataforma.`,
       });
 
       toast.success("Membro e dados removidos com sucesso.");

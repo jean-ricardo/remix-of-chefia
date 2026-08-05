@@ -147,9 +147,9 @@ function HistoricoPage() {
 
       // Inserção de Log de Auditoria para a exclusão em massa
       await logActivity({
-        actorName: user?.full_name || user?.name || "Usuário",
+        actorName: user?.name || "Usuário",
         actionType: "delete",
-        details: `${user?.full_name || user?.name || "Usuário"} excluiu ${selectedIds.length} registro(s) do histórico.`,
+        details: `${user?.name || "Usuário"} excluiu ${selectedIds.length} registro(s) do histórico.`,
       });
 
       toast.success("Registros excluídos com sucesso.");

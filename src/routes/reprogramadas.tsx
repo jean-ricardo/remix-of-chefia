@@ -122,9 +122,9 @@ function ReprogramadasPage() {
 
       // Inserção de Log de Auditoria
       await logActivity({
-        actorName: user?.full_name || user?.name || "Usuário",
+        actorName: user?.name || "Usuário",
         actionType: "delete",
-        details: `${user?.full_name || user?.name || "Usuário"} excluiu ${selectedIds.length} registro(s) de reprogramações.`,
+        details: `${user?.name || "Usuário"} excluiu ${selectedIds.length} registro(s) de reprogramações.`,
       });
 
       toast.success("Registros excluídos com sucesso.");
