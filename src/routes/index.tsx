@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
-import { EditActivitySheet, type EditMode } from "@/components/activities/EditActivitySheet";
+
 import { TaskDetailsSheet } from "@/components/activities/TaskDetailsSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
@@ -78,9 +78,6 @@ function DashboardPage() {
   const qc = useQueryClient();
   // Expose qc to window for direct access in sub-components if needed (though using props/context is better, 
   // here we ensure the logic requested is met).
-  useEffect(() => {
-    (window as any).queryClient = qc;
-  }, [qc]);
   useRotinaRealtime();
   const members = useTeamMembers();
   const activities = useActivities();
@@ -93,6 +90,11 @@ function DashboardPage() {
   const [filter, setFilter] = useState<string>("all");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (window as any).queryClient = qc;
+    (window as any).setDetailsTaskId = setDetailsTaskId;
+  }, [qc, setDetailsTaskId]);
 
   const today = useMemo(() => new Date(), []);
 
@@ -628,7 +630,7 @@ function OccurrenceCard({
   detailsTaskId: string | null;
 }) {
   const [busy, setBusy] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  
   const pointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const member = occ.activity.assigned_user_id
@@ -740,8 +742,8 @@ function OccurrenceCard({
     else toast.success("Conclusão desfeita");
   }
 
-  function openEdit() {
-    setEditOpen(true);
+  function openDetails() {
+    (window as any).setDetailsTaskId?.(occ.activity.id);
   }
 
   // Mobile-safe click: ignore when the pointer moved (scroll gesture).
@@ -909,7 +911,12 @@ function OccurrenceCard({
           <button
             type="button"
             disabled={busy}
-            onClick={stop(openEdit)}
+            onClick={stop(() => {
+              if (occ.activity.id) {
+                // Now we open the details sheet which contains the reschedule form
+                (window as any).setDetailsTaskId?.(occ.activity.id);
+              }
+            })}
             className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-[#185FA5]/30 hover:bg-[#185FA5]/10 hover:text-[#185FA5] disabled:opacity-50"
           >
             <RotateCw className="h-4 w-4" />
@@ -917,13 +924,6 @@ function OccurrenceCard({
           </button>
         </div>
       )}
-
-      <EditActivitySheet
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        occurrence={occ}
-        mode="edit"
-      />
     </li>
   );
 }
