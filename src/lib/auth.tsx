@@ -29,6 +29,7 @@ export interface CurrentUser {
   id: string;
   name: string;
   email: string;
+  telefone?: string;
   role: AppRole;
   /** Raw value from team_members.cargo_principal (null when unmapped). */
   cargo: string | null;
