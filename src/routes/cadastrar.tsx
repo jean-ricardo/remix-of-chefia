@@ -125,7 +125,7 @@ function CadastrarPage() {
             .update({ 
               name: cleanName, 
               role: `equipe:${cleanCode}`,
-              whatsapp: formattedWhatsapp
+              telefone: formattedWhatsapp
             })
             .eq("id", existing.id);
           if (updErr) throw updErr;
@@ -134,7 +134,7 @@ function CadastrarPage() {
             .from("team_members")
             .update({ 
               name: cleanName,
-              whatsapp: formattedWhatsapp
+              telefone: formattedWhatsapp
             })
             .eq("id", existing.id);
           if (updErr) throw updErr;
@@ -143,7 +143,7 @@ function CadastrarPage() {
         const { error: insErr } = await supabase.from("team_members").insert({
           name: cleanName,
           email: cleanEmail,
-          whatsapp: formattedWhatsapp,
+          telefone: formattedWhatsapp,
           cargo_principal: "pendente",
           role: `equipe:${cleanCode}`,
         });
