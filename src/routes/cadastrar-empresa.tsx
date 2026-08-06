@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ChefiaLogo } from "@/components/brand/ChefiaLogo";
+import { PublicOnlyRoute } from "@/components/auth/RouteGuards";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/cadastrar-empresa")({
@@ -21,6 +22,14 @@ export const Route = createFileRoute("/cadastrar-empresa")({
 });
 
 function CadastrarEmpresaPage() {
+  return (
+    <PublicOnlyRoute>
+      <CadastrarEmpresaContent />
+    </PublicOnlyRoute>
+  );
+}
+
+function CadastrarEmpresaContent() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
