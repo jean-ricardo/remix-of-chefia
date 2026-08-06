@@ -50,86 +50,7 @@ export function AuthSplash({ label = "Carregando" }: { label?: string }) {
  * aprovar o vínculo com a equipe.
  */
 export function PendingApprovalScreen() {
-  const { user, session, signOut } = useAuth();
-  const qc = useQueryClient();
-  const [checking, setChecking] = useState(false);
-
-  const metaCode = String(
-    (session?.user?.user_metadata as Record<string, unknown> | undefined)
-      ?.team_code_pending ?? "",
-  );
-  const [code, setCode] = useState(metaCode);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(metaCode);
-  const [saving, setSaving] = useState(false);
-
-  /** Sala de espera dinâmica: refaz a consulta no banco para liberar a entrada. */
-  async function refreshStatus() {
-    if (checking) return;
-    setChecking(true);
-    
-    try {
-      // 1. Força o refresh da sessão e metadados no Supabase Auth
-      const { data: { session: newSession }, error: sessionError } = await supabase.auth.refreshSession();
-      if (sessionError) throw sessionError;
-
-      // 2. Busca o status atualizado na tabela team_members
-      if (newSession?.user?.email) {
-        const { data: member, error: dbError } = await supabase
-          .from("team_members")
-          .select("cargo_principal")
-          .ilike("email", newSession.user.email)
-          .maybeSingle();
-
-        if (dbError) throw dbError;
-
-        // Se o cargo não for mais "pendente", ele foi aprovado
-        const isApproved = member && member.cargo_principal && member.cargo_principal.toLowerCase() !== "pendente";
-        
-        if (isApproved) {
-          toast.success("Acesso aprovado! Redirecionando...");
-          // Força um reload completo para garantir que todo o estado global (AuthProvider, QueryClient)
-          // seja reiniciado com as permissões corretas e o usuário entre no Dashboard.
-          setTimeout(() => {
-            window.location.href = "/";
-          }, 1000);
-          return;
-        }
-      }
-      
-      toast.info("Status atualizado! Aguarde a aprovação do administrador.");
-    } catch (err) {
-      console.error("[refreshStatus] erro ao atualizar", err);
-      toast.error("Erro ao verificar status. Tente novamente.");
-    } finally {
-      setChecking(false);
-    }
-  }
-
-  async function saveCode() {
-    const clean = draft.trim();
-    if (!clean || saving) return;
-    setSaving(true);
-    const { error } = await supabase.auth.updateUser({
-      data: { team_code_pending: clean, status: "pendente" },
-    });
-    // Espelha o código no perfil pendente (campo de texto livre).
-    if (!error && user?.email) {
-      await supabase
-        .from("team_members")
-        .update({ role: `equipe:${clean}` })
-        .ilike("email", user.email)
-        .eq("cargo_principal", "pendente");
-    }
-    setSaving(false);
-    if (error) {
-      toast.error("Não foi possível atualizar o código. Tente novamente.");
-      return;
-    }
-    setCode(clean);
-    setEditing(false);
-    toast.success("Código da equipe atualizado!");
-  }
+  const { user, signOut } = useAuth();
 
   return (
     <div className="grid min-h-screen place-items-center bg-[#F7F6F2] px-5 py-10">
@@ -139,80 +60,18 @@ export function PendingApprovalScreen() {
           <Clock3 className="h-6 w-6" />
         </div>
         <h1 className="mt-5 text-xl font-bold tracking-tight text-[#042C53] sm:text-2xl">
-          Aguardando aprovação do Administrador.
+          Solicitação Enviada!
         </h1>
         <p className="mt-3 text-[0.92rem] leading-relaxed text-[#6f6f6a]">
-          Cadastro realizado com sucesso! Assim que o Administrador da equipe
-          aprovar, suas tarefas ficam liberadas.
+          O Administrador da equipe já recebeu o seu pedido de acesso. Por favor, aguarde a liberação. 
+          Você pode fechar esta página e, assim que for aprovado, basta atualizar a tela (ou acessar novamente) para entrar na plataforma normalmente.
         </p>
 
-        <div className="mt-5 rounded-xl bg-[#F7F6F2] p-4 text-left">
-          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#8b8b86]">
-            Código da equipe inserido
-          </p>
-          {editing ? (
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                disabled={saving}
-                placeholder="Cole o código correto"
-                className="h-11 w-full rounded-lg border border-[#E0DFDA] bg-white px-3 text-sm text-[#1c1c1a] focus:border-[#185FA5] focus:outline-none"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => void saveCode()}
-                  disabled={saving}
-                  className="inline-flex h-11 min-w-[88px] flex-1 items-center justify-center rounded-lg bg-[#D85A30] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#c14e28] disabled:opacity-70"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDraft(code);
-                    setEditing(false);
-                  }}
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[#E0DFDA] px-4 text-sm font-medium text-[#6f6f6a]"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="min-w-0 break-all text-sm font-semibold text-[#042C53]">
-                {code || "Não informado"}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setDraft(code);
-                  setEditing(true);
-                }}
-                className="inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-lg border border-[#185FA5]/30 px-3 text-xs font-medium text-[#185FA5] transition-colors hover:bg-[#185FA5]/10"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Editar código
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => void refreshStatus()}
-            disabled={checking}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#042C53] disabled:opacity-70"
-          >
-            {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar Status"}
-          </button>
+        <div className="mt-7">
           <button
             type="button"
             onClick={() => void signOut()}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#185FA5]/30 px-4 text-sm font-medium text-[#185FA5] transition-colors hover:bg-[#185FA5]/10"
+            className="inline-flex w-full h-11 items-center justify-center gap-2 rounded-lg border border-[#185FA5]/30 px-4 text-sm font-medium text-[#185FA5] transition-colors hover:bg-[#185FA5]/10"
           >
             <LogOut className="h-4 w-4" />
             Sair
