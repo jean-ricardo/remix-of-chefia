@@ -75,9 +75,10 @@ export function useRotinaRealtime() {
   useEffect(() => {
     const channel = supabase
       .channel("rotina")
-      .on("postgres_changes", { event: "*", schema: "public", table: "team_members" }, () =>
-        qc.invalidateQueries({ queryKey: KEYS.members }),
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "team_members" }, () => {
+        qc.invalidateQueries({ queryKey: KEYS.members });
+        qc.invalidateQueries({ queryKey: ["team_members", "pending"] });
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "activities" }, () =>
         qc.invalidateQueries({ queryKey: KEYS.activities }),
       )

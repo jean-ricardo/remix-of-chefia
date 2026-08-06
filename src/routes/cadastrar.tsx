@@ -155,6 +155,9 @@ function CadastrarPage() {
         await supabase.auth.signInWithPassword({ email: cleanEmail, password });
       }
 
+      // Garantir atualização do estado local e cache
+      await supabase.auth.refreshSession();
+
       const { data: after } = await supabase.auth.getSession();
       setBusy(false);
 
