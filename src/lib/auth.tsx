@@ -9,6 +9,16 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Activity } from "./rotina";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 /**
  * Real authentication + RBAC.
@@ -136,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleUpdate, setRoleUpdate] = useState<{ old: string; new: string } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -171,6 +182,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Realtime listener for role changes
+  useEffect(() => {
+    if (!user?.id || !user.mapped) return;
+
+    const channel = supabase
+      .channel(`role-updates-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "team_members",
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          const oldCargo = payload.old.cargo_principal;
+          const newCargo = payload.new.cargo_principal;
+
+          if (oldCargo !== newCargo) {
+            setRoleUpdate({
+              old: String(oldCargo || "Membro"),
+              new: String(newCargo || "Membro"),
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, user?.mapped]);
+
   const value = useMemo<AuthState>(
     () => ({
       loading,
@@ -185,7 +229,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [loading, session, user],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      
+      <Dialog open={!!roleUpdate} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-navy">Permissões Atualizadas</DialogTitle>
+            <DialogDescription className="pt-3 text-base">
+              A administração modificou o seu cargo de <strong>{roleUpdate?.old}</strong> para <strong>{roleUpdate?.new}</strong>. Para que as novas permissões entrem em vigor, é necessário atualizar a plataforma.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6">
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="w-full gap-2 bg-[#185FA5] hover:bg-[#042C53]"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Atualizar Plataforma
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthState {
