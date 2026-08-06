@@ -197,10 +197,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           filter: `id=eq.${user.id}`,
         },
         (payload) => {
-          const oldCargo = payload.old.cargo_principal;
-          const newCargo = payload.new.cargo_principal;
+          const oldCargo = payload.old?.cargo_principal;
+          const newCargo = payload.new?.cargo_principal;
 
-          if (oldCargo !== newCargo) {
+          // Payload.old is only present if REPLICA IDENTITY FULL is set on the table
+          // If it's not present, we can't show the "old" value accurately, 
+          // but the most important thing is detected that a change happened for THIS user.
+          if (newCargo && oldCargo !== newCargo) {
             setRoleUpdate({
               old: String(oldCargo || "Membro"),
               new: String(newCargo || "Membro"),
