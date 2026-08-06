@@ -117,6 +117,16 @@ function EquipePage() {
     },
   });
 
+  const handleRefresh = async () => {
+    setBusyId("refresh");
+    await Promise.all([
+      pending.refetch(),
+      members.refetch(),
+    ]);
+    setBusyId(null);
+    toast.info("Status atualizado!");
+  };
+
 
   async function approve(id: string, name: string) {
     setBusyId(id);
@@ -292,11 +302,23 @@ function EquipePage() {
 
         {isAdmin && (pending.data?.length ?? 0) > 0 ? (
           <section className="rounded-2xl border border-amber/40 bg-warning/10 p-4 sm:p-5">
-            <div className="flex items-center gap-2">
-              <UserRoundCheck className="h-4 w-4 text-amber" />
-              <h2 className="text-sm font-bold uppercase tracking-wide text-navy">
-                Aguardando aprovação ({pending.data?.length})
-              </h2>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <UserRoundCheck className="h-4 w-4 text-amber" />
+                <h2 className="text-sm font-bold uppercase tracking-wide text-navy">
+                  Aguardando aprovação ({pending.data?.length})
+                </h2>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleRefresh}
+                disabled={busyId === "refresh"}
+                className="h-8 gap-1 rounded-lg text-xs font-semibold text-amber hover:bg-amber/10 hover:text-amber"
+              >
+                <Loader2 className={cn("h-3.5 w-3.5", busyId === "refresh" && "animate-spin")} />
+                Atualizar Status
+              </Button>
             </div>
             <ul className="mt-4 flex flex-col gap-2">
               {(pending.data ?? []).map((p) => (
