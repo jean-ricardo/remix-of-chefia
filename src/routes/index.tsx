@@ -233,7 +233,7 @@ function DashboardPage() {
       <Toaster richColors />
       <div className={cn(
         "flex flex-1 flex-col space-y-6 md:space-y-8",
-        isPaginated ? "pb-24 md:pb-8" : "h-screen overflow-hidden pb-0 md:pb-0"
+        isPaginated ? "pb-24 md:pb-8" : "h-[calc(100vh-80px)] overflow-hidden pb-0 md:pb-0"
       )}>
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
