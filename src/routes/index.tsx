@@ -583,12 +583,14 @@ function PaginatedTaskList({
   completed,
   currentUser,
   detailsTaskId,
+  isPaginated,
 }: {
   items: OccurrenceView[];
   memberById: Map<string, TeamMember>;
   completed: boolean;
   currentUser: ReturnType<typeof useCurrentUser>;
   detailsTaskId: string | null;
+  isPaginated: boolean;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -600,7 +602,7 @@ function PaginatedTaskList({
 
   const page = Math.min(currentPage, totalPages);
   const start = (page - 1) * PAGE_SIZE;
-  const visible = items.slice(start, start + PAGE_SIZE);
+  const visible = isPaginated ? items.slice(start, start + PAGE_SIZE) : items;
 
   return (
     <div className="flex flex-col content-start gap-3">
