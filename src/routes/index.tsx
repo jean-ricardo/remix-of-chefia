@@ -20,6 +20,7 @@ import {
   Plus,
   Repeat,
   RotateCw,
+  Trash2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
@@ -671,6 +672,15 @@ function OccurrenceCard({
 }) {
   const [busy, setBusy] = useState(false);
   
+  const rawRole =
+    (currentUser as unknown as { role?: string }).role ??
+    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "admin" : undefined);
+  const isAdmin =
+    rawRole === "admin" ||
+    rawRole === "gestor" ||
+    rawRole === "diretor" ||
+    rawRole === "director";
+
   const pointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const member = occ.activity.assigned_user_id
@@ -768,6 +778,29 @@ function OccurrenceCard({
     setBusy(false);
     if (error) toast.error("Erro: " + error.message);
     else toast.success("Conclusão desfeita");
+  }
+
+  async function remove() {
+    if (!isAdmin || !occ.activity.id || busy) return;
+    const ok = window.confirm("Deseja realmente excluir esta atividade permanentemente?");
+    if (!ok) return;
+
+    setBusy(true);
+    const { error } = await supabase
+      .from("activities")
+      .delete()
+      .eq("id", occ.activity.id);
+
+    if (error) {
+      toast.error("Erro ao excluir: " + error.message);
+      setBusy(false);
+    } else {
+      toast.success("Atividade excluída");
+      const qc = (window as any).queryClient;
+      if (qc) qc.invalidateQueries({ queryKey: ["activities"] });
+      // setBusy(false) happens via unmount usually, but for safety:
+      setBusy(false);
+    }
   }
 
   function openDetails() {
@@ -904,14 +937,27 @@ function OccurrenceCard({
       {canAct && (
         <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-50 pt-3">
           {completed ? (
-            <button
-              type="button"
-              onClick={stop(reopen)}
-              disabled={busy}
-              className="h-10 flex-1 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Desfazer
-            </button>
+            <div className="flex flex-1 gap-2">
+              <button
+                type="button"
+                onClick={stop(reopen)}
+                disabled={busy}
+                className="h-10 flex-1 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Desfazer
+              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={stop(remove)}
+                  disabled={busy}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-100 text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
+                  title="Excluir atividade permanentemente"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           ) : (
             <>
               <button
