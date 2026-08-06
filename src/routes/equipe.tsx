@@ -424,7 +424,7 @@ function EquipePage() {
                         memberId={m.id} 
                         memberName={name} 
                         currentCargo={m.role || "Membro"} 
-                        canEdit={currentUser.cargo?.toLowerCase() === "diretor"} 
+                        canEdit={currentUser.cargo?.toLowerCase() === "diretor" || currentUser.cargo?.toLowerCase() === "adm" || currentUser.cargo?.toLowerCase() === "admin"} 
                       />
                       <StatusBadge status={status} />
                       <span className="text-xs text-muted-foreground">
