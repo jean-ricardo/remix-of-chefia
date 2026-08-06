@@ -1194,10 +1194,7 @@ function KanbanColumn({
   const showPager = isPaginated && items.length > COLUMN_PAGE_SIZE;
 
   return (
-    <div className={cn(
-      "flex min-w-[85vw] snap-center flex-col md:min-w-0 md:snap-none",
-      !isPaginated && "h-full overflow-hidden"
-    )}>
+    <div className="flex min-w-[85vw] snap-center flex-col md:min-w-0 md:snap-none">
       <header className="mb-2 flex items-center gap-2 px-1">
         <span className={cn("h-2 w-2 rounded-full", accent)} />
         <h2 className="text-sm font-semibold text-[#042C53] md:text-base">{title}</h2>
