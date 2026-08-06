@@ -74,6 +74,7 @@ function EquipePage() {
   const queryClient = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [codeOpen, setCodeOpen] = useState(false);
+  const [dynamicCode, setDynamicCode] = useState("");
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -83,7 +84,7 @@ function EquipePage() {
   const [inviteBusy, setInviteBusy] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const teamCode = currentUser.id;
+  const teamCode = dynamicCode || currentUser.id;
   const signupUrl =
     typeof window !== "undefined" ? `${window.location.origin}/cadastrar` : "/cadastrar";
 
@@ -268,7 +269,10 @@ function EquipePage() {
               <>
                 <Button
                   variant="outline"
-                  onClick={() => setCodeOpen(true)}
+                  onClick={() => {
+                    setDynamicCode(crypto.randomUUID().split("-")[0].toUpperCase());
+                    setCodeOpen(true);
+                  }}
                   className="h-10 rounded-lg border-navy/20 px-4 font-medium text-navy hover:bg-navy/5"
                 >
                   <Link2 className="h-4 w-4" />
