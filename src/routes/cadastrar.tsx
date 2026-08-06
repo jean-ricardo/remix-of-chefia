@@ -150,25 +150,17 @@ function CadastrarPage() {
         if (insErr) throw insErr;
       }
 
-      // Login imediato se necessário
-      if (!data.session) {
-        await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-      }
-
-      // Garantir atualização do estado local e cache
-      await supabase.auth.refreshSession();
-
-      const { data: after } = await supabase.auth.getSession();
+      // 3. Garantir que ele não faça login imediato se precisar de confirmação de e-mail
+      // No Supabase, se confirm_email estiver ligado, signUp não retorna session.
       setBusy(false);
 
-      if (after.session) {
+      if (data.session) {
         toast.success("Cadastro realizado! Aguarde a aprovação do administrador.");
         navigate({ to: "/", replace: true });
-        return;
+      } else {
+        toast.success("Cadastro criado! Verifique sua caixa de e-mail para confirmar a conta e liberar seu acesso.");
+        navigate({ to: "/login", replace: true });
       }
-
-      toast.success("Cadastro criado! Confirme o e-mail para liberar seu acesso.");
-      navigate({ to: "/login", replace: true });
 
     } catch (err: any) {
       setBusy(false);

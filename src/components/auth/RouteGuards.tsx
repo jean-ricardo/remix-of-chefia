@@ -60,8 +60,11 @@ export function PendingApprovalScreen() {
           Solicitação Enviada!
         </h1>
         <p className="mt-3 text-[0.92rem] leading-relaxed text-[#6f6f6a]">
-          O Administrador da equipe já recebeu o seu pedido de acesso. Por favor, aguarde a liberação. 
-          Você pode fechar esta página e, assim que for aprovado, basta atualizar a tela (ou acessar novamente) para entrar na plataforma normalmente.
+          {user?.mapped ? (
+            "O Administrador da equipe já recebeu o seu pedido de acesso. Por favor, aguarde a liberação. Você pode fechar esta página e, assim que for aprovado, basta acessar novamente para entrar na plataforma."
+          ) : (
+            "Sua conta foi criada, mas seu e-mail ainda não foi vinculado a nenhuma equipe ou a solicitação está sendo processada. Por favor, aguarde a aprovação do administrador."
+          )}
         </p>
 
         <div className="mt-7">
@@ -97,9 +100,10 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     }
   }, [loading, session, navigate]);
 
-  if (loading || !session) return <AuthSplash />;
+  if (loading) return <AuthSplash />;
+  if (!session) return null; // Redirecionamento em curso no useEffect
 
-  if (user?.pending) return <PendingApprovalScreen />;
+  if (user?.pending || !user?.mapped) return <PendingApprovalScreen />;
 
   return <>{children}</>;
 }
