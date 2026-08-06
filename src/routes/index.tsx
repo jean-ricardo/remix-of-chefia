@@ -1210,10 +1210,13 @@ function KanbanColumn({
       <div
         className={cn(
           "flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/60",
-          isPaginated ? "max-h-[75vh] md:max-h-none" : "max-h-[70vh]",
+          !isPaginated && "h-full",
         )}
       >
-        <div className="flex-1 space-y-3 overflow-y-auto p-3 scrollbar-hide">
+        <div className={cn(
+          "flex-1 space-y-3 p-3 scrollbar-hide",
+          isPaginated ? "overflow-y-auto" : "overflow-y-auto pb-24"
+        )}>
           {isLoading ? (
             <TaskCardSkeleton />
           ) : items.length === 0 ? (
