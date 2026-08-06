@@ -672,6 +672,15 @@ function OccurrenceCard({
 }) {
   const [busy, setBusy] = useState(false);
   
+  const rawRole =
+    (currentUser as unknown as { role?: string }).role ??
+    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "admin" : undefined);
+  const isAdmin =
+    rawRole === "admin" ||
+    rawRole === "gestor" ||
+    rawRole === "diretor" ||
+    rawRole === "director";
+
   const pointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const member = occ.activity.assigned_user_id
