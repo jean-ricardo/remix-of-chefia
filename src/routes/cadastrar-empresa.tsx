@@ -59,52 +59,26 @@ function CadastrarEmpresaContent() {
           data: {
             full_name: name.trim(),
             whatsapp: whatsapp.replace(/\D/g, ""),
-            is_director: true // Helpful hint for metadata
+            is_director: true,
+            temp_company_name: companyName.trim(), // Save temporarily to metadata
           },
         },
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error("Erro ao criar usuário.");
-
-      // 2. Create Team
-      const { data: teamData, error: teamError } = await supabase
-        .from("teams")
-        .insert({
-          name: companyName.trim(),
-        })
-        .select()
-        .single();
-
-      if (teamError) {
-        // Cleanup: We can't easily undo auth signup here without service role,
-        // but the user will exist without a team member entry, which RouteGuards handles.
-        throw teamError;
-      }
-
-      // 3. Create Team Member as Director
-      const { error: memberError } = await supabase.from("team_members").insert({
-        user_id: authData.user.id,
-        team_id: teamData.id,
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        telefone: whatsapp.replace(/\D/g, "").startsWith("55") 
-          ? whatsapp.replace(/\D/g, "") 
-          : `55${whatsapp.replace(/\D/g, "")}`,
-        cargo_principal: "Diretor",
-        role: "diretor",
-      });
-
-      if (memberError) throw memberError;
-
-      // 4. Force session refresh to ensure metadata/claims are up to date
-      await supabase.auth.refreshSession();
-
-      toast.success("Empresa e conta criadas com sucesso! Bem-vindo, Diretor.");
-      navigate({ to: "/", replace: true });
+      
+      // If the user was created (even if email confirmation is required), 
+      // we notify them and send them to the login page as requested.
+      toast.success("Conta criada com sucesso! Por favor, faça login para configurar sua empresa.");
+      
+      // Give the user a moment to see the success message
+      setTimeout(() => {
+        navigate({ to: "/login", replace: true });
+      }, 2000);
+      
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Erro ao criar empresa.");
+      toast.error(err.message || "Erro ao criar conta.");
     } finally {
       setBusy(false);
     }
