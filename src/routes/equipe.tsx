@@ -114,13 +114,20 @@ function EquipePage() {
     queryKey: ["team_members", "pending", teamCode],
     enabled: isAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("team_members")
-        .select("id,name,email,role,created_at")
+        .select("id,name,email,role,created_at,team_id")
         .eq("cargo_principal", "pendente")
-        // Só solicitações que informaram exatamente o código desta equipe.
-        .eq("role", `equipe:${teamCode}`)
         .order("created_at", { ascending: false });
+
+      if (currentUser.team_id) {
+        query = query.eq("team_id", currentUser.team_id);
+      } else {
+        // Fallback for legacy invitation codes if needed, but multi-team relies on team_id
+        query = query.eq("role", `equipe:${teamCode}`);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
     },
