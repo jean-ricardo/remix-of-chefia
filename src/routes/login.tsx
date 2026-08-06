@@ -315,7 +315,7 @@ function SignUpForm() {
           className="flex flex-col items-start gap-1 rounded-xl border border-[#E6E5E0] p-4 text-left transition-all hover:border-[#D85A30] hover:bg-[#D85A30]/[0.02]"
         >
           <span className="text-[15px] font-semibold text-[#042C53]">Criar nova equipe (Empresa)</span>
-          <span className="text-[13px] text-[#6f6f6a]">Ideal para diretores e gestores que querem implantar o Chef.IA.</span>
+          <span className="text-[13px] text-[#6f6f6a]">Ideal para diretores e gestores que desejam criar uma nova base isolada.</span>
         </button>
 
         <button
