@@ -231,7 +231,10 @@ function DashboardPage() {
   return (
     <>
       <Toaster richColors />
-      <div className="flex flex-1 flex-col space-y-6 pb-24 md:space-y-8 md:pb-8">
+      <div className={cn(
+        "flex flex-1 flex-col space-y-6 md:space-y-8",
+        isPaginated ? "pb-24 md:pb-8" : "h-[calc(100vh-80px)] overflow-hidden pb-0 md:pb-0"
+      )}>
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
@@ -1097,7 +1100,12 @@ function KanbanBoard({
     setPages((prev) => ({ ...prev, [key]: page }));
 
   return (
-    <div className="-mx-4 flex snap-x snap-mandatory flex-row gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 md:mx-0 md:grid md:h-[calc(100vh-16rem)] md:min-h-[600px] md:snap-none md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0">
+    <div className={cn(
+      "-mx-4 flex snap-x snap-mandatory flex-row gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-6 md:px-0 md:pb-0",
+      isPaginated 
+        ? "md:h-[calc(100vh-16rem)] md:min-h-[600px] md:overflow-visible" 
+        : "h-[calc(100vh-250px)] md:h-[calc(100vh-280px)] md:overflow-hidden"
+    )}>
       <KanbanColumn
         title="A Fazer"
         accent="bg-[#185FA5]"
@@ -1194,7 +1202,10 @@ function KanbanColumn({
   const showPager = isPaginated && items.length > COLUMN_PAGE_SIZE;
 
   return (
-    <div className="flex min-w-[85vw] snap-center flex-col md:min-w-0 md:snap-none">
+    <div className={cn(
+      "flex min-w-[85vw] snap-center flex-col md:min-w-0 md:snap-none",
+      !isPaginated && "h-full overflow-hidden"
+    )}>
       <header className="mb-2 flex items-center gap-2 px-1">
         <span className={cn("h-2 w-2 rounded-full", accent)} />
         <h2 className="text-sm font-semibold text-[#042C53] md:text-base">{title}</h2>
@@ -1205,10 +1216,13 @@ function KanbanColumn({
       <div
         className={cn(
           "flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/60",
-          isPaginated ? "max-h-[75vh] md:max-h-none" : "max-h-[70vh]",
+          !isPaginated && "h-full",
         )}
       >
-        <div className="flex-1 space-y-3 overflow-y-auto p-3 scrollbar-hide">
+        <div className={cn(
+          "flex-1 space-y-3 p-3 scrollbar-hide",
+          isPaginated ? "overflow-y-auto" : "overflow-y-auto pb-24"
+        )}>
           {isLoading ? (
             <TaskCardSkeleton />
           ) : items.length === 0 ? (
