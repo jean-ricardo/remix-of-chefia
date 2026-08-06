@@ -24,10 +24,9 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
-
 import { TaskDetailsSheet } from "@/components/activities/TaskDetailsSheet";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { toast } from "sonner";
