@@ -1,10 +1,7 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Clock3, Loader2, LogOut, Pencil } from "lucide-react";
-import { toast } from "sonner";
+import { Clock3, LogOut } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
 
