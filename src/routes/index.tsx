@@ -231,7 +231,7 @@ function DashboardPage() {
   return (
     <>
       <Toaster richColors />
-      <div className="flex flex-1 flex-col space-y-6 pb-24 md:space-y-8 md:pb-8">
+      <div className={cn("flex flex-1 flex-col space-y-6 md:space-y-8", !isPaginated ? "pb-48" : "pb-24")}>
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
@@ -509,7 +509,7 @@ function Section({
           message={emptyMessage}
         />
       ) : (
-        <div className={cn(!isPaginated && "max-h-[65vh] overflow-y-auto scrollbar-hide")}>
+        <div className="w-full">
           <PaginatedTaskList
             items={items}
             memberById={memberById}
@@ -1097,7 +1097,7 @@ function KanbanBoard({
     setPages((prev) => ({ ...prev, [key]: page }));
 
   return (
-    <div className="-mx-4 flex snap-x snap-mandatory flex-row gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-6 md:px-0 md:pb-0">
+    <div className="-mx-4 flex snap-x snap-mandatory flex-row gap-4 overflow-x-auto scrollbar-hide px-4 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-6 md:px-0">
       <KanbanColumn
         title="A Fazer"
         accent="bg-[#185FA5]"
@@ -1205,13 +1205,9 @@ function KanbanColumn({
       <div
         className={cn(
           "flex min-h-[420px] flex-col rounded-xl border border-gray-100 bg-gray-50/60",
-          !isPaginated && "max-h-[65vh]",
         )}
       >
-        <div className={cn(
-          "space-y-3 p-3 overflow-y-auto scrollbar-hide",
-          !isPaginated && "pb-24"
-        )}>
+        <div className="space-y-3 p-3">
           {isLoading ? (
             <TaskCardSkeleton />
           ) : items.length === 0 ? (
