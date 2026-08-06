@@ -369,6 +369,21 @@ function DashboardPage() {
               />
             </div>
 
+            <Section
+              title="Atrasadas"
+              tone="danger"
+              items={atrasadas}
+              memberById={memberById}
+              isLoading={false}
+              emptyIcon={AlertTriangle}
+              emptyIconClass="text-danger"
+              emptyTitle="Sem atrasos"
+              emptyMessage="Tudo sob controle."
+              currentUser={currentUser}
+              detailsTaskId={detailsTaskId}
+              isPaginated={isPaginated}
+            />
+
             <KanbanBoard
               atrasadas={atrasadas}
               hoje={hoje}
@@ -377,7 +392,7 @@ function DashboardPage() {
               memberById={memberById}
               isLoading={false}
               currentUser={currentUser}
-               today={today}
+              today={today}
               detailsTaskId={detailsTaskId}
               isPaginated={isPaginated}
             />
