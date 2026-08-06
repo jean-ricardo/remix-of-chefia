@@ -1204,8 +1204,8 @@ function KanbanColumn({
       </header>
       <div
         className={cn(
-          "flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/60",
-          !isPaginated && "h-full",
+          "flex min-h-[420px] flex-col rounded-xl border border-gray-100 bg-gray-50/60",
+          !isPaginated && "max-h-[65vh]",
         )}
       >
         <div className={cn(
