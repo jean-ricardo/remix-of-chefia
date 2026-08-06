@@ -182,12 +182,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Realtime listener for role changes
+  // Realtime listener for role changes AND deletions
   useEffect(() => {
     if (!user?.id || !user.mapped) return;
 
     const channel = supabase
-      .channel(`role-updates-${user.id}`)
+      .channel(`user-updates-${user.id}`)
       .on(
         "postgres_changes",
         {
@@ -200,15 +200,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const oldCargo = payload.old?.cargo_principal;
           const newCargo = payload.new?.cargo_principal;
 
-          // Payload.old is only present if REPLICA IDENTITY FULL is set on the table
-          // If it's not present, we can't show the "old" value accurately, 
-          // but the most important thing is detected that a change happened for THIS user.
           if (newCargo && oldCargo !== newCargo) {
             setRoleUpdate({
               old: String(oldCargo || "Membro"),
               new: String(newCargo || "Membro"),
             });
           }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "team_members",
+          filter: `id=eq.${user.id}`,
+        },
+        () => {
+          // Se o registro do usuário foi deletado da team_members, força logout imediato
+          // pois ele perdeu o acesso à plataforma.
+          console.log("Perfil removido. Encerrando sessão...");
+          void supabase.auth.signOut().then(() => {
+            window.location.href = "/login?reason=removed";
+          });
         }
       )
       .subscribe();
