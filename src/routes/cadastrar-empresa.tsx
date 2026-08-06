@@ -50,6 +50,7 @@ function CadastrarEmpresaPage() {
           data: {
             full_name: name.trim(),
             whatsapp: whatsapp.replace(/\D/g, ""),
+            is_director: true // Helpful hint for metadata
           },
         },
       });
@@ -66,7 +67,11 @@ function CadastrarEmpresaPage() {
         .select()
         .single();
 
-      if (teamError) throw teamError;
+      if (teamError) {
+        // Cleanup: We can't easily undo auth signup here without service role,
+        // but the user will exist without a team member entry, which RouteGuards handles.
+        throw teamError;
+      }
 
       // 3. Create Team Member as Director
       const { error: memberError } = await supabase.from("team_members").insert({
@@ -74,12 +79,17 @@ function CadastrarEmpresaPage() {
         team_id: teamData.id,
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        telefone: whatsapp.replace(/\D/g, ""),
-        cargo_principal: "diretor",
+        telefone: whatsapp.replace(/\D/g, "").startsWith("55") 
+          ? whatsapp.replace(/\D/g, "") 
+          : `55${whatsapp.replace(/\D/g, "")}`,
+        cargo_principal: "Diretor",
         role: "diretor",
       });
 
       if (memberError) throw memberError;
+
+      // 4. Force session refresh to ensure metadata/claims are up to date
+      await supabase.auth.refreshSession();
 
       toast.success("Empresa e conta criadas com sucesso! Bem-vindo, Diretor.");
       navigate({ to: "/", replace: true });
