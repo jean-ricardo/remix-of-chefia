@@ -100,7 +100,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     }
   }, [loading, session, navigate]);
 
-  if (loading || !session) return <AuthSplash />;
+  if (loading) return <AuthSplash />;
+  if (!session) return null; // Redirecionamento em curso no useEffect
 
   if (user?.pending || !user?.mapped) return <PendingApprovalScreen />;
 
