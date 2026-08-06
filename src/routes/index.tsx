@@ -736,6 +736,7 @@ function OccurrenceCard({
       {
         activity_id: occ.activity.id,
         occurrence_key: occ.originalKey,
+        completed_at: new Date().toISOString(),
       },
       { onConflict: "activity_id,occurrence_key" },
     );
