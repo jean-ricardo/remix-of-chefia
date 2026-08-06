@@ -112,12 +112,57 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     "Usuário";
 
   if (email) {
-    const { data, error } = await supabase
+    // 1. Try to find an existing team member entry
+    let { data, error } = await supabase
       .from("team_members")
       .select("id,name,email,cargo_principal,telefone,team_id")
       .ilike("email", email)
       .limit(1)
       .maybeSingle();
+
+    // 2. If not found, check if this user has "is_director" and "temp_company_name" in metadata
+    // This happens when they just signed up via /cadastrar-empresa
+    if (!error && !data && authUser.user_metadata?.is_director && authUser.user_metadata?.temp_company_name) {
+      try {
+        const companyName = authUser.user_metadata.temp_company_name;
+        const fullName = authUser.user_metadata.full_name || fallbackName;
+        const whatsapp = authUser.user_metadata.whatsapp || "";
+
+        // Create the team
+        const { data: teamData, error: teamError } = await supabase
+          .from("teams")
+          .insert({ name: companyName })
+          .select()
+          .single();
+
+        if (!teamError && teamData) {
+          // Create the director member entry
+          const { data: memberData, error: memberError } = await supabase
+            .from("team_members")
+            .insert({
+              user_id: authUser.id,
+              team_id: teamData.id,
+              name: fullName,
+              email: email,
+              telefone: whatsapp.startsWith("55") ? whatsapp : `55${whatsapp}`,
+              cargo_principal: "Diretor",
+              role: "diretor",
+            })
+            .select()
+            .single();
+
+          if (!memberError && memberData) {
+            // Update metadata to remove the temp flags so we don't repeat this
+            await supabase.auth.updateUser({
+              data: { is_director: null, temp_company_name: null }
+            });
+            data = memberData;
+          }
+        }
+      } catch (err) {
+        console.error("Auto-provisioning error:", err);
+      }
+    }
 
     if (!error && data) {
       return {
