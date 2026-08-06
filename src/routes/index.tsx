@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
@@ -24,10 +24,9 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
-
 import { TaskDetailsSheet } from "@/components/activities/TaskDetailsSheet";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { toast } from "sonner";
@@ -309,27 +308,31 @@ function DashboardPage() {
               </>
             )}
 
-            <div className="hidden md:block">
-              <Button
-                onClick={() => setNewTaskOpen(true)}
-                className="h-10 gap-1.5 rounded-lg bg-[#185FA5] px-4 font-medium text-white hover:bg-[#042C53]"
-              >
-                <Plus className="h-4 w-4" />
-                Nova Atividade
-              </Button>
-            </div>
+            {isAdmin && (
+              <div className="hidden md:block">
+                <Button
+                  onClick={() => setNewTaskOpen(true)}
+                  className="h-10 gap-1.5 rounded-lg bg-[#D85A30] px-4 font-medium text-white hover:bg-[#c14e28]"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nova Atividade
+                </Button>
+              </div>
+            )}
           </div>
         </header>
 
         {/* Mobile FAB */}
-        <button
-          type="button"
-          onClick={() => setNewTaskOpen(true)}
-          aria-label="Nova atividade"
-          className="fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-colors hover:bg-[#c24f2a] active:scale-95 md:hidden"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setNewTaskOpen(true)}
+            aria-label="Nova atividade"
+            className="fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#D85A30] text-white shadow-lg shadow-[#D85A30]/30 transition-colors hover:bg-[#c24f2a] active:scale-95 md:hidden"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        )}
 
         <NewTaskModal isOpen={newTaskOpen} onClose={() => setNewTaskOpen(false)} />
 

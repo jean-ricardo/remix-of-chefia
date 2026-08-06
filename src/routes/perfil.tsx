@@ -135,7 +135,8 @@ function PerfilPage() {
           .update({
             name: name.trim(),
             cargo_principal: jobTitle,
-            telefone: formattedWhatsapp
+            telefone: formattedWhatsapp,
+            user_id: user.id // Ensure user_id is synced
           })
           .eq("id", user.id);
 

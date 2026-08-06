@@ -153,24 +153,37 @@ function ModeTabs({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void 
       aria-label="Modo de acesso"
       className="mb-10 flex border-b border-[#E6E5E0]"
     >
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          role="tab"
-          aria-selected={mode === t.id}
-          onClick={() => onChange(t.id)}
-          className={cn(
-            "relative -mb-px min-h-[44px] flex-1 px-2 pb-3 text-sm font-medium transition-colors",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5]/40 focus-visible:ring-offset-2",
-            mode === t.id
-              ? "text-[#042C53] after:absolute after:inset-x-0 after:-bottom-px after:h-[2px] after:rounded-full after:bg-[#185FA5]"
-              : "text-[#8b8b86] hover:text-[#444441]",
-          )}
-        >
-          {t.label}
-        </button>
-      ))}
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === "signin"}
+        onClick={() => onChange("signin")}
+        className={cn(
+          "relative -mb-px min-h-[44px] flex-1 px-2 pb-3 text-sm font-medium transition-colors",
+          mode === "signin"
+            ? "text-[#042C53] after:absolute after:inset-x-0 after:-bottom-px after:h-[2px] after:rounded-full after:bg-[#185FA5]"
+            : "text-[#8b8b86] hover:text-[#444441]",
+        )}
+      >
+        Entrar
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === "signup"}
+        onClick={() => {
+          // Instead of showing the local signup form, we can redirect or show choice
+          onChange("signup");
+        }}
+        className={cn(
+          "relative -mb-px min-h-[44px] flex-1 px-2 pb-3 text-sm font-medium transition-colors",
+          mode === "signup"
+            ? "text-[#042C53] after:absolute after:inset-x-0 after:-bottom-px after:h-[2px] after:rounded-full after:bg-[#185FA5]"
+            : "text-[#8b8b86] hover:text-[#444441]",
+        )}
+      >
+        Cadastrar
+      </button>
     </div>
   );
 }
@@ -288,91 +301,36 @@ function SignInForm({ onForgot }: { onForgot: () => void }) {
 
 function SignUpForm() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    if (password.length < 8) {
-      toast.warning("A senha precisa ter ao menos 8 caracteres.");
-      return;
-    }
-    if (password !== confirm) {
-      toast.warning("As senhas não conferem.");
-      return;
-    }
-
-    setBusy(true);
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: { emailRedirectTo: window.location.origin },
-    });
-    setBusy(false);
-
-    if (error) {
-      toast.error(friendlyError(error.message));
-      return;
-    }
-
-    if (data.session) {
-      toast.success("Conta criada! Acesso liberado.");
-      navigate({ to: "/", replace: true });
-      return;
-    }
-
-    toast.success(
-      "Enviamos um link de confirmação para seu e-mail. Ao confirmar, você entra direto no painel.",
-    );
-  }
 
   return (
-    <>
+    <div className="space-y-6">
       <Header
-        title="Primeiro acesso"
-        subtitle="Use o mesmo e-mail cadastrado pela sua empresa — seu cargo será reconhecido automaticamente."
+        title="Como deseja começar?"
+        subtitle="Escolha se você quer criar uma nova equipe para sua empresa ou entrar em uma equipe existente."
       />
-      <form onSubmit={onSubmit} className="space-y-5">
-        <MaterialInput
-          id="su-email"
-          label="E-mail corporativo"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="voce@empresa.com"
-        />
+      
+      <div className="grid gap-4">
+        <button
+          onClick={() => navigate({ to: "/cadastrar-empresa" })}
+          className="flex flex-col items-start gap-1 rounded-xl border border-[#E6E5E0] p-4 text-left transition-all hover:border-[#D85A30] hover:bg-[#D85A30]/[0.02]"
+        >
+          <span className="text-[15px] font-semibold text-[#042C53]">Criar nova equipe (Empresa)</span>
+          <span className="text-[13px] text-[#6f6f6a]">Ideal para diretores e gestores que querem implantar o Chef.IA.</span>
+        </button>
 
-        <MaterialInput
-          id="su-password"
-          label="Crie uma senha"
-          type="password"
-          required
-          minLength={8}
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Mínimo 8 caracteres"
-        />
+        <button
+          onClick={() => navigate({ to: "/cadastrar" })}
+          className="flex flex-col items-start gap-1 rounded-xl border border-[#E6E5E0] p-4 text-left transition-all hover:border-[#185FA5] hover:bg-[#185FA5]/[0.02]"
+        >
+          <span className="text-[15px] font-semibold text-[#042C53]">Entrar em uma equipe</span>
+          <span className="text-[13px] text-[#6f6f6a]">Para colaboradores que já possuem um código de convite da empresa.</span>
+        </button>
+      </div>
 
-        <MaterialInput
-          id="su-confirm"
-          label="Confirme a senha"
-          type="password"
-          required
-          autoComplete="new-password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          placeholder="Repita a senha"
-        />
-
-        <SubmitButton busy={busy} label="Criar meu acesso" busyLabel="Criando..." />
-      </form>
-    </>
+      <p className="text-center text-[12px] text-[#9a9a95]">
+        Já tem uma conta? <button onClick={() => window.location.reload()} className="font-medium text-[#185FA5] hover:underline">Faça login</button>
+      </p>
+    </div>
   );
 }
 

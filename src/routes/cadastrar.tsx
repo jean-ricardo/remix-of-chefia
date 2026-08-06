@@ -93,7 +93,21 @@ function CadastrarPage() {
     setBusy(true);
 
     try {
-      // 1. Auth Sign Up
+      // 1. Find the team by code
+      const { data: teamData, error: teamLookupError } = await supabase
+        .from("teams")
+        .select("id")
+        .eq("invite_code", cleanCode)
+        .maybeSingle();
+
+      if (teamLookupError) throw teamLookupError;
+      if (!teamData) {
+        toast.error("Código da Equipe inválido. Verifique com o administrador.");
+        setBusy(false);
+        return;
+      }
+
+      // 2. Auth Sign Up
       const { data, error: authError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -125,7 +139,9 @@ function CadastrarPage() {
             .update({ 
               name: cleanName, 
               role: `equipe:${cleanCode}`,
-              telefone: formattedWhatsapp
+              telefone: formattedWhatsapp,
+              team_id: teamData.id,
+              user_id: data.user?.id
             })
             .eq("id", existing.id);
           if (updErr) throw updErr;
@@ -134,7 +150,8 @@ function CadastrarPage() {
             .from("team_members")
             .update({ 
               name: cleanName,
-              telefone: formattedWhatsapp
+              telefone: formattedWhatsapp,
+              user_id: data.user?.id
             })
             .eq("id", existing.id);
           if (updErr) throw updErr;
@@ -146,6 +163,8 @@ function CadastrarPage() {
           telefone: formattedWhatsapp,
           cargo_principal: "pendente",
           role: `equipe:${cleanCode}`,
+          team_id: teamData.id,
+          user_id: data.user?.id
         });
         if (insErr) throw insErr;
       }

@@ -97,6 +97,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
         description: form.description.trim(),
         created_by: currentUser.id,
         status: "todo",
+        team_id: currentUser.team_id,
       })
       .select("id")
       .maybeSingle();

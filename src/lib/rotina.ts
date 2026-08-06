@@ -9,6 +9,8 @@ export interface TeamMember {
   role: string | null;
   /** Somente leitura — usado para notificações de WhatsApp. */
   telefone?: string | null;
+  team_id?: string | null;
+  user_id?: string | null;
 }
 
 export interface Activity {
@@ -24,6 +26,7 @@ export interface Activity {
   recurrence?: string | null;
   created_by?: string | null;
   description?: string | null;
+  team_id?: string | null;
 }
 
 export interface Completion {

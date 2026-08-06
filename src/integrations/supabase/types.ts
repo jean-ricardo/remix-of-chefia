@@ -27,6 +27,7 @@ export type Database = {
           recurrence: string
           recurrence_type: Database["public"]["Enums"]["recurrence_type"]
           status: string | null
+          team_id: string | null
           title: string
           weekday: number | null
         }
@@ -42,6 +43,7 @@ export type Database = {
           recurrence?: string
           recurrence_type: Database["public"]["Enums"]["recurrence_type"]
           status?: string | null
+          team_id?: string | null
           title: string
           weekday?: number | null
         }
@@ -57,6 +59,7 @@ export type Database = {
           recurrence?: string
           recurrence_type?: Database["public"]["Enums"]["recurrence_type"]
           status?: string | null
+          team_id?: string | null
           title?: string
           weekday?: number | null
         }
@@ -66,6 +69,13 @@ export type Database = {
             columns: ["assigned_user_id"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activities_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -169,7 +179,9 @@ export type Database = {
           id: string
           name: string
           role: string | null
+          team_id: string | null
           telefone: string | null
+          user_id: string | null
         }
         Insert: {
           cargo_principal?: string | null
@@ -178,7 +190,9 @@ export type Database = {
           id?: string
           name: string
           role?: string | null
+          team_id?: string | null
           telefone?: string | null
+          user_id?: string | null
         }
         Update: {
           cargo_principal?: string | null
@@ -187,7 +201,38 @@ export type Database = {
           id?: string
           name?: string
           role?: string | null
+          team_id?: string | null
           telefone?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string | null
+          id: string
+          invite_code: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invite_code?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invite_code?: string
+          name?: string
         }
         Relationships: []
       }
