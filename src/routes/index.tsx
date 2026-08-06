@@ -509,7 +509,7 @@ function Section({
           message={emptyMessage}
         />
       ) : (
-        <div className={cn(!isPaginated && "max-h-[70vh] overflow-y-auto scrollbar-hide")}>
+        <div className={cn(!isPaginated && "max-h-[65vh] overflow-y-auto scrollbar-hide")}>
           <PaginatedTaskList
             items={items}
             memberById={memberById}
