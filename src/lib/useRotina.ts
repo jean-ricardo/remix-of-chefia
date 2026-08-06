@@ -46,7 +46,7 @@ export function useCompletions() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("completions")
-        .select("activity_id,occurrence_key");
+        .select("activity_id,occurrence_key,completed_at");
       if (error) throw error;
       return (data ?? []) as Completion[];
     },
