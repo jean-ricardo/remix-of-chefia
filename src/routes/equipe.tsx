@@ -690,9 +690,9 @@ function RoleSelect({
       if (error) throw error;
 
       await logActivity({
-        actorName: currentUser.name || "Diretor",
+        actorName: currentUser.name || "Gestor",
         actionType: "update",
-        details: `O Diretor ${currentUser.name} alterou o cargo de ${memberName} para ${newCargo.charAt(0).toUpperCase() + newCargo.slice(1)}.`,
+        details: `${currentUser.cargo?.charAt(0).toUpperCase()}${currentUser.cargo?.slice(1)} ${currentUser.name} alterou o cargo de ${memberName} para ${newCargo.charAt(0).toUpperCase() + newCargo.slice(1)}.`,
       });
 
       toast.success("Cargo atualizado com sucesso. As permissões foram aplicadas.");
