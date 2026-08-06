@@ -1209,8 +1209,8 @@ function KanbanColumn({
         )}
       >
         <div className={cn(
-          "flex-1 space-y-3 p-3 scrollbar-hide",
-          isPaginated ? "overflow-y-auto" : "overflow-y-auto pb-24"
+          "space-y-3 p-3 overflow-y-auto scrollbar-hide",
+          !isPaginated && "pb-24"
         )}>
           {isLoading ? (
             <TaskCardSkeleton />
