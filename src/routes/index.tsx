@@ -1097,7 +1097,12 @@ function KanbanBoard({
     setPages((prev) => ({ ...prev, [key]: page }));
 
   return (
-    <div className="-mx-4 flex snap-x snap-mandatory flex-row gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 md:mx-0 md:grid md:h-[calc(100vh-16rem)] md:min-h-[600px] md:snap-none md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0">
+    <div className={cn(
+      "-mx-4 flex snap-x snap-mandatory flex-row gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-6 md:px-0 md:pb-0",
+      isPaginated 
+        ? "md:h-[calc(100vh-16rem)] md:min-h-[600px] md:overflow-visible" 
+        : "h-[calc(100vh-220px)] md:h-[calc(100vh-220px)] md:overflow-hidden"
+    )}>
       <KanbanColumn
         title="A Fazer"
         accent="bg-[#185FA5]"
