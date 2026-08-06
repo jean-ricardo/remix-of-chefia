@@ -15,11 +15,11 @@ import {
   Coffee,
   Eye,
   Inbox,
-
+  LayoutGrid,
+  List,
   Plus,
   Repeat,
   RotateCw,
-
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
@@ -40,6 +40,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   RECURRENCE_LABEL_PT,
   advanceDate,
@@ -90,6 +92,7 @@ function DashboardPage() {
   const [filter, setFilter] = useState<string>("all");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null);
+  const [isPaginated, setIsPaginated] = useState(true);
 
   useEffect(() => {
     (window as any).queryClient = qc;
@@ -254,7 +257,31 @@ function DashboardPage() {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-2 rounded-lg border border-border/50 bg-white/50 px-3 py-2 shadow-sm">
+              <Label
+                htmlFor="view-mode"
+                className="flex cursor-pointer items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+              >
+                {isPaginated ? (
+                  <>
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    Paginado
+                  </>
+                ) : (
+                  <>
+                    <List className="h-3.5 w-3.5" />
+                    Ver Tudo
+                  </>
+                )}
+              </Label>
+              <Switch
+                id="view-mode"
+                checked={!isPaginated}
+                onCheckedChange={(checked) => setIsPaginated(!checked)}
+              />
+            </div>
+
             {isAdmin && (
               <>
                 <label className="hidden text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:block">
@@ -350,8 +377,9 @@ function DashboardPage() {
               memberById={memberById}
               isLoading={false}
               currentUser={currentUser}
-              today={today}
+               today={today}
               detailsTaskId={detailsTaskId}
+              isPaginated={isPaginated}
             />
 
           </>
@@ -1000,6 +1028,7 @@ function KanbanBoard({
   currentUser,
   today,
   detailsTaskId,
+  isPaginated,
 }: {
   atrasadas: OccurrenceView[];
   hoje: OccurrenceView[];
@@ -1010,6 +1039,7 @@ function KanbanBoard({
   currentUser: ReturnType<typeof useCurrentUser>;
   today: Date;
   detailsTaskId: string | null;
+  isPaginated: boolean;
 }) {
   const columns = useMemo(() => {
     const todo: OccurrenceView[] = [];
@@ -1075,6 +1105,7 @@ function KanbanBoard({
         emptyTitle="Nada a fazer"
         emptyMessage="Sua fila está vazia."
         detailsTaskId={detailsTaskId}
+        isPaginated={isPaginated}
       />
       <KanbanColumn
         title="Em Andamento"
@@ -1090,6 +1121,7 @@ function KanbanBoard({
         emptyTitle="Nada em andamento"
         emptyMessage="Comece uma tarefa quando estiver pronto."
         detailsTaskId={detailsTaskId}
+        isPaginated={isPaginated}
       />
       <KanbanColumn
         title="Concluído"
@@ -1106,6 +1138,7 @@ function KanbanBoard({
         emptyTitle="Nada concluído ainda"
         emptyMessage="As entregas de hoje aparecem aqui."
         detailsTaskId={detailsTaskId}
+        isPaginated={isPaginated}
       />
     </div>
   );
@@ -1126,6 +1159,7 @@ function KanbanColumn({
   emptyTitle,
   emptyMessage,
   detailsTaskId,
+  isPaginated,
 }: {
   title: string;
   accent: string;
@@ -1141,15 +1175,16 @@ function KanbanColumn({
   emptyTitle: string;
   emptyMessage: string;
   detailsTaskId: string | null;
+  isPaginated: boolean;
 }) {
   const totalPages = Math.max(1, Math.ceil(items.length / COLUMN_PAGE_SIZE));
   const safePage = Math.min(Math.max(1, page), totalPages);
   const start = (safePage - 1) * COLUMN_PAGE_SIZE;
   const visible = useMemo(
-    () => items.slice(start, start + COLUMN_PAGE_SIZE),
-    [items, start],
+    () => (isPaginated ? items.slice(start, start + COLUMN_PAGE_SIZE) : items),
+    [items, start, isPaginated],
   );
-  const showPager = items.length > COLUMN_PAGE_SIZE;
+  const showPager = isPaginated && items.length > COLUMN_PAGE_SIZE;
 
   return (
     <div className="flex min-w-[85vw] snap-center flex-col md:min-w-0 md:snap-none">
@@ -1160,7 +1195,12 @@ function KanbanColumn({
           {isLoading ? "…" : items.length}
         </span>
       </header>
-      <div className="flex max-h-[75vh] min-h-[420px] flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/60 md:max-h-none">
+      <div
+        className={cn(
+          "flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/60",
+          isPaginated ? "max-h-[75vh] md:max-h-none" : "max-h-[70vh]",
+        )}
+      >
         <div className="flex-1 space-y-3 overflow-y-auto p-3 scrollbar-hide">
           {isLoading ? (
             <TaskCardSkeleton />
