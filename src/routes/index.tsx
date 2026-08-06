@@ -1142,6 +1142,7 @@ function KanbanColumn({
   emptyMessage,
   detailsTaskId,
   isPaginated,
+  showDotAlert,
 }: {
   title: string;
   accent: string;
