@@ -67,14 +67,43 @@ export function PendingApprovalScreen() {
   async function refreshStatus() {
     if (checking) return;
     setChecking(true);
-    // Invalida o cache do AuthContext forçando refetch do perfil no team_members.
-    // Como o AuthProvider não usa queryClient diretamente para o profile (resolveCurrentUser),
-    // vamos forçar um reload manual ou apenas esperar o onAuthStateChange se houver trigger.
-    // Melhor: disparar um getSession() que no nosso AuthProvider dispara resolveCurrentUser.
-    const { data } = await supabase.auth.getSession();
-    // O resolveCurrentUser já é disparado pelo apply() no useEffect do AuthProvider.
-    setChecking(false);
-    toast.info("Status atualizado!");
+    
+    try {
+      // 1. Força o refresh da sessão e metadados no Supabase Auth
+      const { data: { session: newSession }, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError) throw sessionError;
+
+      // 2. Busca o status atualizado na tabela team_members
+      if (newSession?.user?.email) {
+        const { data: member, error: dbError } = await supabase
+          .from("team_members")
+          .select("cargo_principal")
+          .ilike("email", newSession.user.email)
+          .maybeSingle();
+
+        if (dbError) throw dbError;
+
+        // Se o cargo não for mais "pendente", ele foi aprovado
+        const isApproved = member && member.cargo_principal && member.cargo_principal.toLowerCase() !== "pendente";
+        
+        if (isApproved) {
+          toast.success("Acesso aprovado! Redirecionando...");
+          // Força um reload completo para garantir que todo o estado global (AuthProvider, QueryClient)
+          // seja reiniciado com as permissões corretas e o usuário entre no Dashboard.
+          setTimeout(() => {
+            window.location.href = "/";
+          }, 1000);
+          return;
+        }
+      }
+      
+      toast.info("Status atualizado! Aguarde a aprovação do administrador.");
+    } catch (err) {
+      console.error("[refreshStatus] erro ao atualizar", err);
+      toast.error("Erro ao verificar status. Tente novamente.");
+    } finally {
+      setChecking(false);
+    }
   }
 
   async function saveCode() {
