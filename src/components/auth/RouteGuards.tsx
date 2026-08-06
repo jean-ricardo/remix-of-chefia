@@ -68,10 +68,15 @@ export function PendingApprovalScreen() {
                 Para retornar, você precisará de um novo link de convite e realizar um novo cadastro utilizando o código da equipe.
               </p>
             </div>
-          ) : user?.mapped ? (
+          ) : user?.mapped && user.pending ? (
             "O Administrador da equipe já recebeu o seu pedido de acesso. Por favor, aguarde a liberação. Você pode fechar esta página e, assim que for aprovado, basta acessar novamente para entrar na plataforma."
           ) : (
-            "Sua conta foi criada, mas seu e-mail ainda não foi vinculado a nenhuma equipe ou a solicitação está sendo processada. Por favor, aguarde a aprovação do administrador."
+            <div className="space-y-3">
+              <p>Sua conta foi criada, mas não identificamos um vínculo ativo com nenhuma equipe.</p>
+              <p className="font-medium text-[#185FA5]">
+                Caso você tenha sido removido ou esteja tentando entrar pela primeira vez, você precisa de um link de convite válido para se cadastrar em uma equipe.
+              </p>
+            </div>
           )}
         </div>
 
