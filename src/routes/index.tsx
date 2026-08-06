@@ -183,9 +183,14 @@ function DashboardPage() {
     const DAY_MS = 24 * 60 * 60 * 1000;
     const nowMs = today.getTime();
     const within24h = (o: OccurrenceView) => {
+      // Find the completion record for this specific occurrence
+      const key = `${o.activity.id}|${o.originalKey}`;
+      const comp = (completions.data ?? []).find(c => `${c.activity_id}|${c.occurrence_key}` === key);
+      
       const raw =
-        (o as unknown as { completed_at?: string | number | Date }).completed_at ??
+        (comp as unknown as { completed_at?: string | number | Date })?.completed_at ??
         (o as unknown as { updated_at?: string | number | Date }).updated_at;
+        
       if (!raw) return true;
       const t = new Date(raw).getTime();
       if (Number.isNaN(t)) return true;
@@ -731,6 +736,7 @@ function OccurrenceCard({
       {
         activity_id: occ.activity.id,
         occurrence_key: occ.originalKey,
+        completed_at: new Date().toISOString(),
       },
       { onConflict: "activity_id,occurrence_key" },
     );
