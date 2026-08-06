@@ -719,23 +719,10 @@ function OccurrenceCard({
     toast.success(`Próxima ocorrência criada para ${format(new Date(`${nextDue}T00:00:00`), "dd/MM/yyyy")}`);
   }
 
+  // O botão iniciar foi removido conforme solicitação de reformulação do Kanban.
+  // A lógica permanece aqui apenas como referência se necessário futuramente, mas não é mais acessível.
   async function start() {
-    setBusy(true);
-    const { error } = await supabase
-      .from("activities")
-      .update({ status: "in_progress" } as any)
-      .eq("id", occ.activity.id);
-    setBusy(false);
-    if (error) {
-      toast.error("Não foi possível iniciar: " + error.message);
-    } else {
-      toast.success("Atividade em andamento");
-      // OBRIGATÓRIO: Invalidar cache para que o Kanban re-renderize e mova o card.
-      const qc = (window as any).queryClient;
-      if (qc) {
-        qc.invalidateQueries({ queryKey: ["activities"] });
-      }
-    }
+    // Logic removed from UI
   }
 
   async function complete() {
@@ -921,17 +908,6 @@ function OccurrenceCard({
             </button>
           ) : (
             <>
-              {resolveColumn(occ, false) === "todo" && (
-                <button
-                  type="button"
-                  onClick={stop(start)}
-                  disabled={busy}
-                  className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-[#185FA5]/30 hover:bg-[#185FA5]/10 hover:text-[#185FA5] disabled:opacity-50"
-                >
-                  <Clock className="h-4 w-4" />
-                  Iniciar
-                </button>
-              )}
               <button
                 type="button"
                 onClick={stop(complete)}
@@ -998,15 +974,11 @@ export const UI_TO_DB_STATUS = {
   "Concluído": "DONE",
 } as const;
 
-type ColKey = "todo" | "in_progress" | "done";
+type ColKey = "atrasadas" | "todo" | "done";
 
 function resolveColumn(occ: OccurrenceView, completed: boolean): ColKey {
   if (completed || occ.status === "concluida") return "done";
-  const raw = (occ.activity as unknown as { status?: string | null }).status;
-  if (raw === "IN_PROGRESS" || raw === "in_progress" || raw === "Em Andamento") {
-    return "in_progress";
-  }
-  // Orphan rescue: null / undefined / unknown -> "A Fazer".
+  if (occ.status === "atrasada") return "atrasadas";
   return "todo";
 }
 
@@ -1023,7 +995,7 @@ function kanbanSort(a: OccurrenceView, b: OccurrenceView, todayMs: number) {
 
 const COLUMN_PAGE_SIZE = 5;
 
-type PagesState = { todo: number; in_progress: number; done: number };
+type PagesState = { atrasadas: number; todo: number; done: number };
 
 function KanbanBoard({
   atrasadas,
@@ -1050,36 +1022,38 @@ function KanbanBoard({
 }) {
   const columns = useMemo(() => {
     const todo: OccurrenceView[] = [];
-    const inProgress: OccurrenceView[] = [];
+    const overdue: OccurrenceView[] = [];
     const done: OccurrenceView[] = [];
+
     const pushOpen = (occ: OccurrenceView) => {
       const col = resolveColumn(occ, false);
-      if (col === "in_progress") inProgress.push(occ);
+      if (col === "atrasadas") overdue.push(occ);
       else if (col === "done") done.push(occ);
       else todo.push(occ);
     };
+
     atrasadas.forEach(pushOpen);
     hoje.forEach(pushOpen);
     proximas.forEach(pushOpen);
     concluidas.forEach((o) => done.push(o));
 
     const t = today.getTime();
+    overdue.sort((a, b) => kanbanSort(a, b, t));
     todo.sort((a, b) => kanbanSort(a, b, t));
-    inProgress.sort((a, b) => kanbanSort(a, b, t));
     done.sort((a, b) => kanbanSort(a, b, t));
-    return { todo, inProgress, done };
+    return { overdue, todo, done };
   }, [atrasadas, hoje, proximas, concluidas, today]);
 
   // Independent per-column pagination state.
-  const [pages, setPages] = useState<PagesState>({ todo: 1, in_progress: 1, done: 1 });
+  const [pages, setPages] = useState<PagesState>({ atrasadas: 1, todo: 1, done: 1 });
 
   // Orphan-page protection: if a column shrinks below the current page,
   // clamp instantly to the new last page (min 1).
   useEffect(() => {
     setPages((prev) => {
       const totals: PagesState = {
+        atrasadas: Math.max(1, Math.ceil(columns.overdue.length / COLUMN_PAGE_SIZE)),
         todo: Math.max(1, Math.ceil(columns.todo.length / COLUMN_PAGE_SIZE)),
-        in_progress: Math.max(1, Math.ceil(columns.inProgress.length / COLUMN_PAGE_SIZE)),
         done: Math.max(1, Math.ceil(columns.done.length / COLUMN_PAGE_SIZE)),
       };
       let next = prev;
@@ -1099,6 +1073,23 @@ function KanbanBoard({
   return (
     <div className="-mx-4 flex snap-x snap-mandatory flex-row gap-4 overflow-x-auto scrollbar-hide px-4 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-6 md:px-0">
       <KanbanColumn
+        title="Atrasadas"
+        accent="bg-red-500"
+        items={columns.overdue}
+        page={pages.atrasadas}
+        onPageChange={(p) => setPage("atrasadas", p)}
+        memberById={memberById}
+        currentUser={currentUser}
+        isLoading={isLoading}
+        emptyIcon={AlertTriangle}
+        emptyIconClass="text-gray-400"
+        emptyTitle="Sem atrasos"
+        emptyMessage="Tudo em dia por aqui."
+        detailsTaskId={detailsTaskId}
+        isPaginated={isPaginated}
+        showDotAlert
+      />
+      <KanbanColumn
         title="A Fazer"
         accent="bg-[#185FA5]"
         items={columns.todo}
@@ -1111,22 +1102,6 @@ function KanbanBoard({
         emptyIconClass="text-gray-400"
         emptyTitle="Nada a fazer"
         emptyMessage="Sua fila está vazia."
-        detailsTaskId={detailsTaskId}
-        isPaginated={isPaginated}
-      />
-      <KanbanColumn
-        title="Em Andamento"
-        accent="bg-amber-500"
-        items={columns.inProgress}
-        page={pages.in_progress}
-        onPageChange={(p) => setPage("in_progress", p)}
-        memberById={memberById}
-        currentUser={currentUser}
-        isLoading={isLoading}
-        emptyIcon={Clock}
-        emptyIconClass="text-gray-400"
-        emptyTitle="Nada em andamento"
-        emptyMessage="Comece uma tarefa quando estiver pronto."
         detailsTaskId={detailsTaskId}
         isPaginated={isPaginated}
       />
@@ -1183,6 +1158,8 @@ function KanbanColumn({
   emptyMessage: string;
   detailsTaskId: string | null;
   isPaginated: boolean;
+  showDotAlert?: boolean;
+  showDotAlert?: boolean;
 }) {
   const totalPages = Math.max(1, Math.ceil(items.length / COLUMN_PAGE_SIZE));
   const safePage = Math.min(Math.max(1, page), totalPages);
@@ -1197,6 +1174,9 @@ function KanbanColumn({
     <div className="flex min-w-[85vw] snap-center flex-col md:min-w-0 md:snap-none">
       <header className="mb-2 flex items-center gap-2 px-1">
         <span className={cn("h-2 w-2 rounded-full", accent)} />
+        {showDotAlert && items.length > 0 && (
+          <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" title="Existem tarefas atrasadas!" />
+        )}
         <h2 className="text-sm font-semibold text-[#042C53] md:text-base">{title}</h2>
         <span className="ml-auto rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">
           {isLoading ? "…" : items.length}
