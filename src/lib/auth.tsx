@@ -221,7 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // pois ele perdeu o acesso à plataforma.
           console.log("Perfil removido. Encerrando sessão...");
           void supabase.auth.signOut().then(() => {
-            window.location.href = "/login?reason=removed";
+            window.location.href = "/?reason=removed";
           });
         }
       )

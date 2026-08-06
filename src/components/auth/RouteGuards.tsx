@@ -48,6 +48,7 @@ export function AuthSplash({ label = "Carregando" }: { label?: string }) {
  */
 export function PendingApprovalScreen() {
   const { user, signOut } = useAuth();
+  const isRemoved = new URLSearchParams(window.location.search).get("reason") === "removed";
 
   return (
     <div className="grid min-h-screen place-items-center bg-[#F7F6F2] px-5 py-10">
@@ -57,15 +58,22 @@ export function PendingApprovalScreen() {
           <Clock3 className="h-6 w-6" />
         </div>
         <h1 className="mt-5 text-xl font-bold tracking-tight text-[#042C53] sm:text-2xl">
-          Solicitação Enviada!
+          {isRemoved ? "Acesso Revogado" : "Solicitação Enviada!"}
         </h1>
-        <p className="mt-3 text-[0.92rem] leading-relaxed text-[#6f6f6a]">
-          {user?.mapped ? (
+        <div className="mt-3 text-[0.92rem] leading-relaxed text-[#6f6f6a]">
+          {isRemoved ? (
+            <div className="space-y-3">
+              <p>Esta conta foi removida da equipe e não possui mais acesso à plataforma.</p>
+              <p className="font-medium text-[#185FA5]">
+                Para retornar, você precisará de um novo link de convite e realizar um novo cadastro utilizando o código da equipe.
+              </p>
+            </div>
+          ) : user?.mapped ? (
             "O Administrador da equipe já recebeu o seu pedido de acesso. Por favor, aguarde a liberação. Você pode fechar esta página e, assim que for aprovado, basta acessar novamente para entrar na plataforma."
           ) : (
             "Sua conta foi criada, mas seu e-mail ainda não foi vinculado a nenhuma equipe ou a solicitação está sendo processada. Por favor, aguarde a aprovação do administrador."
           )}
-        </p>
+        </div>
 
         <div className="mt-7">
           <button
