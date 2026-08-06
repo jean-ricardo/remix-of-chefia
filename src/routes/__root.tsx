@@ -319,20 +319,24 @@ function UserMenu() {
 
 
 
-/** Navegação principal (desktop). Histórico só para diretor/adm. */
+/** Navegação principal (desktop). */
 function MainNav() {
   const { loading } = useAuth();
   const user = useCurrentUser();
-  const canSeeHistory = !loading && hasGlobalScope(user.role);
+  const isAdminOrDirector = !loading && hasGlobalScope(user.role);
 
   return (
     <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
       <NavItem to="/">Painel</NavItem>
       <NavItem to="/atividades">Atividades</NavItem>
       <NavItem to="/atrasadas">Atrasadas</NavItem>
-      <NavItem to="/reprogramadas">Reprogramadas</NavItem>
-      {canSeeHistory ? <NavItem to="/historico">Histórico</NavItem> : null}
-      <NavItem to="/equipe">Equipe</NavItem>
+      {isAdminOrDirector && (
+        <>
+          <NavItem to="/reprogramadas">Reprogramadas</NavItem>
+          <NavItem to="/historico">Histórico</NavItem>
+          <NavItem to="/equipe">Equipe</NavItem>
+        </>
+      )}
     </nav>
   );
 }
@@ -355,17 +359,19 @@ function NavItem({ to, children, className }: { to: string; children: ReactNode;
 function MobileBottomNav() {
   const { loading } = useAuth();
   const user = useCurrentUser();
-  const canSeeHistory = !loading && hasGlobalScope(user.role);
+  const isAdminOrDirector = !loading && hasGlobalScope(user.role);
 
   const items = [
     { to: "/", label: "Painel", icon: LayoutDashboard },
     { to: "/atividades", label: "Atividades", icon: ListChecks },
     { to: "/atrasadas", label: "Atrasadas", icon: AlertCircle },
-    { to: "/reprogramadas", label: "Reprog.", icon: RotateCw },
-    ...(canSeeHistory
-      ? [{ to: "/historico", label: "Histórico", icon: ScrollText }]
+    ...(isAdminOrDirector
+      ? [
+          { to: "/reprogramadas", label: "Reprog.", icon: RotateCw },
+          { to: "/historico", label: "Histórico", icon: ScrollText },
+          { to: "/equipe", label: "Equipe", icon: Users },
+        ]
       : []),
-    { to: "/equipe", label: "Equipe", icon: Users },
   ];
 
   return (
