@@ -1159,7 +1159,6 @@ function KanbanColumn({
   detailsTaskId: string | null;
   isPaginated: boolean;
   showDotAlert?: boolean;
-  showDotAlert?: boolean;
 }) {
   const totalPages = Math.max(1, Math.ceil(items.length / COLUMN_PAGE_SIZE));
   const safePage = Math.min(Math.max(1, page), totalPages);
