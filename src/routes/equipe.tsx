@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Copy, Link2, Loader2, Mail, Trash2, UserPlus, UserRoundCheck, Users, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +70,14 @@ function EquipePage() {
   const isAdmin = hasGlobalScope(currentUser.role);
   const members = useTeamMembers();
   const activities = useActivities();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAdmin) {
+      toast.error("Acesso restrito à diretoria e administradores.");
+      navigate({ to: "/", replace: true });
+    }
+  }, [isAdmin, navigate]);
 
   const queryClient = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
