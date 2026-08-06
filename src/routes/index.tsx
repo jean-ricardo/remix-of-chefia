@@ -468,6 +468,7 @@ function Section({
   showCompletedStyle,
   currentUser,
   detailsTaskId,
+  isPaginated,
 }: {
   title: string;
   tone: "danger" | "warning" | "navy" | "success";
@@ -481,6 +482,7 @@ function Section({
   showCompletedStyle?: boolean;
   currentUser: ReturnType<typeof useCurrentUser>;
   detailsTaskId: string | null;
+  isPaginated: boolean;
 }) {
   const dotClass = {
     danger: "bg-danger",
@@ -507,13 +509,16 @@ function Section({
           message={emptyMessage}
         />
       ) : (
-        <PaginatedTaskList
-          items={items}
-          memberById={memberById}
-          completed={!!showCompletedStyle}
-          currentUser={currentUser}
-          detailsTaskId={detailsTaskId}
-        />
+        <div className={cn(!isPaginated && "max-h-[70vh] overflow-y-auto scrollbar-hide")}>
+          <PaginatedTaskList
+            items={items}
+            memberById={memberById}
+            completed={!!showCompletedStyle}
+            currentUser={currentUser}
+            detailsTaskId={detailsTaskId}
+            isPaginated={isPaginated}
+          />
+        </div>
       )}
     </section>
   );
@@ -611,7 +616,7 @@ function PaginatedTaskList({
           />
         ))}
       </ul>
-      {items.length > PAGE_SIZE && (
+      {isPaginated && items.length > PAGE_SIZE && (
         <nav
           aria-label="Paginação"
           className="mt-1 flex items-center justify-between gap-2 border-t border-border/50 pt-3"
