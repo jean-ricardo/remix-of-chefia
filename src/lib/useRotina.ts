@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./auth";
 import type { Activity, Completion, Reschedule, TeamMember } from "./rotina";
 
 const KEYS = {
@@ -11,32 +12,47 @@ const KEYS = {
 };
 
 export function useTeamMembers() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: KEYS.members,
+    queryKey: [KEYS.members, user?.team_id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("team_members")
-        .select("id,name,role,telefone,cargo_principal")
-        // Cadastros pendentes de aprovação não aparecem em listas/atribuições.
+        .select("id,name,role,telefone,cargo_principal,team_id")
         .or("cargo_principal.is.null,cargo_principal.neq.pendente")
         .order("name");
+
+      if (user?.team_id) {
+        query = query.eq("team_id", user.team_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as TeamMember[];
     },
+    enabled: !!user,
   });
 }
 
 export function useActivities() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: KEYS.activities,
+    queryKey: [KEYS.activities, user?.team_id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("activities")
-        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,recurrence,description,status,created_by")
+        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,recurrence,description,status,created_by,team_id")
         .order("created_at", { ascending: false });
+
+      if (user?.team_id) {
+        query = query.eq("team_id", user.team_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as Activity[];
     },
+    enabled: !!user,
   });
 }
 

@@ -47,6 +47,8 @@ export interface CurrentUser {
   mapped: boolean;
   /** Cadastro aguardando aprovação do Adm/Diretor (cargo_principal = 'pendente'). */
   pending: boolean;
+  /** UUID from teams table. */
+  team_id: string | null;
 }
 
 export interface AuthState {
@@ -112,7 +114,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
   if (email) {
     const { data, error } = await supabase
       .from("team_members")
-      .select("id,name,email,cargo_principal,telefone")
+      .select("id,name,email,cargo_principal,telefone,team_id")
       .ilike("email", email)
       .limit(1)
       .maybeSingle();
@@ -127,6 +129,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         cargo: data.cargo_principal ?? null,
         mapped: true,
         pending: isPendingCargo(data.cargo_principal),
+        team_id: data.team_id ?? null,
       };
     }
   }
@@ -139,6 +142,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     cargo: null,
     mapped: false,
     pending: false,
+    team_id: null,
   };
 }
 
@@ -289,6 +293,7 @@ export function useCurrentUser(): CurrentUser {
       cargo: null,
       mapped: false,
       pending: false,
+      team_id: null,
     }
   );
 }
