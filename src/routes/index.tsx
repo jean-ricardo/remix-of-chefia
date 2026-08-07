@@ -786,6 +786,14 @@ function OccurrenceCard({
     if (!ok) return;
 
     setBusy(true);
+    // Optimistic Update
+    const qc = (window as any).queryClient;
+    if (qc) {
+      qc.setQueryData(["activities", currentUser.team_id], (old: any) => 
+        (old ?? []).filter((a: any) => a.id !== occ.activity.id)
+      );
+    }
+
     const { error } = await supabase
       .from("activities")
       .delete()
@@ -797,7 +805,10 @@ function OccurrenceCard({
     } else {
       toast.success("Atividade excluída");
       const qc = (window as any).queryClient;
-      if (qc) qc.invalidateQueries({ queryKey: ["activities"] });
+      if (qc) {
+        await qc.invalidateQueries({ queryKey: ["activities", currentUser.team_id] });
+        await qc.invalidateQueries({ queryKey: ["activities"] });
+      }
       // setBusy(false) happens via unmount usually, but for safety:
       setBusy(false);
     }

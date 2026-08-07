@@ -139,6 +139,12 @@ function AtividadesPage() {
     setIsDeleting(true);
     try {
       const activity = activities.data?.find((a) => a.id === deleteId);
+      
+      // Otimistic Update: remove from local cache immediately
+      qc.setQueryData(["activities", user.team_id], (old: any) => 
+        (old ?? []).filter((a: any) => a.id !== deleteId)
+      );
+
       const { error } = await supabase.from("activities").delete().eq("id", deleteId);
       if (error) throw error;
 
@@ -149,8 +155,13 @@ function AtividadesPage() {
       });
 
       toast.success("Atividade excluída com sucesso.");
+      
+      // Invalidate to sync with server
+      await qc.invalidateQueries({ queryKey: ["activities", user.team_id] });
       await qc.invalidateQueries({ queryKey: ["activities"] });
     } catch (err) {
+      // Rollback if error
+      await qc.invalidateQueries({ queryKey: ["activities", user.team_id] });
       console.error("Erro ao excluir atividade:", err);
       toast.error("Erro ao excluir a atividade.");
     } finally {
