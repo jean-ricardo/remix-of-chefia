@@ -48,6 +48,7 @@ export function AuthSplash({ label = "Carregando" }: { label?: string }) {
  */
 export function PendingApprovalScreen() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const isRemoved = new URLSearchParams(window.location.search).get("reason") === "removed";
 
   return (
@@ -85,9 +86,36 @@ export function PendingApprovalScreen() {
         </div>
 
         {user?.email ? (
-          <p className="mt-4 rounded-lg bg-[#F7F6F2] px-3 py-2 text-xs text-[#8b8b86]">
-            Conta: <span className="font-medium text-[#042C53]">{user.email}</span>
-          </p>
+          <div className="mt-4 space-y-3">
+            <p className="rounded-lg bg-[#F7F6F2] px-3 py-2 text-xs text-[#8b8b86]">
+              Conta: <span className="font-medium text-[#042C53]">{user.email}</span>
+            </p>
+            
+            {!isRemoved && !user.mapped && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    stashPendingTaskId();
+                    window.location.href = "/cadastrar-empresa";
+                  }}
+                  className="flex h-10 items-center justify-center rounded-lg bg-[#D85A30] px-4 text-[13px] font-semibold text-white transition-all hover:bg-[#c14e28]"
+                >
+                  Criar minha base (Diretor)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    stashPendingTaskId();
+                    window.location.href = "/cadastrar";
+                  }}
+                  className="flex h-10 items-center justify-center rounded-lg border border-[#D85A30]/30 px-4 text-[13px] font-semibold text-[#D85A30] transition-all hover:bg-[#D85A30]/5"
+                >
+                  Entrar em uma equipe
+                </button>
+              </div>
+            )}
+          </div>
         ) : null}
       </div>
     </div>
@@ -115,6 +143,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   // nós permitimos que ele acesse a página de cadastro de empresa ou cadastro de membro
   // em vez de bloqueá-lo na sala de espera.
   const isAuthRoute = window.location.pathname === "/cadastrar" || window.location.pathname === "/cadastrar-empresa";
+  
+  // Se o usuário está logado mas não mapeado, e não está nas rotas de cadastro, 
+  // nós permitimos que ele veja as rotas de cadastro se clicar em links ou for redirecionado.
   if (!user?.mapped && !isAuthRoute) {
     return <PendingApprovalScreen />;
   }

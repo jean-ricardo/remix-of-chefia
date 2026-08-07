@@ -165,9 +165,11 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
 
           if (!memberError && memberData) {
             // Update metadata to remove the temp flags so we don't repeat this
+            // We reload the window to ensure the new team identity is picked up immediately
             await supabase.auth.updateUser({
               data: { is_director: null, temp_company_name: null }
             });
+            window.location.href = "/";
             data = memberData;
           }
         }
