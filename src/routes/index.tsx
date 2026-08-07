@@ -240,10 +240,16 @@ function DashboardPage() {
       <div className={cn("flex flex-1 flex-col space-y-6 md:space-y-8", !isPaginated ? "pb-48" : "pb-24")}>
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
-          <div className="min-w-0 space-y-4">
+          <div className="min-w-0 space-y-5">
             <LiveClock />
             
-            <CompanyIdentity />
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+              <h1 className="font-display text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
+                Dashboard Principal
+              </h1>
+              <div className="hidden h-8 w-px bg-border/40 sm:block" />
+              <CompanyIdentity />
+            </div>
 
             <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
               <Eye className="h-3 w-3" />
