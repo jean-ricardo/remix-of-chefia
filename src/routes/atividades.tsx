@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Search, User as UserIcon, Calendar as CalendarIcon, RotateCw } from "lucide-react";
-import { Toaster } from "@/components/ui/sonner";
+import { Plus, Search, User as UserIcon, Calendar as CalendarIcon, RotateCw, Trash2 } from "lucide-react";
+import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -15,6 +16,19 @@ import {
 import { cn } from "@/lib/utils";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
 import { EditActivitySheet } from "@/components/activities/EditActivitySheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activityLog";
+import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
 import {
   useActivities,
   useCompletions,
@@ -39,7 +53,9 @@ type RecurrenceFilter = "all" | "unica" | "diaria" | "semanal" | "mensal";
 
 function AtividadesPage() {
   useRotinaRealtime();
+  const qc = useQueryClient();
   const members = useTeamMembers();
+  const user = useCurrentUser();
   const activities = useActivities();
   const completions = useCompletions();
   const reschedules = useReschedules();
@@ -51,6 +67,8 @@ function AtividadesPage() {
   const [selected, setSelected] = useState<OccurrenceView | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const today = useMemo(() => new Date(), []);
 
@@ -114,6 +132,31 @@ function AtividadesPage() {
   function openRow(occ: OccurrenceView) {
     setSelected(occ);
     setEditOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      const activity = activities.data?.find((a) => a.id === deleteId);
+      const { error } = await supabase.from("activities").delete().eq("id", deleteId);
+      if (error) throw error;
+
+      await logActivity({
+        actorName: user.name,
+        actionType: "delete",
+        details: `Excluiu permanentemente a atividade "${activity?.title || deleteId}".`,
+      });
+
+      toast.success("Atividade excluída com sucesso.");
+      await qc.invalidateQueries({ queryKey: ["activities"] });
+    } catch (err) {
+      console.error("Erro ao excluir atividade:", err);
+      toast.error("Erro ao excluir a atividade.");
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
+    }
   }
 
   const isLoading =
@@ -218,6 +261,7 @@ function AtividadesPage() {
                 occ={occ}
                 memberById={memberById}
                 onOpen={() => openRow(occ)}
+                onDelete={hasGlobalScope(user.role) ? () => setDeleteId(occ.activity.id) : undefined}
               />
             ))}
           </ul>
@@ -230,6 +274,30 @@ function AtividadesPage() {
         occurrence={selected}
         mode="edit"
       />
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir atividade?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja apagar permanentemente esta atividade? Esta ação removerá a tarefa e todas as suas ocorrências futuras. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Sim, excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -238,10 +306,12 @@ function HistoryRow({
   occ,
   memberById,
   onOpen,
+  onDelete,
 }: {
   occ: OccurrenceView;
   memberById: Map<string, TeamMember>;
   onOpen: () => void;
+  onDelete?: () => void;
 }) {
   const member = occ.activity.assigned_user_id
     ? memberById.get(occ.activity.assigned_user_id)
@@ -282,15 +352,19 @@ function HistoryRow({
 
   return (
     <li
-      onClick={onOpen}
       className={cn(
-        "group cursor-pointer rounded-xl border border-border/60 bg-white p-4 shadow-sm transition-all",
+        "group relative rounded-xl border border-border/60 bg-white p-4 shadow-sm transition-all",
         "hover:border-[#185FA5]/40 hover:shadow-md",
         "flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between md:gap-4",
       )}
     >
+      <div 
+        onClick={onOpen}
+        className="absolute inset-0 z-0 cursor-pointer"
+      />
+      
       {/* LEFT: dot + title + badges */}
-      <div className="flex min-w-0 flex-1 items-start gap-3 md:items-center">
+      <div className="relative z-10 flex min-w-0 flex-1 items-start gap-3 md:items-center">
         <span
           className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full md:mt-0", statusMeta.dot)}
           aria-label={statusMeta.label}
@@ -346,6 +420,18 @@ function HistoryRow({
           <CalendarIcon className="h-3.5 w-3.5" />
           {dateLabel}
         </span>
+        {onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="relative z-20 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            title="Excluir atividade"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Mobile meta row */}
