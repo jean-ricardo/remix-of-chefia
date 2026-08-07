@@ -81,7 +81,11 @@ function AtividadesPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return rows.filter((occ) => {
+    
+    // Sort logic: most recent first (descending by effectiveDate)
+    const sorted = [...rows].sort((a, b) => b.effectiveDate.getTime() - a.effectiveDate.getTime());
+
+    return sorted.filter((occ) => {
       // Recurrence filter
       if (recFilter !== "all" && occ.activity.recurrence_type !== recFilter) return false;
 
