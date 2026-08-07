@@ -99,6 +99,7 @@ function DashboardPage() {
     (window as any).queryClient = qc;
     (window as any).setDetailsTaskId = setDetailsTaskId;
     (window as any).supabase = supabase;
+    console.log("[DEBUG] Supabase client attached to window");
   }, [qc, setDetailsTaskId]);
 
   const today = useMemo(() => new Date(), []);
