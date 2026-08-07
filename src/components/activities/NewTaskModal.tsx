@@ -115,7 +115,6 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
       actionType: "create",
       details: `${currentUser.name || "Usuário"} criou a atividade "${form.title.trim()}" com vencimento em ${formatDateBR(effectiveDate)}.`,
       taskId: inserted?.id ?? null,
-      teamId: currentUser.team_id,
     });
 
     // Dados garantidos: libera a UI antes de qualquer chamada externa.

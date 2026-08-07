@@ -34,8 +34,8 @@ const MIN_PASSWORD = 6;
 
 function friendlyError(message: string) {
   const m = message.toLowerCase();
-  if (m.includes("already registered") || m.includes("already been registered") || m.includes("user_already_exists"))
-    return "Este e-mail já possui conta. Se você já foi removido de uma equipe, pode entrar com sua senha e solicitar acesso a uma nova equipe nesta mesma página.";
+  if (m.includes("already registered") || m.includes("already been registered"))
+    return "Este e-mail já possui conta. Faça login para continuar.";
   if (m.includes("invalid") && m.includes("email")) return "E-mail inválido.";
   // Qualquer outro erro real da API é exibido na íntegra.
   return message;
@@ -43,7 +43,7 @@ function friendlyError(message: string) {
 
 function CadastrarPage() {
   const navigate = useNavigate();
-  const { loading, session, signOut, user: authUser } = useAuth();
+  const { loading, session, signOut } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -107,54 +107,29 @@ function CadastrarPage() {
         return;
       }
 
-      let signUpData;
-      if (!session) {
-        const { data, error: authError } = await supabase.auth.signUp({
-          email: cleanEmail,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: {
-              full_name: cleanName,
-              team_code_pending: cleanCode,
-              whatsapp: formattedWhatsapp,
-              status: "pendente",
-            },
+      // 2. Auth Sign Up
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            full_name: cleanName,
+            team_code_pending: cleanCode,
+            whatsapp: formattedWhatsapp,
+            status: "pendente",
           },
-        });
-        
-        // Se o erro for de usuário já cadastrado, tentamos fazer o login automático se for a mesma senha padrão ou instruímos
-        if (authError) {
-           if (authError.message.includes("User already registered") || authError.status === 422) {
-             // Tenta o login silencioso para o usuário que já existe
-             const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
-               email: cleanEmail,
-               password
-             });
-             
-             if (signInErr) {
-               throw new Error("Este e-mail já está cadastrado com outra senha. Por favor, faça login primeiro para solicitar acesso a esta equipe.");
-             }
-             signUpData = signInData;
-           } else {
-             throw authError;
-           }
-        } else {
-          signUpData = data;
-        }
-      } else {
-        // Logged in user: just proceed with current session
-        signUpData = { user: authUser, session };
-      }
+        },
+      });
 
-      const currentAuthUser = signUpData.user;
+      if (authError) throw authError;
 
       // 2. Transação Única no Frontend: INSERT no team_members
-      // Search for existing entry specifically for this user OR unclaimed email
       const { data: existing } = await supabase
         .from("team_members")
-        .select("id,cargo_principal,user_id")
-        .or(`user_id.eq.${currentAuthUser?.id},and(email.ilike.${cleanEmail},user_id.is.null)`)
+        .select("id,cargo_principal")
+        .ilike("email", cleanEmail)
+        .limit(1)
         .maybeSingle();
 
       if (existing?.id) {
@@ -166,7 +141,7 @@ function CadastrarPage() {
               role: `equipe:${cleanCode}`,
               telefone: formattedWhatsapp,
               team_id: teamData.id,
-              user_id: currentAuthUser?.id
+              user_id: data.user?.id
             })
             .eq("id", existing.id);
           if (updErr) throw updErr;
@@ -176,7 +151,7 @@ function CadastrarPage() {
             .update({ 
               name: cleanName,
               telefone: formattedWhatsapp,
-              user_id: currentAuthUser?.id
+              user_id: data.user?.id
             })
             .eq("id", existing.id);
           if (updErr) throw updErr;
@@ -189,7 +164,7 @@ function CadastrarPage() {
           cargo_principal: "pendente",
           role: `equipe:${cleanCode}`,
           team_id: teamData.id,
-          user_id: currentAuthUser?.id
+          user_id: data.user?.id
         });
         if (insErr) throw insErr;
       }
@@ -198,14 +173,9 @@ function CadastrarPage() {
       // No Supabase, se confirm_email estiver ligado, signUp não retorna session.
       setBusy(false);
 
-      if (signUpData.session) {
+      if (data.session) {
         toast.success("Cadastro realizado! Aguarde a aprovação do administrador.");
-        // If they were already logged in, the auth state listener will catch the team_members insert and refresh
-        if (session) {
-           window.location.reload();
-        } else {
-           navigate({ to: "/", replace: true });
-        }
+        navigate({ to: "/", replace: true });
       } else {
         toast.success("Cadastro criado! Verifique sua caixa de e-mail para confirmar a conta e liberar seu acesso.");
         navigate({ to: "/login", replace: true });

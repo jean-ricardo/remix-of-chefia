@@ -81,8 +81,8 @@ function HistoricoPage() {
     navigate({ to: "/", replace: true });
   }, [loading, allowed, navigate]);
 
-  useActivityLogsRealtime(allowed, user.team_id);
-  const { data, isLoading } = useActivityLogs(allowed, user.team_id);
+  useActivityLogsRealtime(allowed);
+  const { data, isLoading } = useActivityLogs(allowed);
   const qc = useQueryClient();
 
   const [actor, setActor] = useState("all");
@@ -154,7 +154,6 @@ function HistoricoPage() {
         actorName: user?.name || "Usuário",
         actionType: "delete",
         details: `${user?.name || "Usuário"} excluiu ${count} registro(s) do histórico de auditoria.`,
-        teamId: user.team_id,
       });
 
       toast.success("Registros excluídos com sucesso.");

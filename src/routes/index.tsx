@@ -1,4 +1,3 @@
-// adicione no codigo-fonte para eu consiga ver no interface ativa e no codigo fonte
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -26,7 +25,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
 import { TaskDetailsSheet } from "@/components/activities/TaskDetailsSheet";
-import { CompanyIdentity } from "@/components/team/CompanyIdentity";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { z } from "zod";
@@ -99,7 +97,6 @@ function DashboardPage() {
   useEffect(() => {
     (window as any).queryClient = qc;
     (window as any).setDetailsTaskId = setDetailsTaskId;
-    (window as any).supabase = supabase;
   }, [qc, setDetailsTaskId]);
 
   const today = useMemo(() => new Date(), []);
@@ -242,31 +239,28 @@ function DashboardPage() {
       <div className={cn("flex flex-1 flex-col space-y-6 md:space-y-8", !isPaginated ? "pb-48" : "pb-24")}>
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
-          <div className="min-w-0 space-y-5">
+          <div className="min-w-0">
             <LiveClock />
-            
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
-                Dashboard Principal
-              </h1>
-              <p className="text-xs text-muted-foreground">adicione no codigo-fonte para eu consiga ver no interface ativa e no codigo fonte</p>
-              <div className="hidden h-8 w-px bg-border/40 sm:block" />
-              <CompanyIdentity />
-            </div>
+            <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight text-navy md:text-[32px]">
+              {heroTitle}
+            </h1>
+            <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
+              {isAdmin
+                ? "Visão consolidada de toda a equipe — atualizada em tempo real."
+                : "Suas atividades atrasadas, para hoje e próximas."}
+            </p>
 
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
-              <Eye className="h-3 w-3" />
-              {isAdmin ? "Visão Geral (Diretoria)" : "Minhas Atividades"}
-              {impersonatedName ? (
-                <span className="text-navy/70">· {impersonatedName}</span>
-              ) : (
-                isAdmin ? (
-                  <span className="text-navy/70">· toda a equipe</span>
+            {currentUser.role !== "admin" && (
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
+                <Eye className="h-3 w-3" />
+                {currentUser.role === "gestor" ? "Modo gestor" : "Modo usuário"}
+                {impersonatedName ? (
+                  <span className="text-navy/70">· {impersonatedName}</span>
                 ) : (
-                  <span className="text-navy/70">· {currentUser.name}</span>
-                )
-              )}
-            </div>
+                  <span className="text-navy/70">· selecione um membro no topo</span>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2 rounded-lg border border-border/50 bg-white/50 px-3 py-2 shadow-sm">
@@ -735,7 +729,6 @@ function OccurrenceCard({
       month_day: a.month_day,
       due_date: nextDue,
       recurrence: cardRecurrence,
-      team_id: currentUser.team_id,
     });
     if (error) {
       console.error("[activities] recurrence clone failed", error);
@@ -796,14 +789,6 @@ function OccurrenceCard({
     if (!ok) return;
 
     setBusy(true);
-    // Optimistic Update
-    const qc = (window as any).queryClient;
-    if (qc) {
-      qc.setQueryData(["activities", currentUser.team_id], (old: any) => 
-        (old ?? []).filter((a: any) => a.id !== occ.activity.id)
-      );
-    }
-
     const { error } = await supabase
       .from("activities")
       .delete()
@@ -815,10 +800,7 @@ function OccurrenceCard({
     } else {
       toast.success("Atividade excluída");
       const qc = (window as any).queryClient;
-      if (qc) {
-        await qc.invalidateQueries({ queryKey: ["activities", currentUser.team_id] });
-        await qc.invalidateQueries({ queryKey: ["activities"] });
-      }
+      if (qc) qc.invalidateQueries({ queryKey: ["activities"] });
       // setBusy(false) happens via unmount usually, but for safety:
       setBusy(false);
     }

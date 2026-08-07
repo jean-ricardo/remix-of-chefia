@@ -8,7 +8,6 @@ export interface ActivityLog {
   action_type: string;
   details: string;
   task_id: string | null;
-  team_id: string | null;
   created_at: string;
 }
 
@@ -32,7 +31,6 @@ export async function logActivity(input: {
   actionType: LogActionType;
   details: string;
   taskId?: string | null;
-  teamId?: string | null;
 }) {
   try {
     await supabase.from("activity_logs").insert({
@@ -40,29 +38,22 @@ export async function logActivity(input: {
       action_type: input.actionType,
       details: input.details,
       task_id: input.taskId ?? null,
-      team_id: input.teamId ?? null,
-    } as any);
+    });
   } catch (e) {
     console.error("[activity_logs] insert failed", e);
   }
 }
 
-export function useActivityLogs(enabled = true, teamId: string | null = null) {
+export function useActivityLogs(enabled = true) {
   return useQuery({
-    queryKey: teamId ? [...ACTIVITY_LOGS_KEY, teamId] : ACTIVITY_LOGS_KEY,
+    queryKey: ACTIVITY_LOGS_KEY,
     enabled,
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("activity_logs")
         .select("id,actor_name,action_type,details,task_id,created_at")
         .order("created_at", { ascending: false })
         .limit(100);
-
-      if (teamId) {
-        query = query.eq("team_id" as any, teamId);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as ActivityLog[];
     },
@@ -70,7 +61,7 @@ export function useActivityLogs(enabled = true, teamId: string | null = null) {
 }
 
 /** Realtime subscription for the audit feed. */
-export function useActivityLogsRealtime(enabled = true, teamId: string | null = null) {
+export function useActivityLogsRealtime(enabled = true) {
   const qc = useQueryClient();
   useEffect(() => {
     if (!enabled) return;
@@ -78,17 +69,12 @@ export function useActivityLogsRealtime(enabled = true, teamId: string | null = 
       .channel("activity_logs_feed")
       .on(
         "postgres_changes",
-        { 
-          event: "*", 
-          schema: "public", 
-          table: "activity_logs",
-          filter: teamId ? `team_id=eq.${teamId}` : undefined
-        },
-        () => qc.invalidateQueries({ queryKey: teamId ? [...ACTIVITY_LOGS_KEY, teamId] : ACTIVITY_LOGS_KEY }),
+        { event: "*", schema: "public", table: "activity_logs" },
+        () => qc.invalidateQueries({ queryKey: ACTIVITY_LOGS_KEY }),
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [qc, enabled, teamId]);
+  }, [qc, enabled]);
 }

@@ -1,8 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-/**
- * @description
- * agora precisa corrigir que no atual momento quando se remove a conta ele remove o e-mail e o usuario e mais nunca esse e-mail não pode ser mais usado. o correto é esse e-mail só não conseguir mais entrar na base que ele foi removido, mas ele pode criar outro usuario ou criar uma base com a nova equipe
- */
 import { useEffect, useMemo, useState } from "react";
 import { Check, Copy, Link2, Loader2, Mail, Trash2, UserPlus, UserRoundCheck, Users, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -127,7 +123,7 @@ function EquipePage() {
       if (currentUser.team_id) {
         query = query.eq("team_id", currentUser.team_id);
       } else {
-        // Fallback for legacy invitation codes if needed
+        // Fallback for legacy invitation codes if needed, but multi-team relies on team_id
         query = query.eq("role", `equipe:${teamCode}`);
       }
       
@@ -165,7 +161,6 @@ function EquipePage() {
       actorName: currentUser?.name || "Usuário",
       actionType: "update",
       details: `${currentUser?.name || "Usuário"} aprovou a entrada de ${name} na equipe.`,
-      teamId: currentUser.team_id,
     });
 
     toast.success(`${name} aprovado e vinculado à equipe!`);
@@ -192,7 +187,6 @@ function EquipePage() {
       actorName: currentUser?.name || "Usuário",
       actionType: "delete",
       details: `${currentUser?.name || "Usuário"} recusou a solicitação de ${name}.`,
-      teamId: currentUser.team_id,
     });
     
     toast.success(`Solicitação de ${name} recusada.`);
@@ -236,12 +230,11 @@ function EquipePage() {
         actorName: currentUser?.name || "Usuário",
         actionType: "delete",
         details: `${currentUser?.name || "Usuário"} excluiu permanentemente a conta e o perfil do membro ${memberToDelete.name} da plataforma.`,
-        teamId: currentUser.team_id,
       });
 
-      // 2. Chamar a função RPC para remover membro da equipe (preserva auth.users)
-      const { error } = await supabase.rpc('delete_team_member', { 
-        target_member_id: memberToDelete.id 
+      // 2. Chamar a nova função RPC para exclusão total (incluindo auth.users)
+      const { error } = await supabase.rpc('delete_user_account', { 
+        target_user_id: memberToDelete.id 
       });
 
       if (error) throw error;

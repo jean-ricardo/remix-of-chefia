@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ChefiaLogo } from "@/components/brand/ChefiaLogo";
 import { PublicOnlyRoute } from "@/components/auth/RouteGuards";
-import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/cadastrar-empresa")({
@@ -24,15 +23,16 @@ export const Route = createFileRoute("/cadastrar-empresa")({
 
 function CadastrarEmpresaPage() {
   return (
-    <CadastrarEmpresaContent />
+    <PublicOnlyRoute>
+      <CadastrarEmpresaContent />
+    </PublicOnlyRoute>
   );
 }
 
 function CadastrarEmpresaContent() {
   const navigate = useNavigate();
-  const { session, user: authUser } = useAuth();
-  const [name, setName] = useState(authUser?.name || "");
-  const [email, setEmail] = useState(authUser?.email || "");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [password, setPassword] = useState("");
@@ -51,64 +51,29 @@ function CadastrarEmpresaContent() {
     setBusy(true);
 
     try {
-      // 1. Auth Logic
-      if (session) {
-        // User is already logged in, just update metadata
-        const { error: updError } = await supabase.auth.updateUser({
+      // 1. Auth Sign Up
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
           data: {
-            is_director: true,
-            temp_company_name: companyName.trim(),
             full_name: name.trim(),
             whatsapp: whatsapp.replace(/\D/g, ""),
-          }
-        });
-
-        if (updError) throw updError;
-        toast.success("Perfil atualizado! Configurando sua nova empresa...");
-      } else {
-        // Try sign up
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: email.trim().toLowerCase(),
-          password,
-          options: {
-            data: {
-              full_name: name.trim(),
-              whatsapp: whatsapp.replace(/\D/g, ""),
-              is_director: true,
-              temp_company_name: companyName.trim(),
-            },
+            is_director: true,
+            temp_company_name: companyName.trim(), // Save temporarily to metadata
           },
-        });
+        },
+      });
 
-        if (authError) {
-          // If already registered, try sign in with provided password
-          if (authError.message.includes("User already registered") || authError.status === 422) {
-             const { error: signInErr } = await supabase.auth.signInWithPassword({
-               email: email.trim().toLowerCase(),
-               password
-             });
-             
-             if (signInErr) {
-               toast.info("Você já possui uma conta com outra senha. Por favor, faça login primeiro.");
-               setTimeout(() => navigate({ to: "/login" }), 2000);
-               return;
-             }
-             // Signed in successfully
-          } else {
-            throw authError;
-          }
-        }
-        
-        toast.success("Conta identificada! Configurando sua empresa...");
-      }
+      if (authError) throw authError;
+      
+      // If the user was created (even if email confirmation is required), 
+      // we notify them and send them to the login page as requested.
+      toast.success("Conta criada com sucesso! Por favor, faça login para configurar sua empresa.");
       
       // Give the user a moment to see the success message
       setTimeout(() => {
-        if (session) {
-          window.location.href = '/';
-        } else {
-          window.location.href = '/';
-        }
+        navigate({ to: "/login", replace: true });
       }, 2000);
       
     } catch (err: any) {
@@ -123,11 +88,6 @@ function CadastrarEmpresaContent() {
     <div className="min-h-screen bg-[#F7F6F2] px-5 py-10 sm:px-8 sm:py-16">
       <Toaster richColors />
       <div className="mx-auto w-full max-w-[440px]">
-        {session && (
-          <div className="mb-6 rounded-xl border border-[#D85A30]/20 bg-[#D85A30]/5 p-4 text-[0.85rem] leading-relaxed text-[#D85A30]">
-            Você já possui uma conta ativa. Preencha o nome da empresa abaixo para criar sua base e assumir o cargo de Diretor.
-          </div>
-        )}
         <div className="mb-8 flex justify-center">
           <ChefiaLogo className="h-24 w-auto sm:h-28" />
         </div>
@@ -188,26 +148,24 @@ function CadastrarEmpresaContent() {
               placeholder="(11) 99999-9999"
             />
 
-            {!session && (
-              <div className="relative">
-                <Field
-                  id="password"
-                  label="Senha"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mínimo 8 caracteres"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute bottom-1 right-0 grid h-10 w-10 place-items-center text-[#8b8b86]"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            )}
+            <div className="relative">
+              <Field
+                id="password"
+                label="Senha"
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute bottom-1 right-0 grid h-10 w-10 place-items-center text-[#8b8b86]"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
 
             <button
               type="submit"

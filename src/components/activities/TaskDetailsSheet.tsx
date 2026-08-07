@@ -156,7 +156,6 @@ export function TaskDetailsSheet({ taskId, isOpen, onClose, occurrence }: Props)
         reason.trim() ? ` — Justificativa: ${reason.trim()}` : ""
       }.`,
       taskId: activity.id,
-      teamId: currentUser.team_id,
     });
 
     // Notify the CREATOR (created_by)
