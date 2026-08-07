@@ -1,4 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+/**
+ * @description
+ * agora precisa corrigir que no atual momento quando se remove a conta ele remove o e-mail e o usuario e mais nunca esse e-mail não pode ser mais usado. o correto é esse e-mail só não conseguir mais entrar na base que ele foi removido, mas ele pode criar outro usuario ou criar uma base com a nova equipe
+ */
 import { useEffect, useMemo, useState } from "react";
 import { Check, Copy, Link2, Loader2, Mail, Trash2, UserPlus, UserRoundCheck, Users, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
