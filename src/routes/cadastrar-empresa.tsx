@@ -97,7 +97,11 @@ function CadastrarEmpresaContent() {
       
       // Give the user a moment to see the success message
       setTimeout(() => {
-        navigate({ to: "/login", replace: true });
+        if (session) {
+          window.location.href = '/';
+        } else {
+          navigate({ to: "/login", replace: true });
+        }
       }, 2000);
       
     } catch (err: any) {
