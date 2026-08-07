@@ -155,6 +155,7 @@ export function EditActivitySheet({
           reason.trim() ? ` — ${reason.trim()}` : ""
         }.`,
         taskId: activity.id,
+        teamId: currentUser.team_id,
       });
 
       await qc.invalidateQueries({ queryKey: ["reschedules"] });
@@ -231,6 +232,7 @@ export function EditActivitySheet({
       actionType: "update",
       details: `Atualizou a atividade "${title.trim()}".`,
       taskId: activity.id,
+      teamId: currentUser.team_id,
     });
 
     await qc.invalidateQueries({ queryKey: ["activities"] });
