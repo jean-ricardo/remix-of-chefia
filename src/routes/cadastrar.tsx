@@ -35,7 +35,7 @@ const MIN_PASSWORD = 6;
 function friendlyError(message: string) {
   const m = message.toLowerCase();
   if (m.includes("already registered") || m.includes("already been registered") || m.includes("user_already_exists"))
-    return "Este e-mail já possui conta. Se você já foi removido de uma equipe, pode entrar com sua senha e solicitar acesso a uma nova equipe.";
+    return "Este e-mail já possui conta. Se você já foi removido de uma equipe, pode entrar com sua senha e solicitar acesso a uma nova equipe nesta mesma página.";
   if (m.includes("invalid") && m.includes("email")) return "E-mail inválido.";
   // Qualquer outro erro real da API é exibido na íntegra.
   return message;
@@ -122,19 +122,28 @@ function CadastrarPage() {
             },
           },
         });
-        if (authError) throw authError;
-        signUpData = data;
+        
+        // Se o erro for de usuário já cadastrado, tentamos fazer o login automático se for a mesma senha padrão ou instruímos
+        if (authError) {
+           if (authError.message.includes("User already registered") || authError.status === 422) {
+             // Tenta o login silencioso para o usuário que já existe
+             const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+               email: cleanEmail,
+               password
+             });
+             
+             if (signInErr) {
+               throw new Error("Este e-mail já está cadastrado com outra senha. Por favor, faça login primeiro para solicitar acesso a esta equipe.");
+             }
+             signUpData = signInData;
+           } else {
+             throw authError;
+           }
+        } else {
+          signUpData = data;
+        }
       } else {
-        // Logged in user: update metadata and link
-        const { error: updAuthErr } = await supabase.auth.updateUser({
-          data: {
-            full_name: cleanName,
-            team_code_pending: cleanCode,
-            whatsapp: formattedWhatsapp,
-            status: "pendente",
-          }
-        });
-        if (updAuthErr) throw updAuthErr;
+        // Logged in user: just proceed with current session
         signUpData = { user: authUser, session };
       }
 

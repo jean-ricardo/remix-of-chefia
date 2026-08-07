@@ -58,7 +58,7 @@ export function PendingApprovalScreen() {
           <Clock3 className="h-6 w-6" />
         </div>
         <h1 className="mt-5 text-xl font-bold tracking-tight text-[#042C53] sm:text-2xl">
-          {isRemoved ? "Acesso Revogado" : "Solicitação Enviada!"}
+          {isRemoved ? "Acesso Revogado" : "Aguardando Aprovação"}
         </h1>
         <div className="mt-3 text-[0.92rem] leading-relaxed text-[#6f6f6a]">
           {isRemoved ? (
@@ -68,40 +68,8 @@ export function PendingApprovalScreen() {
                 Para retornar, você precisará de um novo link de convite e realizar um novo cadastro utilizando o código da equipe.
               </p>
             </div>
-          ) : user?.mapped && user.pending ? (
-            "O Administrador da equipe já recebeu o seu pedido de acesso. Por favor, aguarde a liberação. Você pode fechar esta página e, assim que for aprovado, basta acessar novamente para entrar na plataforma."
           ) : (
-            <div className="space-y-4">
-              <p>Sua conta está ativa, mas você não está vinculado a nenhuma equipe no momento.</p>
-              
-              <div className="flex flex-col gap-3 pt-2">
-                <button
-                  onClick={() => {
-                    stashPendingTaskId();
-                    window.location.href = '/cadastrar';
-                  }}
-                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#185FA5] px-4 text-sm font-semibold text-white transition-all hover:bg-[#042C53]"
-                >
-                  Entrar em uma equipe existente
-                </button>
-                
-                <div className="flex items-center gap-3 py-1">
-                  <div className="h-px flex-1 bg-[#E0DFDA]" />
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-[#9a9a95]">ou</span>
-                  <div className="h-px flex-1 bg-[#E0DFDA]" />
-                </div>
-
-                <button
-                  onClick={() => {
-                    stashPendingTaskId();
-                    window.location.href = '/cadastrar-empresa';
-                  }}
-                  className="inline-flex h-11 items-center justify-center rounded-xl border border-[#D85A30] px-4 text-sm font-semibold text-[#D85A30] transition-all hover:bg-[#D85A30]/5"
-                >
-                  Criar minha própria base (Diretor)
-                </button>
-              </div>
-            </div>
+            "O seu pedido de acesso está sendo analisado pelo Administrador da equipe. Por favor, aguarde a liberação para acessar o painel."
           )}
         </div>
 
@@ -141,7 +109,15 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   if (loading) return <AuthSplash />;
   if (!session) return null; // Redirecionamento em curso no useEffect
 
-  if (user?.pending || !user?.mapped) return <PendingApprovalScreen />;
+  if (user?.pending) return <PendingApprovalScreen />;
+
+  // Se o usuário está logado mas NÃO tem vínculo com nenhuma equipe, 
+  // nós permitimos que ele acesse a página de cadastro de empresa ou cadastro de membro
+  // em vez de bloqueá-lo na sala de espera.
+  const isAuthRoute = window.location.pathname === "/cadastrar" || window.location.pathname === "/cadastrar-empresa";
+  if (!user?.mapped && !isAuthRoute) {
+    return <PendingApprovalScreen />;
+  }
 
   return <>{children}</>;
 }

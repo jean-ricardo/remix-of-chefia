@@ -51,10 +51,9 @@ function CadastrarEmpresaContent() {
     setBusy(true);
 
     try {
-      // 1. Check if user already exists
+      // 1. Auth Logic
       if (session) {
-        // User is already logged in, but might not have a team. 
-        // We update their metadata so the auto-provisioning logic can create the team on next login.
+        // User is already logged in, just update metadata
         const { error: updError } = await supabase.auth.updateUser({
           data: {
             is_director: true,
@@ -65,10 +64,9 @@ function CadastrarEmpresaContent() {
         });
 
         if (updError) throw updError;
-        
-        toast.success("Perfil atualizado! Agora faça login para finalizar a criação da sua empresa.");
+        toast.success("Perfil atualizado! Configurando sua nova empresa...");
       } else {
-        // 1. Auth Sign Up
+        // Try sign up
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
           password,
@@ -77,22 +75,31 @@ function CadastrarEmpresaContent() {
               full_name: name.trim(),
               whatsapp: whatsapp.replace(/\D/g, ""),
               is_director: true,
-              temp_company_name: companyName.trim(), // Save temporarily to metadata
+              temp_company_name: companyName.trim(),
             },
           },
         });
 
         if (authError) {
-          // If user exists, friendly error
-          if (authError.message.includes("User already registered")) {
-            toast.info("Você já possui uma conta. Por favor, faça login primeiro.");
-            setTimeout(() => navigate({ to: "/login" }), 2000);
-            return;
+          // If already registered, try sign in with provided password
+          if (authError.message.includes("User already registered") || authError.status === 422) {
+             const { error: signInErr } = await supabase.auth.signInWithPassword({
+               email: email.trim().toLowerCase(),
+               password
+             });
+             
+             if (signInErr) {
+               toast.info("Você já possui uma conta com outra senha. Por favor, faça login primeiro.");
+               setTimeout(() => navigate({ to: "/login" }), 2000);
+               return;
+             }
+             // Signed in successfully
+          } else {
+            throw authError;
           }
-          throw authError;
         }
         
-        toast.success("Conta criada com sucesso! Por favor, faça login para configurar sua empresa.");
+        toast.success("Conta identificada! Configurando sua empresa...");
       }
       
       // Give the user a moment to see the success message
@@ -100,7 +107,7 @@ function CadastrarEmpresaContent() {
         if (session) {
           window.location.href = '/';
         } else {
-          navigate({ to: "/login", replace: true });
+          window.location.href = '/';
         }
       }, 2000);
       
