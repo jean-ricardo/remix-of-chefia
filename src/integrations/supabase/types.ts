@@ -255,6 +255,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_team_member: {
+        Args: { target_member_id: string }
+        Returns: undefined
+      }
       delete_user_account: {
         Args: { target_user_id: string }
         Returns: undefined
