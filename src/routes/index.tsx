@@ -25,6 +25,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { NewTaskModal } from "@/components/activities/NewTaskModal";
 import { TaskDetailsSheet } from "@/components/activities/TaskDetailsSheet";
+import { CompanyIdentity } from "@/components/team/CompanyIdentity";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { z } from "zod";
@@ -239,28 +240,24 @@ function DashboardPage() {
       <div className={cn("flex flex-1 flex-col space-y-6 md:space-y-8", !isPaginated ? "pb-48" : "pb-24")}>
         {/* HERO */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-4">
             <LiveClock />
-            <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight text-navy md:text-[32px]">
-              {heroTitle}
-            </h1>
-            <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-              {isAdmin
-                ? "Visão consolidada de toda a equipe — atualizada em tempo real."
-                : "Suas atividades atrasadas, para hoje e próximas."}
-            </p>
+            
+            <CompanyIdentity />
 
-            {currentUser.role !== "admin" && (
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
-                <Eye className="h-3 w-3" />
-                {currentUser.role === "gestor" ? "Modo gestor" : "Modo usuário"}
-                {impersonatedName ? (
-                  <span className="text-navy/70">· {impersonatedName}</span>
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
+              <Eye className="h-3 w-3" />
+              {isAdmin ? "Visão Geral (Diretoria)" : "Minhas Atividades"}
+              {impersonatedName ? (
+                <span className="text-navy/70">· {impersonatedName}</span>
+              ) : (
+                isAdmin ? (
+                  <span className="text-navy/70">· toda a equipe</span>
                 ) : (
-                  <span className="text-navy/70">· selecione um membro no topo</span>
-                )}
-              </div>
-            )}
+                  <span className="text-navy/70">· {currentUser.name}</span>
+                )
+              )}
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2 rounded-lg border border-border/50 bg-white/50 px-3 py-2 shadow-sm">
