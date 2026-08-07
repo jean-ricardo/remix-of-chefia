@@ -193,8 +193,8 @@ function friendlyError(message: string) {
   if (m.includes("invalid login credentials")) return "E-mail ou senha incorretos.";
   if (m.includes("email not confirmed"))
     return "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.";
-  if (m.includes("already registered") || m.includes("already been registered"))
-    return "Este e-mail já possui conta. Use a aba “Entrar”.";
+  if (m.includes("already registered") || m.includes("already been registered") || m.includes("user_already_exists"))
+    return "Este e-mail já possui conta. Se você foi removido de uma equipe, entre aqui para solicitar acesso a uma nova.";
   if (m.includes("password")) return "Senha inválida — use ao menos 8 caracteres.";
   return "Não foi possível concluir. Tente novamente.";
 }

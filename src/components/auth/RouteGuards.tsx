@@ -72,10 +72,18 @@ export function PendingApprovalScreen() {
             "O Administrador da equipe já recebeu o seu pedido de acesso. Por favor, aguarde a liberação. Você pode fechar esta página e, assim que for aprovado, basta acessar novamente para entrar na plataforma."
           ) : (
             <div className="space-y-3">
-              <p>Sua conta foi criada, mas não identificamos um vínculo ativo com nenhuma equipe.</p>
+              <p>Sua conta está ativa, mas você não está vinculado a nenhuma equipe no momento.</p>
               <p className="font-medium text-[#185FA5]">
-                Caso você tenha sido removido ou esteja tentando entrar pela primeira vez, você precisa de um link de convite válido para se cadastrar em uma equipe.
+                Para acessar a plataforma, utilize o código de convite enviado pelo seu administrador na página de cadastro de membro.
               </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => window.location.href = '/cadastrar'}
+                  className="text-sm font-semibold underline text-[#185FA5] hover:text-[#042C53]"
+                >
+                  Ir para página de cadastro de equipe
+                </button>
+              </div>
             </div>
           )}
         </div>
