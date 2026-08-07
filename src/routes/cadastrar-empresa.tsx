@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ChefiaLogo } from "@/components/brand/ChefiaLogo";
 import { PublicOnlyRoute } from "@/components/auth/RouteGuards";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/cadastrar-empresa")({
@@ -51,9 +52,7 @@ function CadastrarEmpresaContent() {
 
     try {
       // 1. Check if user already exists
-      const { data: { user: existingUser } } = await supabase.auth.getUser();
-
-      if (existingUser) {
+      if (session) {
         // User is already logged in, but might not have a team. 
         // We update their metadata so the auto-provisioning logic can create the team on next login.
         const { error: updError } = await supabase.auth.updateUser({
