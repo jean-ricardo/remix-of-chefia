@@ -112,6 +112,11 @@ function CadastrarEmpresaContent() {
     <div className="min-h-screen bg-[#F7F6F2] px-5 py-10 sm:px-8 sm:py-16">
       <Toaster richColors />
       <div className="mx-auto w-full max-w-[440px]">
+        {session && (
+          <div className="mb-6 rounded-xl border border-[#D85A30]/20 bg-[#D85A30]/5 p-4 text-[0.85rem] leading-relaxed text-[#D85A30]">
+            Você já possui uma conta ativa. Preencha o nome da empresa abaixo para criar sua base e assumir o cargo de Diretor.
+          </div>
+        )}
         <div className="mb-8 flex justify-center">
           <ChefiaLogo className="h-24 w-auto sm:h-28" />
         </div>
@@ -172,24 +177,26 @@ function CadastrarEmpresaContent() {
               placeholder="(11) 99999-9999"
             />
 
-            <div className="relative">
-              <Field
-                id="password"
-                label="Senha"
-                type={showPassword ? "text" : "password"}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 8 caracteres"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute bottom-1 right-0 grid h-10 w-10 place-items-center text-[#8b8b86]"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
+            {!session && (
+              <div className="relative">
+                <Field
+                  id="password"
+                  label="Senha"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mínimo 8 caracteres"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute bottom-1 right-0 grid h-10 w-10 place-items-center text-[#8b8b86]"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            )}
 
             <button
               type="submit"

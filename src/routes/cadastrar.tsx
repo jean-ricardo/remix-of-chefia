@@ -191,7 +191,12 @@ function CadastrarPage() {
 
       if (signUpData.session) {
         toast.success("Cadastro realizado! Aguarde a aprovação do administrador.");
-        navigate({ to: "/", replace: true });
+        // If they were already logged in, the auth state listener will catch the team_members insert and refresh
+        if (session) {
+           window.location.reload();
+        } else {
+           navigate({ to: "/", replace: true });
+        }
       } else {
         toast.success("Cadastro criado! Verifique sua caixa de e-mail para confirmar a conta e liberar seu acesso.");
         navigate({ to: "/login", replace: true });
