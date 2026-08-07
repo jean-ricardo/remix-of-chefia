@@ -161,6 +161,7 @@ function EquipePage() {
       actorName: currentUser?.name || "Usuário",
       actionType: "update",
       details: `${currentUser?.name || "Usuário"} aprovou a entrada de ${name} na equipe.`,
+      teamId: currentUser.team_id,
     });
 
     toast.success(`${name} aprovado e vinculado à equipe!`);
@@ -187,6 +188,7 @@ function EquipePage() {
       actorName: currentUser?.name || "Usuário",
       actionType: "delete",
       details: `${currentUser?.name || "Usuário"} recusou a solicitação de ${name}.`,
+      teamId: currentUser.team_id,
     });
     
     toast.success(`Solicitação de ${name} recusada.`);
@@ -230,6 +232,7 @@ function EquipePage() {
         actorName: currentUser?.name || "Usuário",
         actionType: "delete",
         details: `${currentUser?.name || "Usuário"} excluiu permanentemente a conta e o perfil do membro ${memberToDelete.name} da plataforma.`,
+        teamId: currentUser.team_id,
       });
 
       // 2. Chamar a nova função RPC para exclusão total (incluindo auth.users)
