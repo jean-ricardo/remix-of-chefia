@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Search, User as UserIcon, Calendar as CalendarIcon, RotateCw } from "lucide-react";
-import { Toaster } from "@/components/ui/sonner";
+import { Plus, Search, User as UserIcon, Calendar as CalendarIcon, RotateCw, Trash2 } from "lucide-react";
+import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
