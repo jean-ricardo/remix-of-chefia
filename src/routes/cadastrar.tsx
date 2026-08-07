@@ -34,8 +34,8 @@ const MIN_PASSWORD = 6;
 
 function friendlyError(message: string) {
   const m = message.toLowerCase();
-  if (m.includes("already registered") || m.includes("already been registered"))
-    return "Este e-mail já possui conta. Faça login para continuar.";
+  if (m.includes("already registered") || m.includes("already been registered") || m.includes("user_already_exists"))
+    return "Este e-mail já possui conta. Se você já foi removido de uma equipe, pode entrar com sua senha e solicitar acesso a uma nova equipe.";
   if (m.includes("invalid") && m.includes("email")) return "E-mail inválido.";
   // Qualquer outro erro real da API é exibido na íntegra.
   return message;
