@@ -41,7 +41,7 @@ export async function logActivity(input: {
       details: input.details,
       task_id: input.taskId ?? null,
       team_id: input.teamId ?? null,
-    });
+    } as any);
   } catch (e) {
     console.error("[activity_logs] insert failed", e);
   }
@@ -49,20 +49,20 @@ export async function logActivity(input: {
 
 export function useActivityLogs(enabled = true, teamId: string | null = null) {
   return useQuery({
-    queryKey: ACTIVITY_LOGS_KEY,
+    queryKey: teamId ? [...ACTIVITY_LOGS_KEY, teamId] : ACTIVITY_LOGS_KEY,
     enabled,
     queryFn: async () => {
       let query = supabase
         .from("activity_logs")
-        .select("id,actor_name,action_type,details,task_id,team_id,created_at");
-
-      if (teamId) {
-        query = query.eq("team_id", teamId);
-      }
-
-      const { data, error } = await query
+        .select("id,actor_name,action_type,details,task_id,created_at")
         .order("created_at", { ascending: false })
         .limit(100);
+
+      if (teamId) {
+        query = query.eq("team_id" as any, teamId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as ActivityLog[];
     },
@@ -84,11 +84,11 @@ export function useActivityLogsRealtime(enabled = true, teamId: string | null = 
           table: "activity_logs",
           filter: teamId ? `team_id=eq.${teamId}` : undefined
         },
-        () => qc.invalidateQueries({ queryKey: ACTIVITY_LOGS_KEY }),
+        () => qc.invalidateQueries({ queryKey: teamId ? [...ACTIVITY_LOGS_KEY, teamId] : ACTIVITY_LOGS_KEY }),
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [qc, enabled]);
+  }, [qc, enabled, teamId]);
 }
