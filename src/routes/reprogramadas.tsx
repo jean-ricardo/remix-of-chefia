@@ -126,6 +126,7 @@ function ReprogramadasPage() {
         actorName: user?.name || "Usuário",
         actionType: "delete",
         details: `${user?.name || "Usuário"} excluiu ${count} registro(s) de atividades reprogramadas.`,
+        teamId: user.team_id,
       });
 
       toast.success("Registros excluídos com sucesso.");

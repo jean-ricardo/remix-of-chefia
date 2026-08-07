@@ -88,6 +88,7 @@ export type Database = {
           details: string
           id: string
           task_id: string | null
+          team_id: string | null
         }
         Insert: {
           action_type: string
@@ -96,6 +97,7 @@ export type Database = {
           details: string
           id?: string
           task_id?: string | null
+          team_id?: string | null
         }
         Update: {
           action_type?: string
@@ -104,8 +106,17 @@ export type Database = {
           details?: string
           id?: string
           task_id?: string | null
+          team_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       completions: {
         Row: {

@@ -152,6 +152,7 @@ function AtividadesPage() {
         actorName: user.name,
         actionType: "delete",
         details: `Excluiu permanentemente a atividade "${activity?.title || deleteId}".`,
+        teamId: user.team_id,
       });
 
       toast.success("Atividade excluída com sucesso.");
