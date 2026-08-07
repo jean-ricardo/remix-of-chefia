@@ -1,3 +1,4 @@
+// adicione no codigo-fonte para eu consiga ver no interface ativa e no codigo fonte
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -248,6 +249,7 @@ function DashboardPage() {
               <h1 className="font-display text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
                 Dashboard Principal
               </h1>
+              <p className="text-xs text-muted-foreground">adicione no codigo-fonte para eu consiga ver no interface ativa e no codigo fonte</p>
               <div className="hidden h-8 w-px bg-border/40 sm:block" />
               <CompanyIdentity />
             </div>
