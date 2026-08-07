@@ -805,7 +805,10 @@ function OccurrenceCard({
     } else {
       toast.success("Atividade excluída");
       const qc = (window as any).queryClient;
-      if (qc) qc.invalidateQueries({ queryKey: ["activities"] });
+      if (qc) {
+        await qc.invalidateQueries({ queryKey: ["activities", currentUser.team_id] });
+        await qc.invalidateQueries({ queryKey: ["activities"] });
+      }
       // setBusy(false) happens via unmount usually, but for safety:
       setBusy(false);
     }
