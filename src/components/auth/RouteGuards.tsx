@@ -71,17 +71,28 @@ export function PendingApprovalScreen() {
           ) : user?.mapped && user.pending ? (
             "O Administrador da equipe já recebeu o seu pedido de acesso. Por favor, aguarde a liberação. Você pode fechar esta página e, assim que for aprovado, basta acessar novamente para entrar na plataforma."
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p>Sua conta está ativa, mas você não está vinculado a nenhuma equipe no momento.</p>
-              <p className="font-medium text-[#185FA5]">
-                Para acessar a plataforma, utilize o código de convite enviado pelo seu administrador na página de cadastro de membro.
-              </p>
-              <div className="pt-2">
+              
+              <div className="flex flex-col gap-3 pt-2">
                 <button
                   onClick={() => window.location.href = '/cadastrar'}
-                  className="text-sm font-semibold underline text-[#185FA5] hover:text-[#042C53]"
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#185FA5] px-4 text-sm font-semibold text-white transition-all hover:bg-[#042C53]"
                 >
-                  Ir para página de cadastro de equipe
+                  Entrar em uma equipe existente
+                </button>
+                
+                <div className="flex items-center gap-3 py-1">
+                  <div className="h-px flex-1 bg-[#E0DFDA]" />
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-[#9a9a95]">ou</span>
+                  <div className="h-px flex-1 bg-[#E0DFDA]" />
+                </div>
+
+                <button
+                  onClick={() => window.location.href = '/cadastrar-empresa'}
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-[#D85A30] px-4 text-sm font-semibold text-[#D85A30] transition-all hover:bg-[#D85A30]/5"
+                >
+                  Criar minha própria base (Diretor)
                 </button>
               </div>
             </div>
