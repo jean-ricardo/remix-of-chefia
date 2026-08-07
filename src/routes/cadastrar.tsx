@@ -125,11 +125,11 @@ function CadastrarPage() {
       if (authError) throw authError;
 
       // 2. Transação Única no Frontend: INSERT no team_members
+      // Search for existing entry specifically for this user OR unclaimed email
       const { data: existing } = await supabase
         .from("team_members")
-        .select("id,cargo_principal")
-        .ilike("email", cleanEmail)
-        .limit(1)
+        .select("id,cargo_principal,user_id")
+        .or(`user_id.eq.${data.user?.id},and(email.ilike.${cleanEmail},user_id.is.null)`)
         .maybeSingle();
 
       if (existing?.id) {

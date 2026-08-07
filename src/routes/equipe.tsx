@@ -123,7 +123,7 @@ function EquipePage() {
       if (currentUser.team_id) {
         query = query.eq("team_id", currentUser.team_id);
       } else {
-        // Fallback for legacy invitation codes if needed, but multi-team relies on team_id
+        // Fallback for legacy invitation codes if needed
         query = query.eq("role", `equipe:${teamCode}`);
       }
       

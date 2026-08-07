@@ -113,12 +113,24 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
 
   if (email) {
     // 1. Try to find an existing team member entry
+    // Refined check: ensure we match both email AND user_id if present, 
+    // to prevent cross-team profile leakage for the same email.
     let { data, error } = await supabase
       .from("team_members")
-      .select("id,name,email,cargo_principal,telefone,team_id")
-      .ilike("email", email)
-      .limit(1)
+      .select("id,name,email,cargo_principal,telefone,team_id,user_id")
+      .eq("user_id", authUser.id)
       .maybeSingle();
+
+    // If not found by user_id, check by email but ONLY if it hasn't been claimed by another user_id yet
+    if (!error && !data) {
+      const { data: byEmail } = await supabase
+        .from("team_members")
+        .select("id,name,email,cargo_principal,telefone,team_id,user_id")
+        .ilike("email", email)
+        .is("user_id", null)
+        .maybeSingle();
+      data = byEmail;
+    }
 
     // 2. If not found, check if this user has "is_director" and "temp_company_name" in metadata
     // This happens when they just signed up via /cadastrar-empresa
