@@ -733,6 +733,7 @@ function OccurrenceCard({
       month_day: a.month_day,
       due_date: nextDue,
       recurrence: cardRecurrence,
+      team_id: currentUser.team_id,
     });
     if (error) {
       console.error("[activities] recurrence clone failed", error);
