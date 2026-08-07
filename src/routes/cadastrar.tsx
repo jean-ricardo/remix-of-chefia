@@ -43,7 +43,7 @@ function friendlyError(message: string) {
 
 function CadastrarPage() {
   const navigate = useNavigate();
-  const { loading, session, signOut } = useAuth();
+  const { loading, session, signOut, user: authUser } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -107,29 +107,45 @@ function CadastrarPage() {
         return;
       }
 
-      // 2. Auth Sign Up
-      const { data, error: authError } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
+      let signUpData;
+      if (!session) {
+        const { data, error: authError } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: {
+              full_name: cleanName,
+              team_code_pending: cleanCode,
+              whatsapp: formattedWhatsapp,
+              status: "pendente",
+            },
+          },
+        });
+        if (authError) throw authError;
+        signUpData = data;
+      } else {
+        // Logged in user: update metadata and link
+        const { error: updAuthErr } = await supabase.auth.updateUser({
           data: {
             full_name: cleanName,
             team_code_pending: cleanCode,
             whatsapp: formattedWhatsapp,
             status: "pendente",
-          },
-        },
-      });
+          }
+        });
+        if (updAuthErr) throw updAuthErr;
+        signUpData = { user: authUser, session };
+      }
 
-      if (authError) throw authError;
+      const currentAuthUser = signUpData.user;
 
       // 2. Transação Única no Frontend: INSERT no team_members
       // Search for existing entry specifically for this user OR unclaimed email
       const { data: existing } = await supabase
         .from("team_members")
         .select("id,cargo_principal,user_id")
-        .or(`user_id.eq.${data.user?.id},and(email.ilike.${cleanEmail},user_id.is.null)`)
+        .or(`user_id.eq.${currentAuthUser?.id},and(email.ilike.${cleanEmail},user_id.is.null)`)
         .maybeSingle();
 
       if (existing?.id) {
@@ -141,7 +157,7 @@ function CadastrarPage() {
               role: `equipe:${cleanCode}`,
               telefone: formattedWhatsapp,
               team_id: teamData.id,
-              user_id: data.user?.id
+              user_id: currentAuthUser?.id
             })
             .eq("id", existing.id);
           if (updErr) throw updErr;
@@ -151,7 +167,7 @@ function CadastrarPage() {
             .update({ 
               name: cleanName,
               telefone: formattedWhatsapp,
-              user_id: data.user?.id
+              user_id: currentAuthUser?.id
             })
             .eq("id", existing.id);
           if (updErr) throw updErr;
@@ -164,7 +180,7 @@ function CadastrarPage() {
           cargo_principal: "pendente",
           role: `equipe:${cleanCode}`,
           team_id: teamData.id,
-          user_id: data.user?.id
+          user_id: currentAuthUser?.id
         });
         if (insErr) throw insErr;
       }
@@ -173,7 +189,7 @@ function CadastrarPage() {
       // No Supabase, se confirm_email estiver ligado, signUp não retorna session.
       setBusy(false);
 
-      if (data.session) {
+      if (signUpData.session) {
         toast.success("Cadastro realizado! Aguarde a aprovação do administrador.");
         navigate({ to: "/", replace: true });
       } else {

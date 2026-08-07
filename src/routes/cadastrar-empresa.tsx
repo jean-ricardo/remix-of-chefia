@@ -23,16 +23,15 @@ export const Route = createFileRoute("/cadastrar-empresa")({
 
 function CadastrarEmpresaPage() {
   return (
-    <PublicOnlyRoute>
-      <CadastrarEmpresaContent />
-    </PublicOnlyRoute>
+    <CadastrarEmpresaContent />
   );
 }
 
 function CadastrarEmpresaContent() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const { session, user: authUser } = useAuth();
+  const [name, setName] = useState(authUser?.name || "");
+  const [email, setEmail] = useState(authUser?.email || "");
   const [companyName, setCompanyName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [password, setPassword] = useState("");

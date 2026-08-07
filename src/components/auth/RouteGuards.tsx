@@ -76,7 +76,10 @@ export function PendingApprovalScreen() {
               
               <div className="flex flex-col gap-3 pt-2">
                 <button
-                  onClick={() => window.location.href = '/cadastrar'}
+                  onClick={() => {
+                    stashPendingTaskId();
+                    window.location.href = '/cadastrar';
+                  }}
                   className="inline-flex h-11 items-center justify-center rounded-xl bg-[#185FA5] px-4 text-sm font-semibold text-white transition-all hover:bg-[#042C53]"
                 >
                   Entrar em uma equipe existente
@@ -89,7 +92,10 @@ export function PendingApprovalScreen() {
                 </div>
 
                 <button
-                  onClick={() => window.location.href = '/cadastrar-empresa'}
+                  onClick={() => {
+                    stashPendingTaskId();
+                    window.location.href = '/cadastrar-empresa';
+                  }}
                   className="inline-flex h-11 items-center justify-center rounded-xl border border-[#D85A30] px-4 text-sm font-semibold text-[#D85A30] transition-all hover:bg-[#D85A30]/5"
                 >
                   Criar minha própria base (Diretor)
