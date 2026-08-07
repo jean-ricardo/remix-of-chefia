@@ -786,6 +786,14 @@ function OccurrenceCard({
     if (!ok) return;
 
     setBusy(true);
+    // Optimistic Update
+    const qc = (window as any).queryClient;
+    if (qc) {
+      qc.setQueryData(["activities", currentUser.team_id], (old: any) => 
+        (old ?? []).filter((a: any) => a.id !== occ.activity.id)
+      );
+    }
+
     const { error } = await supabase
       .from("activities")
       .delete()
