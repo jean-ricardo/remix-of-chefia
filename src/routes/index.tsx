@@ -98,6 +98,7 @@ function DashboardPage() {
   useEffect(() => {
     (window as any).queryClient = qc;
     (window as any).setDetailsTaskId = setDetailsTaskId;
+    (window as any).supabase = supabase;
   }, [qc, setDetailsTaskId]);
 
   const today = useMemo(() => new Date(), []);

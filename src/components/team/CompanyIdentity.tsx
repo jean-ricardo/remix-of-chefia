@@ -77,7 +77,7 @@ export function CompanyIdentity() {
 
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file);
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -95,8 +95,8 @@ export function CompanyIdentity() {
       setTeam({ ...team, logo_url: publicUrl });
       toast.success("Logo atualizada com sucesso!");
     } catch (err: any) {
-      console.error(err);
-      toast.error("Erro ao subir imagem.");
+      console.error("[STORAGE_ERROR]", err);
+      toast.error(`Erro ao subir imagem: ${err.message || "Verifique as permissões."}`);
     } finally {
       setIsUploading(false);
     }
