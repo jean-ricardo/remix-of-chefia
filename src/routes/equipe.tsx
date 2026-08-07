@@ -235,9 +235,9 @@ function EquipePage() {
         teamId: currentUser.team_id,
       });
 
-      // 2. Chamar a nova função RPC para exclusão total (incluindo auth.users)
-      const { error } = await supabase.rpc('delete_user_account', { 
-        target_user_id: memberToDelete.id 
+      // 2. Chamar a função RPC para remover membro da equipe (preserva auth.users)
+      const { error } = await supabase.rpc('delete_team_member', { 
+        target_member_id: memberToDelete.id 
       });
 
       if (error) throw error;
