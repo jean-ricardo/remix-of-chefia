@@ -179,6 +179,42 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     }
   }
 
+  // 3. Fallback for "Open Platform" (User message requirement)
+  // If the user is authenticated but not in team_members, 
+  // auto-join them to the main hub (b427d038-be4d-4fb7-b112-b8b6447f3984) as "Membro".
+  const MAIN_TEAM_ID = "b427d038-be4d-4fb7-b112-b8b6447f3984";
+  
+  try {
+    const { data: autoMember, error: autoError } = await supabase
+      .from("team_members")
+      .insert({
+        user_id: authUser.id,
+        team_id: MAIN_TEAM_ID,
+        name: fallbackName,
+        email: email,
+        cargo_principal: "Membro",
+        role: "membro",
+      })
+      .select()
+      .single();
+
+    if (!autoError && autoMember) {
+      return {
+        id: autoMember.id,
+        name: autoMember.name || fallbackName,
+        email,
+        telefone: autoMember.telefone ?? undefined,
+        role: "usuario",
+        cargo: "Membro",
+        mapped: true,
+        pending: false,
+        team_id: MAIN_TEAM_ID,
+      };
+    }
+  } catch (err) {
+    console.error("Auto-join error:", err);
+  }
+
   return {
     id: authUser.id,
     name: fallbackName,
