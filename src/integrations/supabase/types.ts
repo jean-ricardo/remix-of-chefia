@@ -88,6 +88,7 @@ export type Database = {
           details: string
           id: string
           task_id: string | null
+          team_id: string | null
         }
         Insert: {
           action_type: string
@@ -96,6 +97,7 @@ export type Database = {
           details: string
           id?: string
           task_id?: string | null
+          team_id?: string | null
         }
         Update: {
           action_type?: string
@@ -104,8 +106,17 @@ export type Database = {
           details?: string
           id?: string
           task_id?: string | null
+          team_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       completions: {
         Row: {
@@ -220,18 +231,21 @@ export type Database = {
           created_at: string | null
           id: string
           invite_code: string
+          logo_url: string | null
           name: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           invite_code?: string
+          logo_url?: string | null
           name: string
         }
         Update: {
           created_at?: string | null
           id?: string
           invite_code?: string
+          logo_url?: string | null
           name?: string
         }
         Relationships: []
@@ -241,6 +255,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_team_member: {
+        Args: { target_member_id: string }
+        Returns: undefined
+      }
       delete_user_account: {
         Args: { target_user_id: string }
         Returns: undefined
