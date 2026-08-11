@@ -68,7 +68,7 @@ export function isPendingCargo(cargo: unknown): boolean {
 
 export function mapCargoToRole(cargo: unknown): AppRole {
   const c = String(cargo ?? "").trim().toLowerCase();
-  if (c === "diretor" || c === "director" || c === "admin") return "admin";
+  if (c === "diretor" || c === "director" || c === "admin" || c === "master") return "admin";
   if (c === "adm" || c === "gestor" || c === "manager") return "gestor";
   return "usuario";
 }
@@ -179,12 +179,18 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     }
   }
 
-  // 3. Fallback for "Open Platform" (User message requirement)
-  // If the user is authenticated but not in team_members, 
-  // auto-join them to the main hub (b427d038-be4d-4fb7-b112-b8b6447f3984) as "Membro".
+  // 3. Auto-provisioning for Single-Tenant
+  // Link any authenticated user directly to the primary team.
   const MAIN_TEAM_ID = "b427d038-be4d-4fb7-b112-b8b6447f3984";
   
   try {
+    // Check if this is the first user in the system to make them Director
+    const { count } = await supabase
+      .from("team_members")
+      .select("id", { count: "exact", head: true });
+
+    const isFirstUser = count === 0;
+
     const { data: autoMember, error: autoError } = await supabase
       .from("team_members")
       .insert({
@@ -192,8 +198,8 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         team_id: MAIN_TEAM_ID,
         name: fallbackName,
         email: email,
-        cargo_principal: "Membro",
-        role: "membro",
+        cargo_principal: isFirstUser ? "Diretor" : "Membro",
+        role: isFirstUser ? "diretor" : "membro",
       })
       .select()
       .single();
@@ -204,15 +210,15 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         name: autoMember.name || fallbackName,
         email,
         telefone: autoMember.telefone ?? undefined,
-        role: "usuario",
-        cargo: "Membro",
+        role: isFirstUser ? "admin" : "usuario",
+        cargo: autoMember.cargo_principal,
         mapped: true,
         pending: false,
         team_id: MAIN_TEAM_ID,
       };
     }
   } catch (err) {
-    console.error("Auto-join error:", err);
+    console.error("Auto-provisioning error:", err);
   }
 
   return {

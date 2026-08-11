@@ -93,19 +93,10 @@ function CadastrarPage() {
     setBusy(true);
 
     try {
-      // 1. Find the team by code
-      const { data: teamData, error: teamLookupError } = await supabase
-        .from("teams")
-        .select("id")
-        .eq("invite_code", cleanCode)
-        .maybeSingle();
-
-      if (teamLookupError) throw teamLookupError;
-      if (!teamData) {
-        toast.error("Código da Equipe inválido. Verifique com o administrador.");
-        setBusy(false);
-        return;
-      }
+      // 1. Single-Tenant: Auto-bind to main team
+      const MAIN_TEAM_ID = "b427d038-be4d-4fb7-b112-b8b6447f3984";
+      const teamId = MAIN_TEAM_ID;
+      const cleanCode = "MASTER";
 
       // 2. Auth Sign Up
       const { data, error: authError } = await supabase.auth.signUp({
@@ -115,9 +106,8 @@ function CadastrarPage() {
           emailRedirectTo: window.location.origin,
           data: {
             full_name: cleanName,
-            team_code_pending: cleanCode,
             whatsapp: formattedWhatsapp,
-            status: "pendente",
+            status: "ativo",
           },
         },
       });
@@ -133,14 +123,15 @@ function CadastrarPage() {
         .maybeSingle();
 
       if (existing?.id) {
-        if (String(existing.cargo_principal ?? "").toLowerCase() === "pendente") {
+        if (String(existing.cargo_principal ?? "").toLowerCase() === "pendente" || !existing.cargo_principal) {
           const { error: updErr } = await supabase
             .from("team_members")
             .update({ 
               name: cleanName, 
-              role: `equipe:${cleanCode}`,
+              role: `membro`,
+              cargo_principal: "Membro",
               telefone: formattedWhatsapp,
-              team_id: teamData.id,
+              team_id: teamId,
               user_id: data.user?.id
             })
             .eq("id", existing.id);
@@ -161,9 +152,9 @@ function CadastrarPage() {
           name: cleanName,
           email: cleanEmail,
           telefone: formattedWhatsapp,
-          cargo_principal: "pendente",
-          role: `equipe:${cleanCode}`,
-          team_id: teamData.id,
+          cargo_principal: "Membro",
+          role: `membro`,
+          team_id: teamId,
           user_id: data.user?.id
         });
         if (insErr) throw insErr;
@@ -174,7 +165,7 @@ function CadastrarPage() {
       setBusy(false);
 
       if (data.session) {
-        toast.success("Cadastro realizado! Aguarde a aprovação do administrador.");
+        toast.success("Cadastro realizado com sucesso!");
         navigate({ to: "/", replace: true });
       } else {
         toast.success("Cadastro criado! Verifique sua caixa de e-mail para confirmar a conta e liberar seu acesso.");
@@ -201,8 +192,8 @@ function CadastrarPage() {
             Criar meu acesso
           </h1>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-[#6f6f6a]">
-            Você foi convidado para a equipe. Preencha os dados abaixo — seu acesso
-            será liberado após a aprovação do administrador.
+            Preencha os dados abaixo para criar sua conta e começar a acompanhar
+            suas atividades.
           </p>
 
           {!loading && session ? (

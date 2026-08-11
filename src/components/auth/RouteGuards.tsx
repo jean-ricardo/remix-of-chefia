@@ -116,7 +116,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   if (loading) return <AuthSplash />;
   if (!session) return null; // Redirecionamento em curso no useEffect
 
-  if (user?.pending || !user?.mapped) return <PendingApprovalScreen />;
+  // Redirecionamento de pendentes removido para suportar o modelo single-tenant com entrada direta.
+  // if (user?.pending || !user?.mapped) return <PendingApprovalScreen />;
 
   return <>{children}</>;
 }
