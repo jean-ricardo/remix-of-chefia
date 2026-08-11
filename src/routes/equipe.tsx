@@ -38,7 +38,7 @@ import { useActivities, useRotinaRealtime, useTeamMembers } from "@/lib/useRotin
 import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { logActivity } from "@/lib/activityLog";
-import { deleteUserAccount } from "@/lib/team-admin.functions";
+import { deleteUserAccount, cleanupOrphanedAuthUser } from "@/lib/team-admin.functions";
 
 export const Route = createFileRoute("/equipe")({
   component: EquipePage,
@@ -226,26 +226,23 @@ function EquipePage() {
     
     setIsDeleting(true);
     try {
-      // 1. Auditoria (Registrado antes da exclusão para garantir que os dados do ator existam)
       await logActivity({
         actorName: currentUser?.name || "Usuário",
         actionType: "delete",
         details: `${currentUser?.name || "Usuário"} excluiu permanentemente a conta e o perfil do membro ${memberToDelete.name} da plataforma.`,
       });
 
-      // 2. Chamar a função de servidor para exclusão total
       const member = (members.data || []).find(m => m.id === memberToDelete.id);
       
       await deleteUserAccount({ 
         data: {
           memberId: memberToDelete.id,
-          authUserId: member?.user_id ?? undefined 
+          authUserId: (member as any)?.user_id ?? undefined 
         }
       });
 
       toast.success("Membro e conta de acesso removidos com sucesso.");
       
-      // 3. Atualização de estado e cache
       await queryClient.invalidateQueries({ queryKey: ["team_members"] });
       await queryClient.invalidateQueries({ queryKey: ["activity_logs"] });
       setMemberToDelete(null);
@@ -256,6 +253,25 @@ function EquipePage() {
       setIsDeleting(false);
     }
   }
+
+  async function handleCleanupOrphan(email: string) {
+    if (!isAdmin) return;
+    
+    setInviteBusy(true);
+    try {
+      const result = await cleanupOrphanedAuthUser({ data: { email } });
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.warning(result.message);
+      }
+    } catch (error: any) {
+      toast.error("Erro ao limpar convite antigo.");
+    } finally {
+      setInviteBusy(false);
+    }
+  }
+
 
   return (
     <>
