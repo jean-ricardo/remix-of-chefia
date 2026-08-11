@@ -1,1 +1,0 @@
-ALTER TABLE public.activities ADD COLUMN IF NOT EXISTS recurrence text NOT NULL DEFAULT 'none';
