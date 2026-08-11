@@ -163,7 +163,8 @@ function CadastrarPage() {
         toast.success("Cadastro realizado com sucesso!");
         navigate({ to: "/", replace: true });
       } else {
-        toast.success("Cadastro criado! Verifique sua caixa de e-mail para confirmar a conta e liberar seu acesso.");
+        // Fallback case if session is not immediately returned
+        toast.success("Cadastro realizado com sucesso!");
         navigate({ to: "/login", replace: true });
       }
 
