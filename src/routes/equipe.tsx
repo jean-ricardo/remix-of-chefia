@@ -117,8 +117,8 @@ function EquipePage() {
     queryFn: async () => {
       let query = supabase
         .from("team_members")
-        .select("id,name,email,role,created_at,team_id")
-        .eq("cargo_principal", "pendente")
+        .select("id,name,email,role,created_at,team_id,status")
+        .eq("status", "pendente")
         .order("created_at", { ascending: false });
 
       if (currentUser.team_id) {
