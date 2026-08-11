@@ -239,7 +239,7 @@ function EquipePage() {
       await deleteUserAccount({ 
         data: {
           memberId: memberToDelete.id,
-          authUserId: member?.user_id 
+          authUserId: member?.user_id ?? undefined 
         }
       });
 
