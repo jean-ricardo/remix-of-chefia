@@ -285,13 +285,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           filter: `id=eq.${user.id}`,
         },
         (payload) => {
-          const oldCargo = payload.old?.cargo_principal;
-          const newCargo = payload.new?.cargo_principal;
+          const oldStatus = payload.old?.status;
+          const newStatus = payload.new?.status;
 
-          if (newCargo && oldCargo !== newCargo) {
+          if (newStatus && oldStatus !== newStatus) {
             setRoleUpdate({
-              old: String(oldCargo || "Membro"),
-              new: String(newCargo || "Membro"),
+              old: String(oldStatus === "pendente" ? "Pendente" : "Aprovado"),
+              new: String(newStatus === "pendente" ? "Pendente" : "Aprovado"),
             });
           }
         }
