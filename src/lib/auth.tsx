@@ -147,6 +147,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
               telefone: whatsapp.startsWith("55") ? whatsapp : `55${whatsapp}`,
               cargo_principal: "Diretor",
               role: "diretor",
+              status: "aprovado",
             })
             .select()
             .single();
