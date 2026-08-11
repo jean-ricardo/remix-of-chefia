@@ -57,6 +57,7 @@ interface MemberLike {
   full_name?: string | null;
   email?: string | null;
   role?: string | null;
+  status?: "pendente" | "aprovado" | null;
   avatar_url?: string | null;
 }
 
