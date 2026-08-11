@@ -68,7 +68,7 @@ export function isPendingCargo(cargo: unknown): boolean {
 
 export function mapCargoToRole(cargo: unknown): AppRole {
   const c = String(cargo ?? "").trim().toLowerCase();
-  if (c === "diretor" || c === "director" || c === "admin" || c === "master") return "admin";
+  if (c === "diretor" || c === "director" || c === "admin" || c === "master" || c === "fundador") return "admin";
   if (c === "adm" || c === "gestor" || c === "manager") return "gestor";
   return "usuario";
 }
@@ -115,7 +115,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     // 1. Try to find an existing team member entry
     let { data, error } = await supabase
       .from("team_members")
-      .select("id,name,email,cargo_principal,telefone,team_id")
+      .select("id,name,email,cargo_principal,role,telefone,team_id")
       .ilike("email", email)
       .limit(1)
       .maybeSingle();
@@ -170,7 +170,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         name: data.name || fallbackName,
         email,
         telefone: data.telefone ?? undefined,
-        role: mapCargoToRole(data.cargo_principal),
+        role: (data.role as any) === "master" ? "admin" : mapCargoToRole(data.cargo_principal),
         cargo: data.cargo_principal ?? null,
         mapped: true,
         pending: isPendingCargo(data.cargo_principal),
