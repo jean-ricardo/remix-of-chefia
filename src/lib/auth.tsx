@@ -115,7 +115,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     // 1. Try to find an existing team member entry
     let { data, error } = await supabase
       .from("team_members")
-      .select("id,name,email,cargo_principal,telefone,team_id")
+      .select("id,name,email,cargo_principal,role,telefone,team_id")
       .ilike("email", email)
       .limit(1)
       .maybeSingle();
