@@ -43,7 +43,7 @@ function friendlyError(message: string) {
 
 function CadastrarPage() {
   const navigate = useNavigate();
-  const { loading, session, signOut } = useAuth();
+  const { loading, session, signOut, refreshUser } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -193,6 +193,8 @@ function CadastrarPage() {
       setBusy(false);
 
       if (data.session) {
+        // Force sync user resolution before navigating to avoid race conditions with guards
+        await refreshUser();
         toast.success(mode === "create" ? "Empresa criada com sucesso!" : "Cadastro realizado! Aguarde a aprovação do administrador.");
         navigate({ to: "/", replace: true });
       } else {
