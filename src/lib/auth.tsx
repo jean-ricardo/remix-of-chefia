@@ -45,8 +45,9 @@ export interface CurrentUser {
   cargo: string | null;
   /** True when the e-mail was found in team_members. */
   mapped: boolean;
-  /** Cadastro aguardando aprovação do Adm/Diretor (cargo_principal = 'pendente'). */
+  /** Cadastro aguardando aprovação do Adm/Diretor (status = 'pendente'). */
   pending: boolean;
+  status: "pendente" | "aprovado";
   /** UUID from teams table. */
   team_id: string | null;
 }
