@@ -38,6 +38,7 @@ import { useActivities, useRotinaRealtime, useTeamMembers } from "@/lib/useRotin
 import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { logActivity } from "@/lib/activityLog";
+import { deleteUserAccount } from "@/lib/team-admin.functions";
 
 export const Route = createFileRoute("/equipe")({
   component: EquipePage,
@@ -232,12 +233,13 @@ function EquipePage() {
         details: `${currentUser?.name || "Usuário"} excluiu permanentemente a conta e o perfil do membro ${memberToDelete.name} da plataforma.`,
       });
 
-      // 2. Chamar a nova função RPC para exclusão total (incluindo auth.users)
-      const { error } = await supabase.rpc('delete_user_account', { 
-        target_user_id: memberToDelete.id 
+      // 2. Chamar a função de servidor para exclusão total
+      const member = (members.data || []).find(m => m.id === memberToDelete.id);
+      
+      await deleteUserAccount({ 
+        memberId: memberToDelete.id,
+        authUserId: member?.user_id 
       });
-
-      if (error) throw error;
 
       toast.success("Membro e conta de acesso removidos com sucesso.");
       
