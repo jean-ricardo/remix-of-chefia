@@ -47,7 +47,7 @@ function RootComponent() {
     location.pathname,
   );
 
-  if (loading) {
+  if (loading && !isPublicRoute) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F7F6F2]">
         <div className="flex flex-col items-center gap-4">
