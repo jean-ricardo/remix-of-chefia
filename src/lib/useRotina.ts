@@ -1,121 +1,128 @@
 import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "./auth";
-import type { Activity, Completion, Reschedule, TeamMember } from "./rotina";
+import type { Activity, Completion, Reschedule } from "./rotina";
+import type { CurrentUser } from "./auth";
 
-const KEYS = {
-  members: ["team_members"] as const,
-  activities: ["activities"] as const,
-  completions: ["completions"] as const,
-  reschedules: ["reschedules"] as const,
-};
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string | null;
+  cargo_principal: string | null;
+  email: string | null;
+  telefone: string | null;
+  user_id: string | null;
+  created_at: string;
+}
 
-export function useTeamMembers() {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: [KEYS.members, user?.team_id],
+export function useRotina(user: CurrentUser | null) {
+  const queryClient = useQueryClient();
+
+  // Queries
+  const { data: members = [] } = useSuspenseQuery({
+    queryKey: ["members", user?.team_id],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("team_members")
-        .select("id,name,role,telefone,cargo_principal,team_id,status")
-        .or("cargo_principal.is.null,cargo_principal.neq.pendente")
+        .select("id, name, role, cargo_principal, email, telefone, user_id, created_at")
         .order("name");
 
-      if (user?.team_id) {
-        query = query.eq("team_id", user.team_id);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as TeamMember[];
+      return data as unknown as TeamMember[];
     },
-    enabled: !!user,
+    enabled: !!user?.team_id,
   });
-}
 
-export function useActivities() {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: [KEYS.activities, user?.team_id],
+  const { data: activities = [] } = useSuspenseQuery({
+    queryKey: ["activities", user?.team_id],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("activities")
-        .select("id,title,assigned_user_id,priority,recurrence_type,weekday,month_day,due_date,recurrence,description,status,created_by,team_id")
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (user?.team_id) {
-        query = query.eq("team_id", user.team_id);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as Activity[];
+      return data as Activity[];
     },
-    enabled: !!user,
+    enabled: !!user?.team_id,
   });
-}
 
-export function useCompletions() {
-  return useQuery({
-    queryKey: KEYS.completions,
+  const { data: completions = [] } = useSuspenseQuery({
+    queryKey: ["completions", user?.team_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("completions")
-        .select("activity_id,occurrence_key,completed_at");
-      if (error) throw error;
-      return (data ?? []) as Completion[];
-    },
-  });
-}
+        .select("*")
+        .order("completed_at", { ascending: false });
 
-export function useReschedules() {
-  return useQuery({
-    queryKey: KEYS.reschedules,
+      if (error) throw error;
+      return data as Completion[];
+    },
+    enabled: !!user?.team_id,
+  });
+
+  const { data: reschedules = [] } = useSuspenseQuery({
+    queryKey: ["reschedules", user?.team_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reschedules")
-        .select("id,activity_id,original_occurrence_key,new_date,justification,created_at");
+        .select("*")
+        .order("requested_at", { ascending: false });
+
       if (error) throw error;
-      return (data ?? []) as Reschedule[];
+      return data as Reschedule[];
     },
+    enabled: !!user?.team_id,
   });
-}
 
-/**
- * Subscribes to realtime changes for all rotina tables and invalidates queries.
- * Also refreshes every 60s so date-based statuses update automatically.
- */
-export function useRotinaRealtime() {
-  const qc = useQueryClient();
+  // Realtime
   useEffect(() => {
-    const channel = supabase
-      .channel("rotina")
-      .on("postgres_changes", { event: "*", schema: "public", table: "team_members" }, () => {
-        qc.invalidateQueries({ queryKey: KEYS.members });
-        qc.invalidateQueries({ queryKey: ["team_members", "pending"] });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "activities" }, () =>
-        qc.invalidateQueries({ queryKey: KEYS.activities }),
-      )
-      .on("postgres_changes", { event: "*", schema: "public", table: "completions" }, () =>
-        qc.invalidateQueries({ queryKey: KEYS.completions }),
-      )
-      .on("postgres_changes", { event: "*", schema: "public", table: "reschedules" }, () =>
-        qc.invalidateQueries({ queryKey: KEYS.reschedules }),
-      )
-      .subscribe();
+    if (!user?.team_id) return;
 
-    const interval = setInterval(() => {
-      // Force re-render for date-based recalculation
-      qc.invalidateQueries({ queryKey: KEYS.activities });
-      qc.invalidateQueries({ queryKey: KEYS.completions });
-      qc.invalidateQueries({ queryKey: KEYS.reschedules });
-    }, 60_000);
+    const channels = [
+      supabase
+        .channel("activities-changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "activities" },
+          () => queryClient.invalidateQueries({ queryKey: ["activities"] })
+        )
+        .subscribe(),
+      supabase
+        .channel("completions-changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "completions" },
+          () => queryClient.invalidateQueries({ queryKey: ["completions"] })
+        )
+        .subscribe(),
+      supabase
+        .channel("reschedules-changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "reschedules" },
+          () => queryClient.invalidateQueries({ queryKey: ["reschedules"] })
+        )
+        .subscribe(),
+      supabase
+        .channel("members-changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "team_members" },
+          () => queryClient.invalidateQueries({ queryKey: ["members"] })
+        )
+        .subscribe(),
+    ];
 
     return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
+      channels.forEach((channel) => supabase.removeChannel(channel));
     };
-  }, [qc]);
+  }, [user?.team_id, queryClient]);
+
+  return {
+    members,
+    activities,
+    completions,
+    reschedules,
+  };
 }
