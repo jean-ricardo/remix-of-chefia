@@ -209,6 +209,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         cargo: "Membro",
         mapped: true,
         pending: false,
+        status: "aprovado",
         team_id: MAIN_TEAM_ID,
       };
     }
