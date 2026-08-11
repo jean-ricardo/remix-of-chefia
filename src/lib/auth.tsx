@@ -173,7 +173,8 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         role: mapCargoToRole(data.cargo_principal),
         cargo: data.cargo_principal ?? null,
         mapped: true,
-        pending: isPendingCargo(data.cargo_principal),
+        pending: data.status === "pendente",
+        status: (data.status as "aprovado" | "pendente") || "aprovado",
         team_id: data.team_id ?? null,
       };
     }
