@@ -151,7 +151,7 @@ function CadastrarPage() {
           usuario_email: cleanEmail,
           usuario_telefone: formattedWhatsapp,
         });
-        toast.info('DEBUG RPC: ' + JSON.stringify({ userId: data.user?.id, mode, rpcError: rpcError ? rpcError.message : null }), { duration: 10000 });
+        alert('CHEGOU AQUI: ' + JSON.stringify({ userId: data.user?.id, mode, rpcError: rpcError ? (rpcError as any).message : null }));
         if (rpcError) throw rpcError;
       } else {
         // Fluxo normal de entrada em equipe
