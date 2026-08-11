@@ -672,12 +672,8 @@ function OccurrenceCard({
   
   const rawRole =
     (currentUser as unknown as { role?: string }).role ??
-    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "admin" : undefined);
-  const isAdmin =
-    rawRole === "admin" ||
-    rawRole === "gestor" ||
-    rawRole === "diretor" ||
-    rawRole === "director";
+    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "diretor" : "membro");
+  const isAdmin = rawRole === "diretor";
 
   const pointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
