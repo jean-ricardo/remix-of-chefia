@@ -190,7 +190,6 @@ export type Database = {
           id: string
           name: string
           role: string | null
-          status: string | null
           team_id: string | null
           telefone: string | null
           user_id: string | null
@@ -202,7 +201,6 @@ export type Database = {
           id?: string
           name: string
           role?: string | null
-          status?: string | null
           team_id?: string | null
           telefone?: string | null
           user_id?: string | null
@@ -214,7 +212,6 @@ export type Database = {
           id?: string
           name?: string
           role?: string | null
-          status?: string | null
           team_id?: string | null
           telefone?: string | null
           user_id?: string | null
@@ -258,18 +255,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      auth_team_id: { Args: never; Returns: string }
-      criar_empresa_e_diretor: {
-        Args: {
-          convite_codigo: string
-          empresa_nome: string
-          usuario_email: string
-          usuario_id: string
-          usuario_nome: string
-          usuario_telefone: string
-        }
-        Returns: undefined
-      }
       delete_team_member: {
         Args: { target_member_id: string }
         Returns: undefined
@@ -278,7 +263,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
-      is_director: { Args: never; Returns: boolean }
+      is_master: { Args: never; Returns: boolean }
     }
     Enums: {
       activity_priority: "alta" | "media" | "baixa"
