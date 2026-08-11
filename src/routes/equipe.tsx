@@ -149,7 +149,7 @@ function EquipePage() {
     setBusyId(id);
     const { error } = await supabase
       .from("team_members")
-      .update({ cargo_principal: "membro", role: "membro" })
+      .update({ status: "aprovado" })
       .eq("id", id);
     
     if (error) {
