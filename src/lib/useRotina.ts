@@ -18,7 +18,7 @@ export function useTeamMembers() {
     queryFn: async () => {
       let query = supabase
         .from("team_members")
-        .select("id,name,role,telefone,cargo_principal,team_id")
+        .select("id,name,role,telefone,cargo_principal,team_id,status")
         .or("cargo_principal.is.null,cargo_principal.neq.pendente")
         .order("name");
 
