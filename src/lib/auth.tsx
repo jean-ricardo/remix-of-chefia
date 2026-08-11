@@ -225,6 +225,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     cargo: null,
     mapped: false,
     pending: false,
+    status: "aprovado",
     team_id: null,
   };
 }
