@@ -1,152 +1,49 @@
-# Remix of ChefIA
-
-Descritivo funcional — Plataforma de Gestão de Rotina de Equipe
-
-1. Visão geral
-
-Plataforma web para gestão da rotina de uma equipe: cadastro de membros, criação de atividades com diferentes recorrências, e um dashboard em tempo real que mostra o que está pendente, atrasado ou próximo do vencimento. Cada membro da equipe pode visualizar e concluir apenas as suas próprias atividades.
-
-Objetivo principal: eliminar o controle manual de rotina (planilhas, lembretes avulsos) e centralizar em um painel único, atualizado em tempo real, com prioridade e responsabilidade claras por atividade.
-
-2. Perfis de uso
-
-Não há hierarquia de permissões complexa nesta primeira versão — todos os membros cadastrados têm acesso ao mesmo painel e podem:
-
-Ver o dashboard geral (todas as atividades da equipe) ou filtrar para ver apenas as suas
-
-Marcar suas próprias atividades como concluídas
-
-Reprogramar a data de qualquer atividade
-
-3. Módulos e funcionalidades
-
-3.1 Cadastro de equipe
-
-Cadastro de membro com: nome e função/cargo
-
-Listagem de todos os membros, com contagem de atividades atribuídas a cada um
-
-Remoção de membro
-
-3.2 Cadastro de atividades
-
-Campos da atividade:
-
-Título (obrigatório)
-
-Responsável (selecionado entre os membros cadastrados)
-
-Prioridade: Alta / Média / Baixa
-
-Tipo de recorrência, com campos específicos por tipo:
-
-Diária — repete todos os dias
-
-Semanal — repete uma vez por semana, em um dia da semana escolhido (domingo a sábado)
-
-Mensal — repete uma vez por mês, em um dia do mês escolhido
-
-Única — ocorre uma única vez, em uma data específica
-
-Listagem de todas as atividades cadastradas, com prioridade, responsável, tipo de recorrência e opção de remover.
-
-3.3 Dashboard em tempo real
-
-O dashboard calcula, a cada momento, o status de cada atividade com base na data atual e organiza em:
-
-Categoria Regra Atrasadas A ocorrência esperada já passou e não foi concluída Para hoje A ocorrência esperada é hoje e não foi concluída Próximos 7 dias A próxima ocorrência cai dentro dos próximos 7 dias Concluídas hoje Atividades cuja ocorrência de hoje já foi marcada como concluída
-
-Regras importantes:
-
-Cada tipo de recorrência gera uma "ocorrência atual" calculada automaticamente (ex: para uma atividade semanal com dia = quarta-feira, a ocorrência da semana corrente é sempre a quarta-feira daquela semana)
-
-Concluir uma ocorrência não afeta as futuras — na próxima semana/mês/dia, a atividade volta a aparecer como pendente
-
-O dashboard deve recalcular automaticamente em intervalos curtos (ex: a cada minuto), sem precisar de recarregar a página, e deve refletir instantaneamente ações de outros usuários (ex: se um colega concluir uma atividade em outro dispositivo, o painel atualiza sozinho)
-
-Dentro de cada categoria, ordenar primeiro por prioridade (Alta > Média > Baixa) e depois por data
-
-Cada item pendente exibe: título, responsável, tipo de recorrência, data da ocorrência, bandeira de prioridade, e duas ações:
-
-Concluir — marca aquela ocorrência específica como feita
-
-Reprogramar — abre um seletor de data para mover aquela ocorrência específica para uma nova data (sem alterar a recorrência das próximas ocorrências); atividades reprogramadas exibem um indicador visual de "reprogramada"
-
-3.4 Filtro por responsável ("minhas atividades")
-
-Um seletor no topo do dashboard permite alternar entre:
-
-Toda a equipe — visão consolidada de todas as atividades
-
-Um membro específico — visão restrita apenas às atividades daquele responsável, mantendo as mesmas categorias (atrasadas / hoje / próximas) e a ação de concluir
-
-4. Modelo de dados sugerido
-
-users
-
-campo tipo observação id string/uuid chave primária name string obrigatório role string opcional (função/cargo)
-
-activities
-
-campo tipo observação id string/uuid chave primária title string obrigatório assigned_user_id referência a users.id priority enum: alta / media / baixa recurrence_type enum: diaria / semanal / mensal / unica weekday int (0–6) usado apenas se recurrence_type = semanal month_day int (1–28) usado apenas se recurrence_type = mensal due_date date usado apenas se recurrence_type = unica
-
-completions (marca de conclusão por ocorrência)
-
-campo tipo observação activity_id referência a activities.id occurrence_key string (data da ocorrência original, formato YYYY-MM-DD) completed_at timestamp
-
-reschedules (reprogramações de ocorrências recorrentes)
-
-campo tipo observação activity_id referência a activities.id original_occurrence_key string (YYYY-MM-DD) data original calculada pela recorrência new_date date nova data escolhida
-
-Observação: para atividades do tipo "única", reprogramar altera diretamente o campo due_date, sem necessidade de registro em reschedules.
-
-5. Requisitos técnicos
-
-Banco de dados em tempo real, para que alterações feitas por um usuário (concluir, reprogramar, cadastrar) apareçam automaticamente nas telas de outros usuários sem recarregar a página (ex: Supabase Realtime, Firestore ou equivalente)
-
-Responsivo, com uso confortável em desktop e celular
-
-Sem necessidade de autenticação complexa nesta primeira versão (uso interno de equipe); estrutura preparada para adicionar login por usuário futuramente
-
-Persistência permanente dos dados (não pode depender de armazenamento local do navegador)
-
-6. Direção visual
-
-Paleta: azul-marinho profundo como cor primária, âmbar como cor de destaque/ação, fundo em tom creme claro, com cores semânticas para status (vermelho para atrasado, âmbar para hoje/atenção, verde para concluído)
-
-Tipografia limpa, sem serifa, hierarquia clara entre título, corpo e metadados
-
-Elementos geométricos discretos (ex: forma hexagonal) podem ser usados como assinatura visual do cabeçalho
-
-Prioridade visual: os itens mais urgentes (atrasados, alta prioridade) devem se destacar imediatamente ao abrir o painel, sem exigir cliques adicionais
-
-7. Fora de escopo (nesta versão)
-
-Autenticação/login individual
-
-Notificações push ou por e-mail
-
-Relatórios exportáveis (PDF/Excel)
-
-Histórico/auditoria de alterações
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/f3d9822f-16ce-4d6d-a711-da5cf48ddee7).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+# Plataforma de Gestão de Rotina de Equipe (ChefIA Remix)
+
+## Estado Atual do Projeto
+
+Este projeto é uma plataforma de gestão de rotina para equipes, permitindo o acompanhamento de atividades recorrentes em tempo real.
+
+### Principais Alterações Recentes
+
+#### 1. Estrutura de Dados e Segurança
+- **Padronização de Funções (Roles):** O campo `role` na tabela `team_members` foi restrito via `CHECK constraint` aos valores `'diretor'` e `'membro'`.
+- **Sistema de Aprovação:** Adicionado campo `status` em `team_members` (`'pendente'` ou `'aprovado'`). Novos usuários entram como `'pendente'`, exceto fundadores de empresas.
+- **Row Level Security (RLS):** Ativado em todas as tabelas (`teams`, `team_members`, `activities`, `completions`, `reschedules`, `activity_logs`).
+- **Isolamento de Equipe:** Implementada a função `auth_team_id()` (`SECURITY DEFINER`) para garantir que usuários só vejam/editem dados do seu próprio `team_id`.
+- **Prevenção de Recursão:** Criada a função `is_director()` para checar permissões administrativas sem causar erros 500 de recursão infinita nas políticas de RLS.
+
+#### 2. Fluxo de Cadastro
+- **Criação de Empresa:** Agora os usuários podem escolher entre entrar em uma empresa existente (via convite) ou criar uma nova empresa.
+- **RPC `criar_empresa_e_diretor`:** Criada uma função no banco de dados para garantir que a criação da empresa e a vinculação do diretor ocorram de forma atômica e segura.
+- **Resolução de Condição de Corrida:** O fluxo de cadastro agora força a atualização do estado global do usuário (`refreshUser`) antes de redirecionar para o dashboard, evitando que o usuário caia em telas de "aguardando aprovação" por erro de sincronia.
+
+#### 3. Frontend e Experiência do Usuário (UX)
+- **Dashboard RBAC:** A visão do dashboard é filtrada automaticamente pelo papel do usuário. Diretores têm visão global da equipe, enquanto membros vêem apenas suas tarefas.
+- **Atualização em Tempo Real:** Uso de Supabase Realtime para refletir mudanças de status e deleções de perfil instantaneamente.
+- **Depuração:** Adicionados alertas e logs temporários para validar o sucesso das operações críticas de banco de dados no ambiente de produção.
+
+---
+
+## Estrutura do Banco de Dados (Lovable Cloud)
+
+### Tabelas Principais
+- `teams`: Armazena as empresas/equipes e seus códigos de convite.
+- `team_members`: Vínculo entre usuários (auth.users) e equipes, contendo `role` e `status`.
+- `activities`: Definição das tarefas e suas regras de recorrência (diária, semanal, mensal, única).
+- `completions`: Registro de cada ocorrência concluída de uma atividade.
+- `reschedules`: Registro de reprogramações de datas para ocorrências específicas.
+- `activity_logs`: Logs de auditoria para ações na plataforma.
+
+### Funções Auxiliares (PostgreSQL)
+- `auth_team_id()`: Retorna o ID da equipe do usuário atual.
+- `is_director()`: Valida se o usuário atual possui cargo de diretoria.
+- `criar_empresa_e_diretor(user_id, team_name)`: Cria atomicamente uma nova empresa e define o criador como diretor aprovado.
+
+---
+
+## Tecnologias
+- **Frontend:** TanStack Start (React 19, React Router, Vite).
+- **Estilização:** Tailwind CSS v4.
+- **Backend/Banco:** Lovable Cloud (Supabase).
+- **Gerenciamento de Estado/Dados:** TanStack Query.
