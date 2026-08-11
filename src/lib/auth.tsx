@@ -57,6 +57,8 @@ export interface AuthState {
   session: Session | null;
   user: CurrentUser | null;
   signOut: () => Promise<void>;
+  /** Forces a refresh of the current user data from the database. */
+  refreshUser: () => Promise<void>;
 }
 
 /** Marcador de cadastro pendente (sem alterar schema: usa cargo_principal). */
@@ -101,6 +103,7 @@ const AuthContext = createContext<AuthState>({
   session: null,
   user: null,
   signOut: async () => {},
+  refreshUser: async () => {},
 });
 
 async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
@@ -238,6 +241,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [roleUpdate, setRoleUpdate] = useState<{ old: string; new: string } | null>(null);
 
+  const refreshUser = async () => {
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    setSession(currentSession);
+    
+    if (!currentSession?.user) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const resolved = await resolveCurrentUser(currentSession.user);
+    setUser(resolved);
+    setLoading(false);
+  };
+
   useEffect(() => {
     let active = true;
 
@@ -332,6 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null);
         setUser(null);
       },
+      refreshUser,
     }),
     [loading, session, user],
   );
