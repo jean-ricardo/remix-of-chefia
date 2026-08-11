@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
  * Simplified for single-tenant: no pending approval state.
  */
 export function ProtectedRoute({ children }: { children?: ReactNode }) {
-  const { user, loading, session } = useAuth();
+  const { user, loading, session, refreshUser } = useAuth();
 
   if (loading) {
     return (
@@ -20,7 +20,19 @@ export function ProtectedRoute({ children }: { children?: ReactNode }) {
 
   // No active session -> login
   if (!session) {
+    // If we have an auth user but no mapped user, try one last refresh before redirecting
     return <Navigate to="/login" />;
+  }
+
+  // Double check if we have a session but no user object yet (and not loading)
+  // This helps prevent "white screens" if the session exists but resolveCurrentUser hasn't finished
+  if (session && !user && !loading) {
+    refreshUser();
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return children ? <>{children}</> : <Outlet />;
