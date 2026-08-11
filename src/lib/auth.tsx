@@ -68,7 +68,7 @@ export function isPendingCargo(cargo: unknown): boolean {
 
 export function mapCargoToRole(cargo: unknown): AppRole {
   const c = String(cargo ?? "").trim().toLowerCase();
-  if (c === "diretor" || c === "director" || c === "admin" || c === "master") return "admin";
+  if (c === "diretor" || c === "director" || c === "admin" || c === "master" || c === "fundador") return "admin";
   if (c === "adm" || c === "gestor" || c === "manager") return "gestor";
   return "usuario";
 }
