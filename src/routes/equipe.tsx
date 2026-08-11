@@ -71,7 +71,7 @@ function EquipePage() {
 
       // Use the server function to delete from auth + database
       if (member.user_id) {
-        await doDeleteUser({ targetUserId: member.user_id });
+        await doDeleteUser({ data: { targetUserId: member.user_id } });
       } else {
         // Fallback for members without linked auth user
         const { error } = await supabase
