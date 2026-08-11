@@ -57,6 +57,7 @@ interface MemberLike {
   full_name?: string | null;
   email?: string | null;
   role?: string | null;
+  status?: "pendente" | "aprovado" | null;
   avatar_url?: string | null;
 }
 
@@ -116,8 +117,8 @@ function EquipePage() {
     queryFn: async () => {
       let query = supabase
         .from("team_members")
-        .select("id,name,email,role,created_at,team_id")
-        .eq("cargo_principal", "pendente")
+        .select("id,name,email,role,created_at,team_id,status")
+        .eq("status", "pendente")
         .order("created_at", { ascending: false });
 
       if (currentUser.team_id) {
@@ -148,7 +149,7 @@ function EquipePage() {
     setBusyId(id);
     const { error } = await supabase
       .from("team_members")
-      .update({ cargo_principal: "membro", role: "membro" })
+      .update({ status: "aprovado" })
       .eq("id", id);
     
     if (error) {
@@ -400,10 +401,9 @@ function EquipePage() {
           </div>
         ) : (
           <ul className="flex flex-col gap-2">
-            {memberList.map((m, idx) => {
+            {memberList.map((m) => {
               const name = displayNameOf(m);
-              const status: "ativo" | "pendente" =
-                idx === 0 && memberList.length > 1 ? "pendente" : "ativo";
+              const status = (m.status as "aprovado" | "pendente") || "aprovado";
               const count = counts.get(m.id) ?? 0;
               return (
                 <li key={m.id}>
@@ -742,12 +742,12 @@ function RoleSelect({
   );
 }
 
-function StatusBadge({ status }: { status: "ativo" | "pendente" }) {
+function StatusBadge({ status }: { status: "aprovado" | "pendente" }) {
   return (
     <span
       className={cn(
         "inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold uppercase tracking-wide",
-        status === "ativo"
+        status === "aprovado"
           ? "bg-success/15 text-success"
           : "bg-warning/20 text-amber-foreground",
       )}
@@ -755,11 +755,11 @@ function StatusBadge({ status }: { status: "ativo" | "pendente" }) {
       <span
         className={cn(
           "h-1.5 w-1.5 rounded-full",
-          status === "ativo" ? "bg-success" : "bg-amber",
+          status === "aprovado" ? "bg-success" : "bg-amber",
         )}
         aria-hidden
       />
-      {status === "ativo" ? "Ativo" : "Pendente"}
+      {status === "aprovado" ? "Ativo" : "Pendente"}
     </span>
   );
 }

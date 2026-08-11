@@ -45,8 +45,9 @@ export interface CurrentUser {
   cargo: string | null;
   /** True when the e-mail was found in team_members. */
   mapped: boolean;
-  /** Cadastro aguardando aprovação do Adm/Diretor (cargo_principal = 'pendente'). */
+  /** Cadastro aguardando aprovação do Adm/Diretor (status = 'pendente'). */
   pending: boolean;
+  status: "pendente" | "aprovado";
   /** UUID from teams table. */
   team_id: string | null;
 }
@@ -114,7 +115,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     // 1. Try to find an existing team member entry
     let { data, error } = await supabase
       .from("team_members")
-      .select("id,name,email,cargo_principal,telefone,team_id")
+      .select("id,name,email,cargo_principal,telefone,team_id,status")
       .ilike("email", email)
       .limit(1)
       .maybeSingle();
@@ -146,6 +147,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
               telefone: whatsapp.startsWith("55") ? whatsapp : `55${whatsapp}`,
               cargo_principal: "Diretor",
               role: "diretor",
+              status: "aprovado",
             })
             .select()
             .single();
@@ -172,7 +174,8 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         role: mapCargoToRole(data.cargo_principal),
         cargo: data.cargo_principal ?? null,
         mapped: true,
-        pending: isPendingCargo(data.cargo_principal),
+        pending: data.status === "pendente",
+        status: (data.status as "aprovado" | "pendente") || "aprovado",
         team_id: data.team_id ?? null,
       };
     }
@@ -193,6 +196,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         email: email,
         cargo_principal: "Membro",
         role: "membro",
+        status: "aprovado",
       })
       .select()
       .single();
@@ -207,6 +211,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         cargo: "Membro",
         mapped: true,
         pending: false,
+        status: "aprovado",
         team_id: MAIN_TEAM_ID,
       };
     }
@@ -222,6 +227,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     cargo: null,
     mapped: false,
     pending: false,
+    status: "aprovado",
     team_id: null,
   };
 }
@@ -281,13 +287,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           filter: `id=eq.${user.id}`,
         },
         (payload) => {
-          const oldCargo = payload.old?.cargo_principal;
-          const newCargo = payload.new?.cargo_principal;
+          const oldStatus = payload.old?.status;
+          const newStatus = payload.new?.status;
 
-          if (newCargo && oldCargo !== newCargo) {
+          if (newStatus && oldStatus !== newStatus) {
             setRoleUpdate({
-              old: String(oldCargo || "Membro"),
-              new: String(newCargo || "Membro"),
+              old: String(oldStatus === "pendente" ? "Pendente" : "Aprovado"),
+              new: String(newStatus === "pendente" ? "Pendente" : "Aprovado"),
             });
           }
         }
@@ -373,6 +379,7 @@ export function useCurrentUser(): CurrentUser {
       cargo: null,
       mapped: false,
       pending: false,
+      status: "aprovado",
       team_id: null,
     }
   );

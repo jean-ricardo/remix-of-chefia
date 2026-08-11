@@ -163,6 +163,7 @@ function CadastrarPage() {
           telefone: formattedWhatsapp,
           cargo_principal: "pendente",
           role: `equipe:${cleanCode}`,
+          status: "pendente",
           team_id: teamData.id,
           user_id: data.user?.id
         });
