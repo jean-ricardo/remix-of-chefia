@@ -54,7 +54,7 @@ function PerfilPage() {
   const [name, setName] = useState<string>(user?.name || "");
   const [email] = useState<string>(user?.email || "");
   const [jobTitle, setJobTitle] = useState<string>(
-    user?.role === "admin" ? "Diretor" : user?.role === "gestor" ? "Adm" : "Membro",
+    user?.role === "diretor" ? "Diretor" : "Membro",
   );
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
