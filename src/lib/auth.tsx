@@ -377,6 +377,7 @@ export function useCurrentUser(): CurrentUser {
       cargo: null,
       mapped: false,
       pending: false,
+      status: "aprovado",
       team_id: null,
     }
   );
