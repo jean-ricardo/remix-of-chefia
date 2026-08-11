@@ -49,7 +49,7 @@ function CadastrarPage() {
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [password, setPassword] = useState("123456");
-  const [teamCode, setTeamCode] = useState("");
+  
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -76,11 +76,6 @@ function CadastrarPage() {
     }
     const formattedWhatsapp = cleanWhatsapp.startsWith("55") ? cleanWhatsapp : `55${cleanWhatsapp}`;
 
-    const cleanCode = teamCode.trim();
-    if (!cleanCode) {
-      toast.warning("Informe o Código da Equipe fornecido pelo administrador.");
-      return;
-    }
 
     if (password.length < MIN_PASSWORD) {
       const msg = `A senha deve ter no mínimo ${MIN_PASSWORD} caracteres.`;
@@ -245,15 +240,6 @@ function CadastrarPage() {
               placeholder="(11) 99999-9999"
             />
 
-            <Field
-              id="cd-team"
-              label="Código da Equipe"
-              required
-              disabled={busy}
-              value={teamCode}
-              onChange={(e) => setTeamCode(e.target.value)}
-              placeholder="Cole aqui o código enviado pelo administrador"
-            />
 
             <div className="relative">
               <Field

@@ -287,17 +287,6 @@ function EquipePage() {
             {isAdmin && (
               <>
                 <Button
-                  variant="outline"
-                  onClick={() => {
-                    setDynamicCode(crypto.randomUUID().split("-")[0].toUpperCase());
-                    setCodeOpen(true);
-                  }}
-                  className="h-10 rounded-lg border-navy/20 px-4 font-medium text-navy hover:bg-navy/5"
-                >
-                  <Link2 className="h-4 w-4" />
-                  Convidar Membro
-                </Button>
-                <Button
                   onClick={() => setInviteOpen(true)}
                   className="h-10 rounded-lg bg-[#D85A30] px-4 font-medium text-white hover:bg-[#c14e28]"
                 >
