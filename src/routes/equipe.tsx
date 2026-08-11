@@ -148,7 +148,7 @@ function EquipePage() {
     setBusyId(id);
     const { error } = await supabase
       .from("team_members")
-      .update({ cargo_principal: "membro", role: "Membro" })
+      .update({ cargo_principal: "membro", role: "membro" })
       .eq("id", id);
     
     if (error) {
@@ -430,8 +430,8 @@ function EquipePage() {
                       <RoleSelect 
                         memberId={m.id} 
                         memberName={name} 
-                        currentCargo={m.role || "Membro"} 
-                        canEdit={currentUser.cargo?.toLowerCase() === "diretor" || currentUser.cargo?.toLowerCase() === "adm" || currentUser.cargo?.toLowerCase() === "admin"} 
+                        currentCargo={m.role || "membro"} 
+                        canEdit={currentUser.role === "diretor"} 
                       />
                       <StatusBadge status={status} />
                       <span className="text-xs text-muted-foreground">
