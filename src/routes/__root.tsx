@@ -209,7 +209,7 @@ function AppShell() {
 function RoleBadge() {
   const user = useCurrentUser();
   const label =
-    user.role === "admin" ? "Diretor" : user.role === "gestor" ? "Adm" : "Membro";
+    user.role === "diretor" ? "Diretor" : "Membro";
   const Icon = hasGlobalScope(user.role) ? Shield : UserCircle2;
 
   return (
