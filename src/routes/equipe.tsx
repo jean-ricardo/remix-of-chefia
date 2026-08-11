@@ -401,10 +401,9 @@ function EquipePage() {
           </div>
         ) : (
           <ul className="flex flex-col gap-2">
-            {memberList.map((m, idx) => {
+            {memberList.map((m) => {
               const name = displayNameOf(m);
-              const status: "ativo" | "pendente" =
-                idx === 0 && memberList.length > 1 ? "pendente" : "ativo";
+              const status = (m.status as "aprovado" | "pendente") || "aprovado";
               const count = counts.get(m.id) ?? 0;
               return (
                 <li key={m.id}>
