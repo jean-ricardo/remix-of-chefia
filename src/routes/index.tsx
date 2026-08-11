@@ -245,10 +245,10 @@ function DashboardPage() {
                 : "Suas atividades atrasadas, para hoje e próximas."}
             </p>
 
-            {currentUser.role !== "admin" && (
+            {currentUser.role !== "diretor" && (
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
                 <Eye className="h-3 w-3" />
-                {currentUser.role === "gestor" ? "Modo gestor" : "Modo usuário"}
+                Modo usuário
                 {impersonatedName ? (
                   <span className="text-navy/70">· {impersonatedName}</span>
                 ) : (
