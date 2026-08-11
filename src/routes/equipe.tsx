@@ -570,24 +570,36 @@ function EquipePage() {
                 </SelectContent>
               </Select>
             </div>
-            <DialogFooter className="gap-2 sm:gap-2">
+            <DialogFooter className="flex flex-col gap-2 sm:flex-col sm:gap-2">
+              <div className="flex w-full gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setInviteOpen(false)}
+                  className="h-11 flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={inviteBusy}
+                  className="h-11 flex-1 rounded-lg bg-[#D85A30] font-medium text-white hover:bg-[#c14e28]"
+                >
+                  {inviteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  Enviar Convite
+                </Button>
+              </div>
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => setInviteOpen(false)}
-                className="h-11"
+                variant="ghost"
+                disabled={inviteBusy || !inviteEmail.includes("@")}
+                onClick={() => handleCleanupOrphan(inviteEmail)}
+                className="h-9 w-full text-[10px] text-muted-foreground hover:text-danger"
               >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={inviteBusy}
-                className="h-11 rounded-lg bg-[#D85A30] font-medium text-white hover:bg-[#c14e28]"
-              >
-                <Mail className="h-4 w-4" />
-                Enviar Convite
+                Limpar convite antigo se houver erro
               </Button>
             </DialogFooter>
+
           </form>
         </DialogContent>
       </Dialog>
