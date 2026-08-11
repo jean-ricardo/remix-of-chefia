@@ -742,12 +742,12 @@ function RoleSelect({
   );
 }
 
-function StatusBadge({ status }: { status: "ativo" | "pendente" }) {
+function StatusBadge({ status }: { status: "aprovado" | "pendente" }) {
   return (
     <span
       className={cn(
         "inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold uppercase tracking-wide",
-        status === "ativo"
+        status === "aprovado"
           ? "bg-success/15 text-success"
           : "bg-warning/20 text-amber-foreground",
       )}
@@ -755,11 +755,11 @@ function StatusBadge({ status }: { status: "ativo" | "pendente" }) {
       <span
         className={cn(
           "h-1.5 w-1.5 rounded-full",
-          status === "ativo" ? "bg-success" : "bg-amber",
+          status === "aprovado" ? "bg-success" : "bg-amber",
         )}
         aria-hidden
       />
-      {status === "ativo" ? "Ativo" : "Pendente"}
+      {status === "aprovado" ? "Ativo" : "Pendente"}
     </span>
   );
 }
