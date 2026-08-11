@@ -237,8 +237,10 @@ function EquipePage() {
       const member = (members.data || []).find(m => m.id === memberToDelete.id);
       
       await deleteUserAccount({ 
-        memberId: memberToDelete.id,
-        authUserId: member?.user_id 
+        data: {
+          memberId: memberToDelete.id,
+          authUserId: member?.user_id 
+        }
       });
 
       toast.success("Membro e conta de acesso removidos com sucesso.");
