@@ -216,7 +216,7 @@ function EquipePage() {
     setInviteBusy(false);
     setInviteOpen(false);
     setInviteEmail("");
-    setInviteRole("member");
+    setInviteRole("membro");
     toast.success("Convite enviado com sucesso!");
   }
 
