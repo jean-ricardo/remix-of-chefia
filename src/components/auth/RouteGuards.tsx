@@ -1,146 +1,72 @@
-import { useEffect, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { Clock3, LogOut } from "lucide-react";
-import { Toaster } from "@/components/ui/sonner";
+import { Navigate, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-
-
-/** Chave usada para preservar o ?taskId=... do WhatsApp durante o login. */
-export const PENDING_TASK_KEY = "chefia:pendingTaskId";
-
-/** Guarda o taskId da URL atual (se houver) antes de mandar o usuário ao login. */
-function stashPendingTaskId() {
-  if (typeof window === "undefined") return;
-  const taskId = new URLSearchParams(window.location.search).get("taskId");
-  if (taskId) window.sessionStorage.setItem(PENDING_TASK_KEY, taskId);
-}
-
-/** Lê e limpa o taskId preservado durante o fluxo de login. */
-export function consumePendingTaskId(): string | null {
-  if (typeof window === "undefined") return null;
-  const taskId = window.sessionStorage.getItem(PENDING_TASK_KEY);
-  if (taskId) window.sessionStorage.removeItem(PENDING_TASK_KEY);
-  return taskId;
-}
-
-
-/** Tela neutra usada enquanto o Supabase confirma a sessão (evita flicker no F5). */
-export function AuthSplash({ label = "Carregando" }: { label?: string }) {
-  return (
-    <div className="grid min-h-screen place-items-center bg-[#F7F6F2]">
-      <div
-        className="h-8 w-8 animate-spin rounded-full border-2 border-[#185FA5]/25 border-t-[#185FA5]"
-        role="status"
-        aria-label={label}
-      />
-    </div>
-  );
-}
+import { Loader2 } from "lucide-react";
 
 /**
- * Bloqueia a renderização de páginas internas quando não há sessão do Supabase
- * e redireciona para /login. Enquanto a sessão está sendo verificada, mostra a
- * tela neutra em vez de piscar o login.
+ * Ensures the user is authenticated.
+ * Simplified for single-tenant: no pending approval state.
  */
-/**
- * Sala de espera: novos cadastros ficam sem navegação até um Adm/Diretor
- * aprovar o vínculo com a equipe.
- */
-export function PendingApprovalScreen() {
-  const { user, signOut } = useAuth();
-  const isRemoved = new URLSearchParams(window.location.search).get("reason") === "removed";
+export function ProtectedRoute() {
+  const { user, loading, session } = useAuth();
 
-  return (
-    <div className="grid min-h-screen place-items-center bg-[#F7F6F2] px-5 py-10">
-      <Toaster richColors />
-      <div className="w-full max-w-[440px] rounded-2xl bg-white p-7 text-center shadow-[0_18px_40px_-28px_rgba(4,44,83,0.45)] ring-1 ring-black/[0.04] sm:p-9">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#185FA5]/10 text-[#185FA5]">
-          <Clock3 className="h-6 w-6" />
-        </div>
-        <h1 className="mt-5 text-xl font-bold tracking-tight text-[#042C53] sm:text-2xl">
-          {isRemoved ? "Acesso Revogado" : "Solicitação Enviada!"}
-        </h1>
-        <div className="mt-3 text-[0.92rem] leading-relaxed text-[#6f6f6a]">
-          {isRemoved ? (
-            <div className="space-y-3">
-              <p>Esta conta foi removida da equipe e não possui mais acesso à plataforma.</p>
-              <p className="font-medium text-[#185FA5]">
-                Para retornar, você precisará de um novo link de convite e realizar um novo cadastro utilizando o código da equipe.
-              </p>
-            </div>
-          ) : user?.mapped && user.pending ? (
-            "O Administrador da equipe já recebeu o seu pedido de acesso. Por favor, aguarde a liberação. Você pode fechar esta página e, assim que for aprovado, basta acessar novamente para entrar na plataforma."
-          ) : (
-            <div className="space-y-3">
-              <p>Sua conta foi criada, mas não identificamos um vínculo ativo com nenhuma equipe.</p>
-              <p className="font-medium text-[#185FA5]">
-                Caso você tenha sido removido ou esteja tentando entrar pela primeira vez, você precisa de um link de convite válido para se cadastrar em uma equipe.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-7">
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            className="inline-flex w-full h-11 items-center justify-center gap-2 rounded-lg border border-[#185FA5]/30 px-4 text-sm font-medium text-[#185FA5] transition-colors hover:bg-[#185FA5]/10"
-          >
-            <LogOut className="h-4 w-4" />
-            Sair
-          </button>
-        </div>
-
-        {user?.email ? (
-          <p className="mt-4 rounded-lg bg-[#F7F6F2] px-3 py-2 text-xs text-[#8b8b86]">
-            Conta: <span className="font-medium text-[#042C53]">{user.email}</span>
-          </p>
-        ) : null}
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
-    </div>
-  );
-}
+    );
+  }
 
+  // No active session -> login
+  if (!session) {
+    return <Navigate to="/entrar" />;
+  }
 
-export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { loading, session, user } = useAuth();
-  const navigate = useNavigate();
+  // Not mapped to team_members (should be rare due to auto-provisioning)
+  if (!user?.mapped) {
+    // If auth exists but no team_member, registration logic will handle re-mapping
+    // but for now, we just let them through or could redirect to /cadastrar
+    return <Outlet />;
+  }
 
-  useEffect(() => {
-    if (!loading && !session) {
-      stashPendingTaskId();
-      navigate({ to: "/login", replace: true });
-    }
-  }, [loading, session, navigate]);
-
-  if (loading) return <AuthSplash />;
-  if (!session) return null; // Redirecionamento em curso no useEffect
-
-  if (user?.pending || !user?.mapped) return <PendingApprovalScreen />;
-
-  return <>{children}</>;
+  return <Outlet />;
 }
 
 /**
- * Inverso: rotas públicas de autenticação. Usuário já logado é enviado ao
- * painel sem exibir o formulário.
+ * Only allows users with 'master' role.
  */
-export function PublicOnlyRoute({ children }: { children: ReactNode }) {
-  const { loading, session } = useAuth();
-  const navigate = useNavigate();
+export function MasterRoute() {
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    if (!loading && session) {
-      const pending = consumePendingTaskId();
-      navigate({
-        to: "/",
-        search: pending ? { taskId: pending } : {},
-        replace: true,
-      });
-    }
-  }, [loading, session, navigate]);
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  if (loading || session) return <AuthSplash label="Verificando sessão" />;
+  if (user?.role !== "master") {
+    return <Navigate to="/" />;
+  }
 
-  return <>{children}</>;
+  return <Outlet />;
+}
+
+export function PublicOnlyRoute() {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (session) {
+    return <Navigate to="/" />;
+  }
+
+  return <Outlet />;
 }
