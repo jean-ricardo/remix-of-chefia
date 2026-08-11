@@ -196,6 +196,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         email: email,
         cargo_principal: "Membro",
         role: "membro",
+        status: "aprovado",
       })
       .select()
       .single();
