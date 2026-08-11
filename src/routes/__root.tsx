@@ -47,8 +47,15 @@ function RootComponent() {
     location.pathname,
   );
 
-  if (loading && !session) {
-    return null;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F7F6F2]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#185FA5] border-t-transparent"></div>
+          <p className="text-sm font-medium text-[#042C53]">Carregando plataforma...</p>
+        </div>
+      </div>
+    );
   }
 
   const navItems = [

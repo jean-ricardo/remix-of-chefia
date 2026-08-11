@@ -190,39 +190,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   };
 
-  useEffect(() => {
-    let active = true;
+    useEffect(() => {
+      let active = true;
 
-    async function apply(next: Session | null) {
-      if (!active) return;
-      setSession(next);
-      if (!next?.user) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-      const resolved = await resolveCurrentUser(next.user);
-      if (!active) return;
-      setUser(resolved);
-      setLoading(false);
-    }
-
-    supabase.auth.getSession().then(({ data }) => void apply(data.session ?? null));
-
-    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
-      if (event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+      async function apply(next: Session | null) {
+        if (!active) return;
         setSession(next);
-        void apply(next ?? null);
-        return;
-      }
-      void apply(next ?? null);
-    });
+        
+        if (!next?.user) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
 
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
+        try {
+          const resolved = await resolveCurrentUser(next.user);
+          if (active) {
+            setUser(resolved);
+          }
+        } catch (error) {
+          console.error("Error resolving user:", error);
+        } finally {
+          if (active) {
+            setLoading(false);
+          }
+        }
+      }
+
+      // Initial check
+      supabase.auth.getSession().then(({ data }) => {
+        void apply(data.session ?? null);
+      }).catch(err => {
+        console.error("Get session error:", err);
+        if (active) setLoading(false);
+      });
+
+      const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+        if (event === "SIGNED_OUT") {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        void apply(next ?? null);
+      });
+
+      return () => {
+        active = false;
+        sub.subscription.unsubscribe();
+      };
+    }, []);
 
   // Realtime listener for role changes AND deletions
   useEffect(() => {
