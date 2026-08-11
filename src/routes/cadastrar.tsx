@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Eye, EyeOff, Loader2, LogOut } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogOut, Building2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,13 +15,13 @@ export const Route = createFileRoute("/cadastrar")({
       {
         name: "description",
         content:
-          "Cadastre-se como membro da equipe no Chef.IA e acompanhe suas atividades em tempo real.",
+          "Cadastre-se como membro da equipe ou crie sua própria empresa no Chef.IA.",
       },
       { property: "og:title", content: "Criar acesso — Chef.IA" },
       {
         property: "og:description",
         content:
-          "Cadastre-se como membro da equipe no Chef.IA e acompanhe suas atividades em tempo real.",
+          "Cadastre-se como membro da equipe ou crie sua própria empresa no Chef.IA.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -50,6 +50,8 @@ function CadastrarPage() {
   const [whatsapp, setWhatsapp] = useState("");
   const [password, setPassword] = useState("123456");
   const [teamCode, setTeamCode] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [mode, setMode] = useState<"join" | "create">("join");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -76,10 +78,18 @@ function CadastrarPage() {
     }
     const formattedWhatsapp = cleanWhatsapp.startsWith("55") ? cleanWhatsapp : `55${cleanWhatsapp}`;
 
-    const cleanCode = teamCode.trim();
-    if (!cleanCode) {
-      toast.warning("Informe o Código da Equipe fornecido pelo administrador.");
-      return;
+    if (mode === "join") {
+      const cleanCode = teamCode.trim();
+      if (!cleanCode) {
+        toast.warning("Informe o Código da Equipe fornecido pelo administrador.");
+        return;
+      }
+    } else {
+      const cleanCompany = companyName.trim();
+      if (!cleanCompany) {
+        toast.warning("Informe o nome da sua empresa.");
+        return;
+      }
     }
 
     if (password.length < MIN_PASSWORD) {
@@ -93,18 +103,24 @@ function CadastrarPage() {
     setBusy(true);
 
     try {
-      // 1. Find the team by code
-      const { data: teamData, error: teamLookupError } = await supabase
-        .from("teams")
-        .select("id")
-        .eq("invite_code", cleanCode)
-        .maybeSingle();
+      let targetTeamId: string | null = null;
+      let finalInviteCode = teamCode.trim();
 
-      if (teamLookupError) throw teamLookupError;
-      if (!teamData) {
-        toast.error("Código da Equipe inválido. Verifique com o administrador.");
-        setBusy(false);
-        return;
+      // 1. Validar ou Criar Empresa
+      if (mode === "join") {
+        const { data: teamData, error: teamLookupError } = await supabase
+          .from("teams")
+          .select("id")
+          .eq("invite_code", finalInviteCode)
+          .maybeSingle();
+
+        if (teamLookupError) throw teamLookupError;
+        if (!teamData) {
+          toast.error("Código da Equipe inválido. Verifique com o administrador.");
+          setBusy(false);
+          return;
+        }
+        targetTeamId = teamData.id;
       }
 
       // 2. Auth Sign Up
@@ -115,59 +131,61 @@ function CadastrarPage() {
           emailRedirectTo: window.location.origin,
           data: {
             full_name: cleanName,
-            team_code_pending: cleanCode,
             whatsapp: formattedWhatsapp,
-            status: "pendente",
+            status: mode === "create" ? "aprovado" : "pendente",
           },
         },
       });
 
       if (authError) throw authError;
+      if (!data.user) throw new Error("Falha ao criar usuário.");
 
-      // 2. Transação Única no Frontend: INSERT no team_members
-      const { data: existing } = await supabase
-        .from("team_members")
-        .select("id,cargo_principal")
-        .ilike("email", cleanEmail)
-        .limit(1)
-        .maybeSingle();
+      // 3. RPC para Criar Empresa (se necessário) e Vínculo
+      if (mode === "create") {
+        const generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const { error: rpcError } = await supabase.rpc("criar_empresa_e_diretor", {
+          empresa_nome: companyName.trim(),
+          convite_codigo: generatedCode,
+          usuario_id: data.user.id,
+          usuario_nome: cleanName,
+          usuario_email: cleanEmail,
+          usuario_telefone: formattedWhatsapp,
+        });
+        if (rpcError) throw rpcError;
+      } else {
+        // Fluxo normal de entrada em equipe
+        const { data: existing } = await supabase
+          .from("team_members")
+          .select("id")
+          .ilike("email", cleanEmail)
+          .limit(1)
+          .maybeSingle();
 
-      if (existing?.id) {
-        if (String(existing.cargo_principal ?? "").toLowerCase() === "pendente") {
+        if (existing?.id) {
           const { error: updErr } = await supabase
             .from("team_members")
             .update({ 
               name: cleanName, 
-              role: `equipe:${cleanCode}`,
+              role: "membro",
               telefone: formattedWhatsapp,
-              team_id: teamData.id,
-              user_id: data.user?.id
+              team_id: targetTeamId,
+              user_id: data.user.id,
+              status: "pendente"
             })
             .eq("id", existing.id);
           if (updErr) throw updErr;
         } else {
-          const { error: updErr } = await supabase
-            .from("team_members")
-            .update({ 
-              name: cleanName,
-              telefone: formattedWhatsapp,
-              user_id: data.user?.id
-            })
-            .eq("id", existing.id);
-          if (updErr) throw updErr;
+          const { error: insErr } = await supabase.from("team_members").insert({
+            name: cleanName,
+            email: cleanEmail,
+            telefone: formattedWhatsapp,
+            role: "membro",
+            status: "pendente",
+            team_id: targetTeamId,
+            user_id: data.user.id
+          });
+          if (insErr) throw insErr;
         }
-      } else {
-        const { error: insErr } = await supabase.from("team_members").insert({
-          name: cleanName,
-          email: cleanEmail,
-          telefone: formattedWhatsapp,
-          cargo_principal: "pendente",
-          role: `equipe:${cleanCode}`,
-          status: "pendente",
-          team_id: teamData.id,
-          user_id: data.user?.id
-        });
-        if (insErr) throw insErr;
       }
 
       // 3. Garantir que ele não faça login imediato se precisar de confirmação de e-mail
@@ -175,7 +193,7 @@ function CadastrarPage() {
       setBusy(false);
 
       if (data.session) {
-        toast.success("Cadastro realizado! Aguarde a aprovação do administrador.");
+        toast.success(mode === "create" ? "Empresa criada com sucesso!" : "Cadastro realizado! Aguarde a aprovação do administrador.");
         navigate({ to: "/", replace: true });
       } else {
         toast.success("Cadastro criado! Verifique sua caixa de e-mail para confirmar a conta e liberar seu acesso.");
@@ -202,9 +220,39 @@ function CadastrarPage() {
             Criar meu acesso
           </h1>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-[#6f6f6a]">
-            Você foi convidado para a equipe. Preencha os dados abaixo — seu acesso
-            será liberado após a aprovação do administrador.
+            {mode === "join" 
+              ? "Você foi convidado para a equipe. Preencha os dados abaixo — seu acesso será liberado após a aprovação."
+              : "Crie sua conta administrativa e comece a gerenciar sua equipe agora mesmo."}
           </p>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setMode("join")}
+              className={cn(
+                "flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all",
+                mode === "join"
+                  ? "border-[#D85A30] bg-[#D85A30]/[0.04] text-[#D85A30]"
+                  : "border-[#E0DFDA] text-[#8b8b86] hover:bg-black/[0.02]"
+              )}
+            >
+              <Users className="h-5 w-5" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Entrar em Equipe</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("create")}
+              className={cn(
+                "flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all",
+                mode === "create"
+                  ? "border-[#D85A30] bg-[#D85A30]/[0.04] text-[#D85A30]"
+                  : "border-[#E0DFDA] text-[#8b8b86] hover:bg-black/[0.02]"
+              )}
+            >
+              <Building2 className="h-5 w-5" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Criar Empresa</span>
+            </button>
+          </div>
 
           {!loading && session ? (
             <div className="mt-5 rounded-xl border border-[#185FA5]/20 bg-[#185FA5]/[0.06] p-4 text-[0.85rem] leading-relaxed text-[#185FA5]">
@@ -255,15 +303,27 @@ function CadastrarPage() {
               placeholder="(11) 99999-9999"
             />
 
-            <Field
-              id="cd-team"
-              label="Código da Equipe"
-              required
-              disabled={busy}
-              value={teamCode}
-              onChange={(e) => setTeamCode(e.target.value)}
-              placeholder="Cole aqui o código enviado pelo administrador"
-            />
+            {mode === "join" ? (
+              <Field
+                id="cd-team"
+                label="Código da Equipe"
+                required
+                disabled={busy}
+                value={teamCode}
+                onChange={(e) => setTeamCode(e.target.value)}
+                placeholder="Cole aqui o código enviado pelo administrador"
+              />
+            ) : (
+              <Field
+                id="cd-company"
+                label="Nome da Empresa"
+                required
+                disabled={busy}
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Ex: Restaurante do Silva"
+              />
+            )}
 
             <div className="relative">
               <Field
@@ -339,7 +399,7 @@ function CadastrarPage() {
                   Criando acesso...
                 </>
               ) : (
-                "Criar meu acesso"
+                mode === "create" ? "Criar Empresa e Conta" : "Criar meu acesso"
               )}
             </button>
           </form>

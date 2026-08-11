@@ -259,6 +259,17 @@ export type Database = {
     }
     Functions: {
       auth_team_id: { Args: never; Returns: string }
+      criar_empresa_e_diretor: {
+        Args: {
+          convite_codigo: string
+          empresa_nome: string
+          usuario_email: string
+          usuario_id: string
+          usuario_nome: string
+          usuario_telefone: string
+        }
+        Returns: undefined
+      }
       delete_team_member: {
         Args: { target_member_id: string }
         Returns: undefined
