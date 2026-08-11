@@ -263,7 +263,6 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
-      is_master: { Args: never; Returns: boolean }
     }
     Enums: {
       activity_priority: "alta" | "media" | "baixa"

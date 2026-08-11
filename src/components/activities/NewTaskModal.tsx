@@ -215,7 +215,7 @@ export function NewTaskModal({ isOpen, onClose }: Props) {
                   {(members.data ?? []).map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.name}
-                      {m.role ? ` · ${m.role === "diretor" ? "Diretor" : "Membro"}` : ""}
+                      {m.role ? ` · ${m.role}` : ""}
                     </option>
                   ))}
                 </select>

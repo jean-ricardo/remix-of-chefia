@@ -7,7 +7,6 @@ export interface TeamMember {
   id: string;
   name: string;
   role: string | null;
-  /** STATUS REMOVED: Status field no longer exists */
   /** Somente leitura — usado para notificações de WhatsApp. */
   telefone?: string | null;
   team_id?: string | null;
