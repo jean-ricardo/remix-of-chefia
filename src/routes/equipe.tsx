@@ -88,7 +88,7 @@ function EquipePage() {
   const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
   const [inviteLink, setInviteLink] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"member" | "admin">("member");
+  const [inviteRole, setInviteRole] = useState<"membro" | "diretor">("membro");
   const [inviteBusy, setInviteBusy] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -148,7 +148,7 @@ function EquipePage() {
     setBusyId(id);
     const { error } = await supabase
       .from("team_members")
-      .update({ cargo_principal: "membro", role: "Membro" })
+      .update({ cargo_principal: "membro", role: "membro" })
       .eq("id", id);
     
     if (error) {
@@ -216,7 +216,7 @@ function EquipePage() {
     setInviteBusy(false);
     setInviteOpen(false);
     setInviteEmail("");
-    setInviteRole("member");
+    setInviteRole("membro");
     toast.success("Convite enviado com sucesso!");
   }
 
@@ -430,8 +430,8 @@ function EquipePage() {
                       <RoleSelect 
                         memberId={m.id} 
                         memberName={name} 
-                        currentCargo={m.role || "Membro"} 
-                        canEdit={currentUser.cargo?.toLowerCase() === "diretor" || currentUser.cargo?.toLowerCase() === "adm" || currentUser.cargo?.toLowerCase() === "admin"} 
+                        currentCargo={m.role || "membro"} 
+                        canEdit={currentUser.role === "diretor"} 
                       />
                       <StatusBadge status={status} />
                       <span className="text-xs text-muted-foreground">
@@ -550,14 +550,14 @@ function EquipePage() {
               <Label htmlFor="invite-role">Nível de Acesso</Label>
               <Select
                 value={inviteRole}
-                onValueChange={(v) => setInviteRole(v as "member" | "admin")}
+                onValueChange={(v) => setInviteRole(v as "membro" | "diretor")}
               >
                 <SelectTrigger id="invite-role" className="h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Membro</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="membro">Membro</SelectItem>
+                  <SelectItem value="diretor">Diretor</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -654,7 +654,7 @@ function RoleSelect({
   const normalizedValue = useMemo(() => {
     const v = currentCargo.toLowerCase();
     if (v === "diretor") return "diretor";
-    if (v === "admin" || v === "adm") return "adm";
+    if (v === "admin" || v === "adm" || v === "diretor") return "diretor";
     return "membro";
   }, [currentCargo]);
 
@@ -690,7 +690,7 @@ function RoleSelect({
         .from("team_members")
         .update({ 
           cargo_principal: newCargo,
-          role: newCargo.charAt(0).toUpperCase() + newCargo.slice(1) 
+          role: newCargo.toLowerCase() === "diretor" ? "diretor" : "membro" 
         })
         .eq("id", memberId);
 
@@ -736,7 +736,6 @@ function RoleSelect({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="membro" className="text-[11px] font-semibold uppercase tracking-wide">Membro</SelectItem>
-        <SelectItem value="adm" className="text-[11px] font-semibold uppercase tracking-wide">Administrador</SelectItem>
         <SelectItem value="diretor" className="text-[11px] font-semibold uppercase tracking-wide">Diretor</SelectItem>
       </SelectContent>
     </Select>

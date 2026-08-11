@@ -32,7 +32,7 @@ import { RefreshCw } from "lucide-react";
  * Users that authenticate but have no matching row in `team_members` fall back
  * to the lowest tier ('usuario') — deny by default.
  */
-export type AppRole = "admin" | "gestor" | "usuario";
+export type AppRole = "diretor" | "membro";
 
 export interface CurrentUser {
   /** team_members.id when mapped, otherwise the auth user id. */
@@ -68,14 +68,13 @@ export function isPendingCargo(cargo: unknown): boolean {
 
 export function mapCargoToRole(cargo: unknown): AppRole {
   const c = String(cargo ?? "").trim().toLowerCase();
-  if (c === "diretor" || c === "director" || c === "admin") return "admin";
-  if (c === "adm" || c === "gestor" || c === "manager") return "gestor";
-  return "usuario";
+  if (c === "diretor" || c === "director" || c === "admin" || c === "gestor") return "diretor";
+  return "membro";
 }
 
 /** Tiers with full visibility and edit rights (diretor + adm). */
 export function hasGlobalScope(role: AppRole): boolean {
-  return role === "admin" || role === "gestor";
+  return role === "diretor";
 }
 
 /**
@@ -204,7 +203,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         name: autoMember.name || fallbackName,
         email,
         telefone: autoMember.telefone ?? undefined,
-        role: "usuario",
+        role: "membro",
         cargo: "Membro",
         mapped: true,
         pending: false,
@@ -219,7 +218,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     id: authUser.id,
     name: fallbackName,
     email,
-    role: "usuario",
+    role: "membro",
     cargo: null,
     mapped: false,
     pending: false,
@@ -370,7 +369,7 @@ export function useCurrentUser(): CurrentUser {
       id: "",
       name: "Usuário",
       email: "",
-      role: "usuario",
+      role: "membro",
       cargo: null,
       mapped: false,
       pending: false,

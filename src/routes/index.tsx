@@ -123,16 +123,11 @@ function DashboardPage() {
   }
 
 
-  // Dynamic RBAC schema adaptability: admin + gestor + legacy director aliases
-  // all have global scope. Anything else (including undefined) → deny-by-default.
+  // RBAC: 'diretor' has global scope, 'membro' has restricted scope.
   const rawRole =
     (currentUser as unknown as { role?: string }).role ??
-    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "admin" : undefined);
-  const isAdmin =
-    rawRole === "admin" ||
-    rawRole === "gestor" ||
-    rawRole === "diretor" ||
-    rawRole === "director";
+    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "diretor" : "membro");
+  const isAdmin = rawRole === "diretor";
   // Deny-by-default: unknown role -> usuario view; requires a resolved user id.
   const effectiveUserId =
     !isAdmin && currentUser.id && !currentUser.id.startsWith("__")
@@ -250,10 +245,10 @@ function DashboardPage() {
                 : "Suas atividades atrasadas, para hoje e próximas."}
             </p>
 
-            {currentUser.role !== "admin" && (
+            {currentUser.role !== "diretor" && (
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
                 <Eye className="h-3 w-3" />
-                {currentUser.role === "gestor" ? "Modo gestor" : "Modo usuário"}
+                Modo usuário
                 {impersonatedName ? (
                   <span className="text-navy/70">· {impersonatedName}</span>
                 ) : (
@@ -677,12 +672,8 @@ function OccurrenceCard({
   
   const rawRole =
     (currentUser as unknown as { role?: string }).role ??
-    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "admin" : undefined);
-  const isAdmin =
-    rawRole === "admin" ||
-    rawRole === "gestor" ||
-    rawRole === "diretor" ||
-    rawRole === "director";
+    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "diretor" : "membro");
+  const isAdmin = rawRole === "diretor";
 
   const pointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
