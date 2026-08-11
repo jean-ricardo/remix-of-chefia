@@ -21,18 +21,10 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 
 /**
- * Real authentication + RBAC.
- *
- * Supabase Auth owns the identity (session/email). The business role comes from
- * the existing `team_members` table, matched by the authenticated e-mail:
- *
- *   cargo_principal: 'diretor' | 'adm' | 'membro'
- *      → app role:   'admin'   | 'gestor' | 'usuario'
- *
- * Users that authenticate but have no matching row in `team_members` fall back
- * to the lowest tier ('usuario') — deny by default.
+ * Single-Tenant RBAC.
+ * Only two roles: 'master' and 'membro'.
  */
-export type AppRole = "diretor" | "membro";
+export type AppRole = "master" | "membro";
 
 export interface CurrentUser {
   /** team_members.id when mapped, otherwise the auth user id. */
@@ -41,14 +33,11 @@ export interface CurrentUser {
   email: string;
   telefone?: string;
   role: AppRole;
-  /** Raw value from team_members.cargo_principal (null when unmapped). */
+  /** Raw value from team_members.cargo_principal. */
   cargo: string | null;
   /** True when the e-mail was found in team_members. */
   mapped: boolean;
-  /** Cadastro aguardando aprovação do Adm/Diretor (status = 'pendente'). */
-  pending: boolean;
-  status: "pendente" | "aprovado";
-  /** UUID from teams table. */
+  /** UUID from teams table (Single team). */
   team_id: string | null;
 }
 
@@ -61,29 +50,19 @@ export interface AuthState {
   refreshUser: () => Promise<void>;
 }
 
-/** Marcador de cadastro pendente (sem alterar schema: usa cargo_principal). */
-export const PENDING_CARGO = "pendente";
-
-/** Usuários antigos (cargo nulo ou qualquer outro valor) contam como aprovados. */
-export function isPendingCargo(cargo: unknown): boolean {
-  return String(cargo ?? "").trim().toLowerCase() === PENDING_CARGO;
-}
-
 export function mapCargoToRole(cargo: unknown): AppRole {
   const c = String(cargo ?? "").trim().toLowerCase();
-  if (c === "diretor" || c === "director" || c === "admin" || c === "gestor") return "diretor";
+  if (c === "master" || c === "diretor" || c === "admin") return "master";
   return "membro";
 }
 
-/** Tiers with full visibility and edit rights (diretor + adm). */
+/** Tiers with full visibility and edit rights (master). */
 export function hasGlobalScope(role: AppRole): boolean {
-  return role === "diretor";
+  return role === "master";
 }
 
 /**
  * RBAC action gate for a specific activity.
- * - admin/gestor: allowed on everything.
- * - usuario: only when they are the assignee (or legacy creator match).
  */
 export function canActOnActivity(
   user: Pick<CurrentUser, "id" | "role"> | null | undefined,
@@ -106,6 +85,8 @@ const AuthContext = createContext<AuthState>({
   refreshUser: async () => {},
 });
 
+const MAIN_TEAM_ID = "b427d038-be4d-4fb7-b112-b8b6447f3984";
+
 async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
   const email = (authUser.email ?? "").trim();
   const fallbackName =
@@ -115,58 +96,13 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     "Usuário";
 
   if (email) {
-    // 1. Try to find an existing team member entry
-    let { data, error } = await supabase
+    // 1. Try to find existing member
+    const { data, error } = await supabase
       .from("team_members")
-      .select("id,name,email,cargo_principal,telefone,team_id,status")
+      .select("id,name,email,cargo_principal,telefone,team_id,role")
       .ilike("email", email)
       .limit(1)
       .maybeSingle();
-
-    // 2. If not found, check if this user has "is_director" and "temp_company_name" in metadata
-    // This happens when they just signed up via /cadastrar-empresa
-    if (!error && !data && authUser.user_metadata?.is_director && authUser.user_metadata?.temp_company_name) {
-      try {
-        const companyName = authUser.user_metadata.temp_company_name;
-        const fullName = authUser.user_metadata.full_name || fallbackName;
-        const whatsapp = authUser.user_metadata.whatsapp || "";
-
-        // Create the team
-        const { data: teamData, error: teamError } = await supabase
-          .from("teams")
-          .insert({ name: companyName })
-          .select()
-          .single();
-
-        if (!teamError && teamData) {
-          // Create the director member entry
-          const { data: memberData, error: memberError } = await supabase
-            .from("team_members")
-            .insert({
-              user_id: authUser.id,
-              team_id: teamData.id,
-              name: fullName,
-              email: email,
-              telefone: whatsapp.startsWith("55") ? whatsapp : `55${whatsapp}`,
-              cargo_principal: "Diretor",
-              role: "diretor",
-              status: "aprovado",
-            })
-            .select()
-            .single();
-
-          if (!memberError && memberData) {
-            // Update metadata to remove the temp flags so we don't repeat this
-            await supabase.auth.updateUser({
-              data: { is_director: null, temp_company_name: null }
-            });
-            data = memberData;
-          }
-        }
-      } catch (err) {
-        console.error("Auto-provisioning error:", err);
-      }
-    }
 
     if (!error && data) {
       return {
@@ -174,52 +110,51 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         name: data.name || fallbackName,
         email,
         telefone: data.telefone ?? undefined,
-        role: mapCargoToRole(data.cargo_principal),
+        role: (data.role as AppRole) || "membro",
         cargo: data.cargo_principal ?? null,
         mapped: true,
-        pending: data.status === "pendente",
-        status: (data.status as "aprovado" | "pendente") || "aprovado",
-        team_id: data.team_id ?? null,
+        team_id: data.team_id ?? MAIN_TEAM_ID,
       };
     }
-  }
 
-  // 3. Fallback for "Open Platform" (User message requirement)
-  // If the user is authenticated but not in team_members, 
-  // auto-join them to the main hub (b427d038-be4d-4fb7-b112-b8b6447f3984) as "Membro".
-  const MAIN_TEAM_ID = "b427d038-be4d-4fb7-b112-b8b6447f3984";
-  
-  try {
-    const { data: autoMember, error: autoError } = await supabase
-      .from("team_members")
-      .insert({
-        user_id: authUser.id,
-        team_id: MAIN_TEAM_ID,
-        name: fallbackName,
-        email: email,
-        cargo_principal: "Membro",
-        role: "membro",
-        status: "aprovado",
-      })
-      .select()
-      .single();
+    // 2. Auto-provisioning: first user is master, others are members
+    try {
+      const { count } = await supabase
+        .from("team_members")
+        .select("id", { count: "exact", head: true });
 
-    if (!autoError && autoMember) {
-      return {
-        id: autoMember.id,
-        name: autoMember.name || fallbackName,
-        email,
-        telefone: autoMember.telefone ?? undefined,
-        role: "membro",
-        cargo: "Membro",
-        mapped: true,
-        pending: false,
-        status: "aprovado",
-        team_id: MAIN_TEAM_ID,
-      };
+      const isFirst = count === 0;
+      const role: AppRole = isFirst ? "master" : "membro";
+
+      const { data: autoMember, error: autoError } = await supabase
+        .from("team_members")
+        .insert({
+          user_id: authUser.id,
+          team_id: MAIN_TEAM_ID,
+          name: fallbackName,
+          email: email,
+          cargo_principal: role === "master" ? "Diretor" : "Membro",
+          role: role,
+          telefone: authUser.user_metadata?.whatsapp || "",
+        })
+        .select()
+        .single();
+
+      if (!autoError && autoMember) {
+        return {
+          id: autoMember.id,
+          name: autoMember.name || fallbackName,
+          email,
+          telefone: autoMember.telefone ?? undefined,
+          role: role,
+          cargo: autoMember.cargo_principal,
+          mapped: true,
+          team_id: MAIN_TEAM_ID,
+        };
+      }
+    } catch (err) {
+      console.error("Auto-provisioning error:", err);
     }
-  } catch (err) {
-    console.error("Auto-join error:", err);
   }
 
   return {
@@ -229,9 +164,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
     role: "membro",
     cargo: null,
     mapped: false,
-    pending: false,
-    status: "aprovado",
-    team_id: null,
+    team_id: MAIN_TEAM_ID,
   };
 }
 
@@ -306,13 +239,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           filter: `id=eq.${user.id}`,
         },
         (payload) => {
-          const oldStatus = payload.old?.status;
-          const newStatus = payload.new?.status;
+          const oldRole = payload.old?.role;
+          const newRole = payload.new?.role;
 
-          if (newStatus && oldStatus !== newStatus) {
+          if (newRole && oldRole !== newRole) {
             setRoleUpdate({
-              old: String(oldStatus === "pendente" ? "Pendente" : "Aprovado"),
-              new: String(newStatus === "pendente" ? "Pendente" : "Aprovado"),
+              old: String(oldRole),
+              new: String(newRole),
             });
           }
         }
@@ -326,8 +259,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           filter: `id=eq.${user.id}`,
         },
         () => {
-          // Se o registro do usuário foi deletado da team_members, força logout imediato
-          // pois ele perdeu o acesso à plataforma.
           console.log("Perfil removido. Encerrando sessão...");
           void supabase.auth.signOut().then(() => {
             window.location.href = "/?reason=removed";
@@ -398,9 +329,7 @@ export function useCurrentUser(): CurrentUser {
       role: "membro",
       cargo: null,
       mapped: false,
-      pending: false,
-      status: "aprovado",
-      team_id: null,
+      team_id: MAIN_TEAM_ID,
     }
   );
 }
