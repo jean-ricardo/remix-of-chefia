@@ -1,12 +1,13 @@
 import { Navigate, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
 
 /**
  * Ensures the user is authenticated.
  * Simplified for single-tenant: no pending approval state.
  */
-export function ProtectedRoute() {
+export function ProtectedRoute({ children }: { children?: ReactNode }) {
   const { user, loading, session } = useAuth();
 
   if (loading) {
@@ -19,23 +20,16 @@ export function ProtectedRoute() {
 
   // No active session -> login
   if (!session) {
-    return <Navigate to="/entrar" />;
+    return <Navigate to="/login" />;
   }
 
-  // Not mapped to team_members (should be rare due to auto-provisioning)
-  if (!user?.mapped) {
-    // If auth exists but no team_member, registration logic will handle re-mapping
-    // but for now, we just let them through or could redirect to /cadastrar
-    return <Outlet />;
-  }
-
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 }
 
 /**
  * Only allows users with 'master' role.
  */
-export function MasterRoute() {
+export function MasterRoute({ children }: { children?: ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -50,10 +44,10 @@ export function MasterRoute() {
     return <Navigate to="/" />;
   }
 
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 }
 
-export function PublicOnlyRoute() {
+export function PublicOnlyRoute({ children }: { children?: ReactNode }) {
   const { session, loading } = useAuth();
 
   if (loading) {
@@ -68,5 +62,5 @@ export function PublicOnlyRoute() {
     return <Navigate to="/" />;
   }
 
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 }
