@@ -8,9 +8,10 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
     invitedByName: z.string()
   }))
   .handler(async ({ data }) => {
-    const signupUrl = typeof process !== 'undefined' && process.env.VITE_URL 
-      ? `${process.env.VITE_URL}/cadastrar` 
-      : "https://routine-flow-78.lovable.app/cadastrar";
+    const baseUrl = typeof process !== 'undefined' && process.env.VITE_URL 
+      ? process.env.VITE_URL 
+      : "https://routine-flow-78.lovable.app";
+    const inviteUrl = `${baseUrl}/cadastrar`;
 
     const url = process.env.EVOLUTION_API_URL;
     const apiKey = process.env.EVOLUTION_API_KEY;
