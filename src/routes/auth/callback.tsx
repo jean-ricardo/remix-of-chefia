@@ -12,22 +12,27 @@ function AuthCallbackPage() {
 
   useEffect(() => {
     async function handleAuth() {
-      // 1. First, check if there is an access_token in the hash (standard Supabase invite flow)
-      const hash = window.location.hash;
-      if (hash && hash.includes("access_token=")) {
-        // Supabase JS client automatically handles hash fragments on initialize/refresh,
-        // but for invite flows, we might need to wait for the session or explicitly refresh.
-        const { data, error } = await supabase.auth.getSession();
-        if (data.session) {
-          const searchParams = new URLSearchParams(window.location.search);
-          const next = searchParams.get("next") || "/";
-          navigate({ to: next, replace: true });
-          return;
-        }
+      console.log("AuthCallbackPage: Initing check...");
+      
+      // 1. Manually check if there's a session (Supabase handles hash automatically)
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("AuthCallbackPage: Session error", error);
       }
 
-      // 2. Fallback to event listener for other flows
+      if (data.session) {
+        console.log("AuthCallbackPage: Session found, redirecting...");
+        const searchParams = new URLSearchParams(window.location.search);
+        const next = searchParams.get("next") || "/";
+        navigate({ to: next, replace: true });
+        return;
+      }
+
+      // 2. Set up listener if not found immediately
+      console.log("AuthCallbackPage: No session yet, listening for state change...");
       const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+        console.log("AuthCallbackPage: Auth event:", event);
         if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
           const searchParams = new URLSearchParams(window.location.search);
           const next = searchParams.get("next") || "/";
@@ -35,8 +40,20 @@ function AuthCallbackPage() {
         }
       });
 
+      // 3. Safety timeout: if nothing happens in 5 seconds, go home
+      const timer = setTimeout(() => {
+        console.log("AuthCallbackPage: Timeout reached, checking session one last time...");
+        supabase.auth.getSession().then(({ data }) => {
+          if (!data.session) {
+            console.log("AuthCallbackPage: Still no session, navigating to home.");
+            navigate({ to: "/", replace: true });
+          }
+        });
+      }, 5000);
+
       return () => {
         sub.subscription.unsubscribe();
+        clearTimeout(timer);
       };
     }
 
