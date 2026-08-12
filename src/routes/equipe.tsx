@@ -234,6 +234,7 @@ function EquipePage() {
         setInviteOpen(false);
         setInviteEmail("");
         setInviteRole("member");
+        window.location.reload(); // Atualiza para mostrar o novo membro pendente
       } else {
         setInviteError(result.message);
         toast.error(result.message);
