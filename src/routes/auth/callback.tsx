@@ -11,18 +11,36 @@ function AuthCallbackPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        // Obter o destino do metadado ou da URL se necessário
-        const searchParams = new URLSearchParams(window.location.search);
-        const next = searchParams.get("next") || "/";
-        navigate({ to: next, replace: true });
+    async function handleAuth() {
+      // 1. First, check if there is an access_token in the hash (standard Supabase invite flow)
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token=")) {
+        // Supabase JS client automatically handles hash fragments on initialize/refresh,
+        // but for invite flows, we might need to wait for the session or explicitly refresh.
+        const { data, error } = await supabase.auth.getSession();
+        if (data.session) {
+          const searchParams = new URLSearchParams(window.location.search);
+          const next = searchParams.get("next") || "/";
+          navigate({ to: next, replace: true });
+          return;
+        }
       }
-    });
 
-    return () => {
-      sub.subscription.unsubscribe();
-    };
+      // 2. Fallback to event listener for other flows
+      const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+        if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+          const searchParams = new URLSearchParams(window.location.search);
+          const next = searchParams.get("next") || "/";
+          navigate({ to: next, replace: true });
+        }
+      });
+
+      return () => {
+        sub.subscription.unsubscribe();
+      };
+    }
+
+    handleAuth();
   }, [navigate]);
 
   return <AuthSplash label="Finalizando acesso..." />;
