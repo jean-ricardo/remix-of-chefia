@@ -78,7 +78,7 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
       // but that usually requires a redirect URL.
       
       const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
-        redirectTo: signupUrl,
+        redirectTo: inviteUrl,
         data: {
           role: data.role
         }
