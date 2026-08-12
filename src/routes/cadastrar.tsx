@@ -98,7 +98,7 @@ function CadastrarPage() {
         email: cleanEmail,
         password,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             full_name: cleanName,
             whatsapp: formattedWhatsapp,
