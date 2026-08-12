@@ -8,9 +8,10 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
     invitedByName: z.string()
   }))
   .handler(async ({ data }) => {
-    const signupUrl = typeof process !== 'undefined' && process.env.VITE_URL 
-      ? `${process.env.VITE_URL}/cadastrar` 
-      : "https://routine-flow-78.lovable.app/cadastrar"; // Fallback to current project URL
+    const baseUrl = typeof process !== 'undefined' && process.env.VITE_URL 
+      ? process.env.VITE_URL 
+      : "https://routine-flow-78.lovable.app";
+    const inviteUrl = `${baseUrl}/cadastrar`;
 
     const url = process.env.EVOLUTION_API_URL;
     const apiKey = process.env.EVOLUTION_API_KEY;
@@ -29,7 +30,7 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
       `Como *${data.role === 'admin' ? 'Administrador' : 'Membro'}*, você poderá gerenciar e acompanhar as atividades da rotina em tempo real.`,
       ``,
       `👉 *Para começar, crie sua conta no link abaixo:*`,
-      signupUrl,
+      inviteUrl,
       ``,
       `_Seja bem-vindo(a)!_`
     ].join("\n");
@@ -77,7 +78,7 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
       // but that usually requires a redirect URL.
       
       const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
-        redirectTo: signupUrl,
+        redirectTo: `${baseUrl}/auth/callback?next=/cadastrar`,
         data: {
           role: data.role
         }

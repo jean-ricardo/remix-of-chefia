@@ -56,6 +56,7 @@ function CadastrarEmpresaContent() {
         email: email.trim().toLowerCase(),
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             full_name: name.trim(),
             whatsapp: whatsapp.replace(/\D/g, ""),
