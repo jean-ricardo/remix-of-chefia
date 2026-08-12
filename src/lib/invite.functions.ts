@@ -85,7 +85,16 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
 
       if (inviteError) {
         console.error("[sendInviteEmail] Supabase invite error:", inviteError);
-        // If it's a "provider not configured" error, we should tell the user.
+        
+        // Se o usuário já existe, tratamos como sucesso informativo
+        if (inviteError.message.includes("already been registered")) {
+          return { 
+            success: true, 
+            message: "Este e-mail já possui cadastro. O usuário já pode acessar a plataforma diretamente." 
+          };
+        }
+
+        // Erro de SMTP não configurado
         if (inviteError.message.includes("SMTP")) {
           return { success: false, message: "O servidor de e-mail não está configurado. Por favor, envie o link manualmente." };
         }
