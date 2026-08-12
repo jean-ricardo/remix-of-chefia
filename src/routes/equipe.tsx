@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, Copy, Link2, Loader2, Mail, Trash2, UserPlus, UserRoundCheck, Users, X } from "lucide-react";
+import { Check, Copy, Link2, Loader2, Mail, Trash2, UserPlus, UserRoundCheck, Users, X, AlertTriangle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -39,6 +39,8 @@ import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { logActivity } from "@/lib/activityLog";
 import { deleteUserAccount, cleanupOrphanedAuthUser } from "@/lib/team-admin.functions";
+import { sendInviteEmail } from "@/lib/invite.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/equipe")({
   component: EquipePage,
@@ -92,6 +94,8 @@ function EquipePage() {
   const [inviteRole, setInviteRole] = useState<"member" | "admin">("member");
   const [inviteBusy, setInviteBusy] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const serverInvite = useServerFn(sendInviteEmail);
 
   const teamCode = dynamicCode || currentUser.id;
   const signupUrl =
@@ -212,13 +216,36 @@ function EquipePage() {
   async function sendInvite(e: React.FormEvent) {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
+    
     setInviteBusy(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setInviteBusy(false);
-    setInviteOpen(false);
-    setInviteEmail("");
-    setInviteRole("member");
-    toast.success("Convite enviado com sucesso!");
+    setInviteError(null);
+    
+    try {
+      const result = await serverInvite({
+        data: {
+          email: inviteEmail.trim(),
+          role: inviteRole,
+          invitedByName: currentUser.name || "Administrador"
+        }
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+        setInviteOpen(false);
+        setInviteEmail("");
+        setInviteRole("member");
+      } else {
+        setInviteError(result.message);
+        toast.error(result.message);
+      }
+    } catch (error: any) {
+      console.error("Invite error:", error);
+      const msg = error.message || "Erro ao enviar convite.";
+      setInviteError(msg);
+      toast.error(msg);
+    } finally {
+      setInviteBusy(false);
+    }
   }
 
   async function handleDeleteMember() {
@@ -570,6 +597,12 @@ function EquipePage() {
                 </SelectContent>
               </Select>
             </div>
+            {inviteError && (
+              <div className="flex items-start gap-2 rounded-lg bg-danger/10 p-3 text-xs text-danger">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <p>{inviteError}</p>
+              </div>
+            )}
             <DialogFooter className="flex flex-col gap-2 sm:flex-col sm:gap-2">
               <div className="flex w-full gap-2">
                 <Button
