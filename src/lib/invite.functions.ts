@@ -64,6 +64,7 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
           .from('team_members')
           .insert({
             email: data.email,
+            name: data.email.split('@')[0], // Provide a temporary name as it's required
             team_id: MAIN_TEAM_ID,
             cargo_principal: "pendente",
             role: data.role === 'admin' ? 'Admin' : 'Membro'
