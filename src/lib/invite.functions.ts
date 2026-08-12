@@ -15,9 +15,10 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
     const url = process.env.EVOLUTION_API_URL;
     const apiKey = process.env.EVOLUTION_API_KEY;
 
+    // We proceed even without Evolution API configured, as we fall back to Supabase Email 
+    // and manual link sharing. We only log it server-side.
     if (!url || !apiKey) {
-      console.error("[sendInviteEmail] missing EVOLUTION_API_URL / EVOLUTION_API_KEY");
-      return { success: false, message: "Serviço de notificação não configurado." };
+      console.warn("[sendInviteEmail] EVOLUTION_API_URL / EVOLUTION_API_KEY not configured. WhatsApp notifications disabled.");
     }
 
     const message = [

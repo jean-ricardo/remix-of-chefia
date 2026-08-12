@@ -598,7 +598,7 @@ function EquipePage() {
               </Select>
             </div>
             {inviteError && (
-              <div className="flex items-start gap-2 rounded-lg bg-danger/10 p-3 text-xs text-danger">
+              <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 p-3 text-xs text-amber-600 border border-amber-500/20">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <p>{inviteError}</p>
               </div>
