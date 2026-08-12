@@ -30,7 +30,7 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
       `Como *${data.role === 'admin' ? 'Administrador' : 'Membro'}*, você poderá gerenciar e acompanhar as atividades da rotina em tempo real.`,
       ``,
       `👉 *Para começar, crie sua conta no link abaixo:*`,
-      signupUrl,
+      inviteUrl,
       ``,
       `_Seja bem-vindo(a)!_`
     ].join("\n");
