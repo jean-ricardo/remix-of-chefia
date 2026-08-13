@@ -90,3 +90,45 @@ export const cleanupOrphanedAuthUser = createServerFn({ method: "POST" })
     
     return { success: true, message: "Resquício de conta removido com sucesso." };
   });
+
+export const updateMemberRole = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    memberId: z.string(),
+    newCargo: z.string(),
+  }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabase } = await import("@/integrations/supabase/client");
+    
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const callerId = authUser?.id;
+
+    if (!callerId) {
+      throw new Error("Não foi possível verificar sua sessão.");
+    }
+
+    const { data: caller } = await supabaseAdmin
+      .from('team_members')
+      .select('cargo_principal, role')
+      .eq('user_id', callerId)
+      .maybeSingle();
+
+    const roleStr = (caller?.cargo_principal || caller?.role || "").toLowerCase();
+    const isAdmin = ['diretor', 'admin', 'adm', 'master', 'fundador'].includes(roleStr);
+
+    if (!isAdmin) {
+      throw new Error("Acesso negado: apenas administradores podem alterar cargos.");
+    }
+
+    const { error } = await supabaseAdmin
+      .from("team_members")
+      .update({ 
+        cargo_principal: data.newCargo,
+        role: data.newCargo.charAt(0).toUpperCase() + data.newCargo.slice(1) 
+      })
+      .eq("id", data.memberId);
+
+    if (error) throw error;
+
+    return { success: true };
+  });
