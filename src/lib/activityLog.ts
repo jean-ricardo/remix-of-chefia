@@ -13,7 +13,7 @@ export interface ActivityLog {
 
 export const ACTIVITY_LOGS_KEY = ["activity_logs"] as const;
 
-export type LogActionType = "create" | "update" | "delete" | "status" | "reschedule";
+export type LogActionType = "create" | "update" | "delete" | "status" | "reschedule" | "member_removed" | "role_change";
 
 export const ACTION_LABEL: Record<string, string> = {
   create: "criou a atividade",
@@ -21,6 +21,8 @@ export const ACTION_LABEL: Record<string, string> = {
   delete: "excluiu a atividade",
   status: "alterou o status",
   reschedule: "reprogramou a atividade",
+  member_removed: "removeu o membro",
+  role_change: "alterou o cargo",
 };
 
 /**
