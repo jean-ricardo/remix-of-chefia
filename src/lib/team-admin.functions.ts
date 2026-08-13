@@ -1,22 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { deleteAuthUser } from "./team-admin.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const deleteUserAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(z.object({
     memberId: z.string(),
     authUserId: z.string().optional()
   }))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { supabase } = await import("@/integrations/supabase/client");
     
-    const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-    const callerId = authUser?.id;
+    // We use context provided by requireSupabaseAuth middleware
+    const callerId = context.userId;
 
-    if (userError || !callerId) {
-      console.error("[team-admin.functions] No callerId found or auth error:", userError);
-      throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
+    if (!callerId) {
+      throw new Error("Sessão não identificada. Por favor, recarregue a página e tente novamente.");
     }
 
     // Verify admin permissions using supabaseAdmin
@@ -93,19 +93,18 @@ export const cleanupOrphanedAuthUser = createServerFn({ method: "POST" })
   });
 
 export const updateMemberRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(z.object({
     memberId: z.string(),
     newCargo: z.string(),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { supabase } = await import("@/integrations/supabase/client");
     
-    const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-    const callerId = authUser?.id;
+    const callerId = context.userId;
 
-    if (userError || !callerId) {
-      throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
+    if (!callerId) {
+      throw new Error("Sessão não identificada. Por favor, recarregue a página e tente novamente.");
     }
 
     const { data: caller } = await supabaseAdmin
