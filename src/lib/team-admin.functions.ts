@@ -9,14 +9,15 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { supabase } = await import("@/integrations/supabase/client");
     
-    const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-    const callerId = authUser?.id;
+    // We trust the bearer token provided by TanStack Start middleware.
+    // However, if session verification fails, we fall back to a more permissive check
+    // or detailed logging to understand why the callerId is missing.
+    const callerId = context.userId;
 
-    if (userError || !callerId) {
-      console.error("[team-admin.functions] No callerId found or auth error:", userError);
-      throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
+    if (!callerId) {
+      console.error("[team-admin.functions] No context.userId found. Headers:", context.headers);
+      throw new Error("Sessão não identificada. Por favor, recarregue a página e tente novamente.");
     }
 
     // Verify admin permissions using supabaseAdmin
@@ -97,15 +98,13 @@ export const updateMemberRole = createServerFn({ method: "POST" })
     memberId: z.string(),
     newCargo: z.string(),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { supabase } = await import("@/integrations/supabase/client");
     
-    const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-    const callerId = authUser?.id;
+    const callerId = context.userId;
 
-    if (userError || !callerId) {
-      throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
+    if (!callerId) {
+      throw new Error("Sessão não identificada. Por favor, recarregue a página e tente novamente.");
     }
 
     const { data: caller } = await supabaseAdmin
