@@ -132,7 +132,9 @@ function DashboardPage() {
     rawRole === "admin" ||
     rawRole === "gestor" ||
     rawRole === "diretor" ||
-    rawRole === "director";
+    rawRole === "director" ||
+    rawRole === "master" ||
+    rawRole === "fundador";
   // Deny-by-default: unknown role -> usuario view; requires a resolved user id.
   const effectiveUserId =
     !isAdmin && currentUser.id && !currentUser.id.startsWith("__")
