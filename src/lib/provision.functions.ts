@@ -4,10 +4,10 @@ import { z } from "zod";
 export const provisionUser = createServerFn({ method: "POST" })
   .validator((data: unknown) => 
     z.object({ 
-      userId: z.string(), 
+      userId: z.string().optional().nullable(), 
       email: z.string().email(), 
       name: z.string(), 
-      whatsapp: z.string() 
+      whatsapp: z.string().optional().nullable() 
     }).parse(data)
   )
   .handler(async ({ data }) => {
