@@ -173,7 +173,10 @@ function DashboardPage() {
     const list: OccurrenceView[] = [];
     for (const a of master) {
       const occ = buildOccurrence(a, today, compSet, reMap);
-      if (occ && occ.status !== "fora") list.push(occ);
+      // O Diretor vê tudo (incluindo o que está "fora" do range de 7 dias, se não estiver concluído)
+      if (occ && (occ.status !== "fora" || (isAdmin && !occ.completed))) {
+        list.push(occ);
+      }
     }
 
     const bucket = (s: OccurrenceStatus) =>
