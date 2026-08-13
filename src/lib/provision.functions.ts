@@ -46,7 +46,7 @@ export const provisionUser = createServerFn({ method: "POST" })
 
       if (updateError) {
         console.error("[provisionUser] Update error:", updateError);
-        throw new Error("Erro ao atualizar vínculo com a equipe.");
+        throw new Error("Erro ao vincular perfil: o sistema não conseguiu atualizar seu cadastro na equipe.");
       }
     } else {
       console.log(`[provisionUser] Creating new member entry`);
@@ -71,7 +71,7 @@ export const provisionUser = createServerFn({ method: "POST" })
 
       if (insertError) {
         console.error("[provisionUser] Insert error:", insertError);
-        throw new Error("Erro ao criar vínculo com a equipe.");
+        throw new Error("Erro ao vincular perfil: o sistema não conseguiu criar seu cadastro na equipe.");
       }
     }
 
