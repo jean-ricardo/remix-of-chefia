@@ -10,20 +10,31 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = await import("@/integrations/supabase/client");
     
-    // We fetch the caller profile. If it fails, we fall back to a less restrictive check if we can verify the session.
+    // We fetch the caller profile using the session.
     const { data: { session } } = await supabase.auth.getSession();
-    
+    const callerId = session?.user?.id;
+
+    if (!callerId) {
+      throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
+    }
+
     const { data: caller, error: callerError } = await supabase
       .from('team_members')
       .select('role, cargo_principal, user_id')
-      .eq('user_id', session?.user?.id || '')
+      .eq('user_id', callerId)
       .maybeSingle();
 
+    if (callerError) {
+      console.error("[team-admin.functions] Caller profile error:", callerError);
+    }
+
     const roleStr = (caller?.cargo_principal || caller?.role || "").toLowerCase();
-    const isAdmin = roleStr === 'diretor' || roleStr === 'admin' || roleStr === 'adm' || roleStr === 'master' || roleStr === 'fundador';
+    
+    // We treat as admin: 'diretor', 'admin', 'adm', 'master', 'fundador'
+    const isAdmin = ['diretor', 'admin', 'adm', 'master', 'fundador'].includes(roleStr);
 
     if (!isAdmin) {
-      throw new Error(`Acesso negado: apenas administradores podem remover membros. (Seu cargo atual: ${roleStr})`);
+      throw new Error(`Acesso negado: apenas administradores podem remover membros. (Seu cargo atual: ${roleStr || 'Desconhecido'})`);
     }
 
     const { error: rpcError } = await supabase.rpc('delete_user_account', {
