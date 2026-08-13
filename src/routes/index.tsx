@@ -174,8 +174,16 @@ function DashboardPage() {
     for (const a of master) {
       const occ = buildOccurrence(a, today, compSet, reMap);
       // O Diretor vê tudo (incluindo o que está "fora" do range de 7 dias, se não estiver concluído)
-      if (occ && (occ.status !== "fora" || (isAdmin && !occ.completed))) {
-        list.push(occ);
+      if (occ) {
+        // Para o Diretor, se a atividade não está concluída, nós mostramos ela (mesmo que status seja 'fora')
+        // mas forçamos ela para 'hoje' se estiver 'fora' e não concluída, para aparecer em "A fazer".
+        if (isAdmin && !occ.completed && occ.status === "fora") {
+          occ.status = "hoje";
+        }
+
+        if (occ.status !== "fora" || (isAdmin && !occ.completed)) {
+          list.push(occ);
+        }
       }
     }
 

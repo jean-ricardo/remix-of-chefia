@@ -113,7 +113,7 @@ export function currentOccurrenceDate(activity: Activity, today: Date): Date | n
 
 /**
  * Compute the NEXT occurrence date strictly in the future (>= today+1 for recurring).
- * Used for "próximos 7 dias" when current occurrence has already passed today.
+ * Used for "próximos 7 dias" when current occurrence has already passed today or is already completed today.
  */
 export function nextOccurrenceDate(activity: Activity, today: Date): Date | null {
   const base = startOfDay(today);
