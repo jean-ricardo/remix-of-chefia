@@ -11,16 +11,16 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { supabase } = await import("@/integrations/supabase/client");
     
-    // Get user using getUser() which is more reliable than getSession() in server context
+    // Use getUser() to get the authenticated user's ID
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const callerId = authUser?.id;
 
     if (!callerId) {
-      console.error("[team-admin.functions] No callerId found in auth.getUser()");
-      throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
+      console.error("[team-admin.functions] No callerId found");
+      throw new Error("Não foi possível verificar sua sessão. Por favor, saia e entre novamente na plataforma.");
     }
 
-    // Use supabaseAdmin to bypass RLS for the permission check to ensure we can always see the caller's role
+    // Verify admin permissions using supabaseAdmin to ensure we can see the caller's role regardless of RLS
     const { data: caller, error: callerError } = await supabaseAdmin
       .from('team_members')
       .select('role, cargo_principal, user_id')
@@ -28,16 +28,17 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (callerError) {
-      console.error("[team-admin.functions] Caller profile error (admin client):", callerError);
+      console.error("[team-admin.functions] Error fetching caller profile:", callerError);
     }
 
     const roleStr = (caller?.cargo_principal || caller?.role || "").toLowerCase();
     
-    // We treat as admin: 'diretor', 'admin', 'adm', 'master', 'fundador'
-    const isAdmin = ['diretor', 'admin', 'adm', 'master', 'fundador'].includes(roleStr);
+    // Expanded list of admin roles
+    const isAdmin = ['diretor', 'admin', 'adm', 'master', 'fundador', 'director'].includes(roleStr);
 
     if (!isAdmin) {
-      throw new Error(`Acesso negado: apenas administradores podem remover membros. (Seu cargo atual: ${roleStr || 'Desconhecido'})`);
+      console.warn(`[team-admin.functions] Access denied for user ${callerId} with role: ${roleStr}`);
+      throw new Error(`Acesso negado: apenas administradores podem realizar esta ação. (Cargo detectado: ${roleStr || 'Membro'})`);
     }
 
     const { error: rpcError } = await supabaseAdmin.rpc('delete_user_account', {
@@ -104,7 +105,7 @@ export const updateMemberRole = createServerFn({ method: "POST" })
     const callerId = authUser?.id;
 
     if (!callerId) {
-      throw new Error("Não foi possível verificar sua sessão.");
+      throw new Error("Não foi possível verificar sua sessão. Por favor, saia e entre novamente na plataforma.");
     }
 
     const { data: caller } = await supabaseAdmin
@@ -114,10 +115,10 @@ export const updateMemberRole = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const roleStr = (caller?.cargo_principal || caller?.role || "").toLowerCase();
-    const isAdmin = ['diretor', 'admin', 'adm', 'master', 'fundador'].includes(roleStr);
+    const isAdmin = ['diretor', 'admin', 'adm', 'master', 'fundador', 'director'].includes(roleStr);
 
     if (!isAdmin) {
-      throw new Error("Acesso negado: apenas administradores podem alterar cargos.");
+      throw new Error(`Acesso negado: apenas administradores podem alterar cargos. (Cargo detectado: ${roleStr || 'Membro'})`);
     }
 
     const { error } = await supabaseAdmin
