@@ -8,24 +8,27 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     authUserId: z.string().optional()
   }))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { supabase } = await import("@/integrations/supabase/client");
     
-    // We fetch the caller profile using the session.
-    const { data: { session } } = await supabase.auth.getSession();
-    const callerId = session?.user?.id;
+    // Get user using getUser() which is more reliable than getSession() in server context
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const callerId = authUser?.id;
 
     if (!callerId) {
+      console.error("[team-admin.functions] No callerId found in auth.getUser()");
       throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
     }
 
-    const { data: caller, error: callerError } = await supabase
+    // Use supabaseAdmin to bypass RLS for the permission check to ensure we can always see the caller's role
+    const { data: caller, error: callerError } = await supabaseAdmin
       .from('team_members')
       .select('role, cargo_principal, user_id')
       .eq('user_id', callerId)
       .maybeSingle();
 
     if (callerError) {
-      console.error("[team-admin.functions] Caller profile error:", callerError);
+      console.error("[team-admin.functions] Caller profile error (admin client):", callerError);
     }
 
     const roleStr = (caller?.cargo_principal || caller?.role || "").toLowerCase();
@@ -37,7 +40,7 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
       throw new Error(`Acesso negado: apenas administradores podem remover membros. (Seu cargo atual: ${roleStr || 'Desconhecido'})`);
     }
 
-    const { error: rpcError } = await supabase.rpc('delete_user_account', {
+    const { error: rpcError } = await supabaseAdmin.rpc('delete_user_account', {
       target_user_id: data.memberId
     });
 
