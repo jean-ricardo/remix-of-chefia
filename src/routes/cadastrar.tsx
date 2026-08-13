@@ -111,7 +111,7 @@ function CadastrarPage() {
       if (authError) throw authError;
 
       // 3. Server-side provisioning to bypass RLS and ensure team binding
-      await provisionUser({
+      const result = await provisionUser({
         data: {
           userId: data.user!.id,
           email: cleanEmail,
@@ -119,6 +119,10 @@ function CadastrarPage() {
           whatsapp: formattedWhatsapp
         }
       });
+
+      if (!result.success) {
+        throw new Error("O servidor não confirmou a criação do seu perfil na equipe.");
+      }
 
       setBusy(false);
 
