@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChefiaLogo } from "@/components/brand/ChefiaLogo";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { provisionUser } from "@/lib/provision.functions";
 
 export const Route = createFileRoute("/cadastrar")({
   head: () => ({
@@ -109,53 +110,22 @@ function CadastrarPage() {
 
       if (authError) throw authError;
 
-      // 2. Transação Única no Frontend: INSERT no team_members
-      const { data: existing } = await supabase
-        .from("team_members")
-        .select("id,cargo_principal")
-        .ilike("email", cleanEmail)
-        .limit(1)
-        .maybeSingle();
-
-      if (existing?.id) {
-        // Se já existe e está pendente ou sem cargo, ativamos imediatamente
-        const isPending = String(existing.cargo_principal ?? "").toLowerCase() === "pendente" || !existing.cargo_principal;
-        
-        const { error: updErr } = await supabase
-          .from("team_members")
-          .update({ 
-            name: cleanName, 
-            role: isPending ? "Membro" : undefined, // Preserva role se já for admin
-            cargo_principal: isPending ? "Membro" : undefined,
-            telefone: formattedWhatsapp,
-            team_id: teamId,
-            user_id: data.user?.id
-          })
-          .eq("id", existing.id);
-        if (updErr) throw updErr;
-      } else {
-        // Novo registro: cria como Membro ativo imediatamente
-        const { error: insErr } = await supabase.from("team_members").insert({
-          name: cleanName,
+      // 3. Server-side provisioning to bypass RLS and ensure team binding
+      await provisionUser({
+        data: {
+          userId: data.user!.id,
           email: cleanEmail,
-          telefone: formattedWhatsapp,
-          cargo_principal: "Membro",
-          role: "Membro",
-          team_id: teamId,
-          user_id: data.user?.id
-        });
-        if (insErr) throw insErr;
-      }
+          name: cleanName,
+          whatsapp: formattedWhatsapp
+        }
+      });
 
-      // 3. Garantir que ele não faça login imediato se precisar de confirmação de e-mail
-      // No Supabase, se confirm_email estiver ligado, signUp não retorna session.
       setBusy(false);
 
       if (data.session) {
         toast.success("Cadastro realizado com sucesso!");
         navigate({ to: "/", replace: true });
       } else {
-        // Fallback case if session is not immediately returned
         toast.success("Cadastro realizado com sucesso!");
         navigate({ to: "/login", replace: true });
       }
