@@ -4,10 +4,10 @@ import { z } from "zod";
 export const provisionUser = createServerFn({ method: "POST" })
   .validator((data: unknown) => 
     z.object({ 
-      userId: z.string(), 
+      userId: z.string().optional().nullable(), 
       email: z.string().email(), 
       name: z.string(), 
-      whatsapp: z.string() 
+      whatsapp: z.string().optional().nullable() 
     }).parse(data)
   )
   .handler(async ({ data }) => {
@@ -19,7 +19,7 @@ export const provisionUser = createServerFn({ method: "POST" })
     // 1. Check if user already has a member entry (orphan or pending)
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from("team_members")
-      .select("id, cargo_principal, role")
+      .select("id, cargo_principal, role, user_id, name, telefone")
       .ilike("email", data.email)
       .maybeSingle();
 
@@ -35,12 +35,12 @@ export const provisionUser = createServerFn({ method: "POST" })
       const { error: updateError } = await supabaseAdmin
         .from("team_members")
         .update({
-          user_id: data.userId,
-          name: data.name,
-          telefone: data.whatsapp,
+          user_id: data.userId || existing.user_id,
+          name: data.name || existing.name,
+          telefone: data.whatsapp || existing.telefone,
           team_id: MAIN_TEAM_ID,
-          cargo_principal: isPending ? "Membro" : undefined,
-          role: isPending ? "Membro" : undefined
+          cargo_principal: isPending ? "Membro" : existing.cargo_principal,
+          role: isPending ? "Membro" : existing.role
         })
         .eq("id", existing.id);
 
@@ -64,7 +64,7 @@ export const provisionUser = createServerFn({ method: "POST" })
           team_id: MAIN_TEAM_ID,
           name: data.name,
           email: data.email.toLowerCase(),
-          telefone: data.whatsapp,
+          telefone: data.whatsapp || "",
           cargo_principal: isFirst ? "Diretor" : "Membro",
           role: isFirst ? "Diretor" : "Membro"
         });

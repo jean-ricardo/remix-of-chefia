@@ -170,7 +170,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         name: data.name || fallbackName,
         email,
         telefone: data.telefone ?? undefined,
-        role: (data.role as any) === "master" ? "admin" : mapCargoToRole(data.cargo_principal),
+        role: (data.role as any) === "master" || (data.cargo_principal as string)?.toLowerCase() === "fundador" ? "admin" : mapCargoToRole(data.cargo_principal),
         cargo: data.cargo_principal ?? null,
         mapped: true,
         pending: false, // Single-tenant: sempre ativo se mapeado
@@ -193,31 +193,38 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
 
     const isFirstUser = (count ?? 0) === 0;
 
-    // Use a lightweight insert attempt - if it fails (e.g. RLS), we still return a "soft" user
-    const { data: autoMember, error: autoError } = await supabase
-      .from("team_members")
-      .insert({
-        user_id: authUser.id,
-        team_id: MAIN_TEAM_ID,
-        name: fallbackName,
+    // Use the server function to provision the user if client-side mapping failed
+    // We import it dynamically to avoid circular dependencies if any
+    const { provisionUser } = await import("./provision.functions");
+    
+    await provisionUser({
+      data: {
+        userId: authUser.id,
         email: email,
-        cargo_principal: isFirstUser ? "Diretor" : "Membro",
-        role: isFirstUser ? "Diretor" : "Membro",
-      })
-      .select()
+        name: fallbackName,
+        whatsapp: (authUser.user_metadata?.whatsapp as string) || ""
+      }
+    });
+
+    // Try fetching again after server-side provisioning
+    const { data: retryData } = await supabase
+      .from("team_members")
+      .select("id,name,email,cargo_principal,role,telefone,team_id")
+      .ilike("email", email)
+      .limit(1)
       .maybeSingle();
 
-    if (!autoError && autoMember) {
+    if (retryData) {
       return {
-        id: autoMember.id,
-        name: autoMember.name || fallbackName,
+        id: retryData.id,
+        name: retryData.name || fallbackName,
         email,
-        telefone: autoMember.telefone ?? undefined,
-        role: isFirstUser ? "admin" : "usuario",
-        cargo: autoMember.cargo_principal,
+        telefone: retryData.telefone ?? undefined,
+        role: (retryData.role as any) === "master" ? "admin" : mapCargoToRole(retryData.cargo_principal),
+        cargo: retryData.cargo_principal ?? null,
         mapped: true,
         pending: false,
-        team_id: MAIN_TEAM_ID,
+        team_id: retryData.team_id ?? null,
       };
     }
   } catch (err) {
