@@ -125,16 +125,8 @@ function DashboardPage() {
 
   // Dynamic RBAC schema adaptability: admin + gestor + legacy director aliases
   // all have global scope. Anything else (including undefined) → deny-by-default.
-  const rawRole =
-    (currentUser as unknown as { role?: string }).role ??
-    ((currentUser as unknown as { isAdmin?: boolean }).isAdmin ? "admin" : undefined);
-  const isAdmin =
-    rawRole === "admin" ||
-    rawRole === "gestor" ||
-    rawRole === "diretor" ||
-    rawRole === "director" ||
-    rawRole === "master" ||
-    rawRole === "fundador";
+  const roleStr = (currentUser.cargo || currentUser.role || "").toLowerCase();
+  const isAdmin = ["diretor", "admin", "adm", "master", "fundador"].includes(roleStr);
   // Deny-by-default: unknown role -> usuario view; requires a resolved user id.
   const effectiveUserId =
     !isAdmin && currentUser.id && !currentUser.id.startsWith("__")
