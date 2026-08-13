@@ -69,7 +69,7 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
             name: data.email.split('@')[0], // Provide a temporary name as it's required
             team_id: MAIN_TEAM_ID,
             cargo_principal: "pendente",
-            role: data.role === 'admin' ? 'Admin' : 'Membro'
+            role: data.role === 'admin' ? 'master' : 'membro'
           });
       }
 
