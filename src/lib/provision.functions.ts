@@ -70,8 +70,8 @@ export const provisionUser = createServerFn({ method: "POST" })
         });
 
       if (insertError) {
-        console.error("[provisionUser] Insert error:", insertError);
-        throw new Error("Erro ao vincular perfil: o sistema não conseguiu criar seu cadastro na equipe.");
+        console.error("[provisionUser] Insert error detail:", JSON.stringify(insertError));
+        throw new Error(`Erro ao vincular perfil: ${insertError.message}`);
       }
     }
 
