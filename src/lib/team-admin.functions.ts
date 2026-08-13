@@ -8,11 +8,15 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     authUserId: z.string().optional()
   }))
   .handler(async ({ data, context }) => {
-    const { supabase } = await import("@/integrations/supabase/client");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
-    // We fetch the caller profile using the session.
-    const { data: { session } } = await supabase.auth.getSession();
-    const callerId = session?.user?.id;
+    // We get the session from the headers/context if available, 
+    // but createServerFn context in TanStack Start usually requires manual extraction or middleware.
+    // However, we can use the supabaseAdmin to verify the user if we have their ID.
+    // In this environment, we'll try to get the user from the supabase client first.
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const callerId = authUser?.id;
 
     if (!callerId) {
       throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
