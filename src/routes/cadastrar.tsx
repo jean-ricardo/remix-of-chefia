@@ -281,6 +281,16 @@ function CadastrarPage() {
                 "Criar meu acesso"
               )}
             </button>
+
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/login" })}
+                className="text-[13px] font-medium text-[#185FA5] transition-colors hover:text-[#042C53] hover:underline"
+              >
+                Já tem uma conta? Faça login
+              </button>
+            </div>
           </form>
         </div>
 
