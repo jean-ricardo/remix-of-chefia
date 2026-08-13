@@ -35,12 +35,12 @@ export const provisionUser = createServerFn({ method: "POST" })
       const { error: updateError } = await supabaseAdmin
         .from("team_members")
         .update({
-          user_id: data.userId,
-          name: data.name,
-          telefone: data.whatsapp,
+          user_id: data.userId || existing.user_id,
+          name: data.name || existing.name,
+          telefone: data.whatsapp || existing.telefone,
           team_id: MAIN_TEAM_ID,
-          cargo_principal: isPending ? "Membro" : undefined,
-          role: isPending ? "Membro" : undefined
+          cargo_principal: isPending ? "Membro" : existing.cargo_principal,
+          role: isPending ? "Membro" : existing.role
         })
         .eq("id", existing.id);
 
@@ -64,7 +64,7 @@ export const provisionUser = createServerFn({ method: "POST" })
           team_id: MAIN_TEAM_ID,
           name: data.name,
           email: data.email.toLowerCase(),
-          telefone: data.whatsapp,
+          telefone: data.whatsapp || "",
           cargo_principal: isFirst ? "Diretor" : "Membro",
           role: isFirst ? "Diretor" : "Membro"
         });
