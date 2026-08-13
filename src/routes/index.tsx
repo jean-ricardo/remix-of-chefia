@@ -157,16 +157,17 @@ function DashboardPage() {
       (a as unknown as { assignee_id?: string | null }).assignee_id ??
       null;
 
-
     const master = (activities.data ?? []).filter((a) => {
-      if (!isAdmin) {
-        // Deny-by-default: no resolvable user -> no tasks.
-        if (!effectiveUserId) return false;
-        return assigneeOf(a) === effectiveUserId;
+      // 1. Admin/Gestor/Director logic
+      if (isAdmin) {
+        // Admin extra "focus on member" dropdown (optional).
+        if (filter !== "all") return assigneeOf(a) === filter;
+        return true;
       }
-      // Admin/Director extra "focus on member" dropdown (optional).
-      if (filter !== "all") return assigneeOf(a) === filter;
-      return true;
+
+      // 2. Member logic (Deny-by-default)
+      if (!effectiveUserId) return false;
+      return assigneeOf(a) === effectiveUserId;
     });
 
     const list: OccurrenceView[] = [];
@@ -254,11 +255,7 @@ function DashboardPage() {
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-navy/15 bg-navy/5 px-2.5 py-1 text-[11px] font-medium text-navy">
                 <Eye className="h-3 w-3" />
                 {currentUser.role === "gestor" ? "Modo gestor" : "Modo usuário"}
-                {impersonatedName ? (
-                  <span className="text-navy/70">· {impersonatedName}</span>
-                ) : (
-                  <span className="text-navy/70">· selecione um membro no topo</span>
-                )}
+                <span className="text-navy/70">· {impersonatedName || currentUser.name}</span>
               </div>
             )}
           </div>

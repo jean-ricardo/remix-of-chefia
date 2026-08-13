@@ -32,16 +32,23 @@ export const provisionUser = createServerFn({ method: "POST" })
       console.log(`[provisionUser] Updating existing member ${existing.id}`);
       const isPending = String(existing.cargo_principal ?? "").toLowerCase() === "pendente" || !existing.cargo_principal;
       
+      const updateData: any = {
+        name: data.name || existing.name,
+        telefone: data.whatsapp || existing.telefone,
+        team_id: MAIN_TEAM_ID,
+        cargo_principal: isPending ? "Membro" : existing.cargo_principal,
+        role: isPending ? "membro" : (existing.role === "master" || existing.role === "Diretor" ? "master" : "membro")
+      };
+
+      // Only link user_id if we have a new one (e.g. from registration) 
+      // AND the existing record doesn't have it yet, OR it's different.
+      if (data.userId && existing.user_id !== data.userId) {
+        updateData.user_id = data.userId;
+      }
+
       const { error: updateError } = await supabaseAdmin
         .from("team_members")
-        .update({
-          user_id: data.userId || existing.user_id,
-          name: data.name || existing.name,
-          telefone: data.whatsapp || existing.telefone,
-          team_id: MAIN_TEAM_ID,
-          cargo_principal: isPending ? "Membro" : existing.cargo_principal,
-          role: isPending ? "membro" : (existing.role === "master" || existing.role === "Diretor" ? "master" : "membro")
-        })
+        .update(updateData)
         .eq("id", existing.id);
 
       if (updateError) {
