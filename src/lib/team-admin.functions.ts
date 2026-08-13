@@ -40,7 +40,7 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
       throw new Error(`Acesso negado: apenas administradores podem remover membros. (Seu cargo atual: ${roleStr || 'Desconhecido'})`);
     }
 
-    const { error: rpcError } = await supabase.rpc('delete_user_account', {
+    const { error: rpcError } = await supabaseAdmin.rpc('delete_user_account', {
       target_user_id: data.memberId
     });
 
