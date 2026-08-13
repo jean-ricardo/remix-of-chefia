@@ -173,9 +173,24 @@ function DashboardPage() {
     const list: OccurrenceView[] = [];
     for (const a of master) {
       const occ = buildOccurrence(a, today, compSet, reMap);
-      // O Diretor vê tudo (incluindo o que está "fora" do range de 7 dias, se não estiver concluído)
-      if (occ && (occ.status !== "fora" || (isAdmin && !occ.completed))) {
-        list.push(occ);
+      if (occ) {
+        // Para o Diretor, se a atividade não está concluída, nós mostramos ela (mesmo que status seja 'fora')
+        // Se ela estiver 'fora' (mais de 7 dias no futuro) e não concluída, forçamos para 'proxima' 
+        // para garantir que apareça no board, mas se o usuário quer ver TUDO no "A fazer" (hoje), 
+        // poderíamos forçar para hoje. O usuário disse: "todas atividades que estão no prazo tem que ficar na aba do kanba 'A fazer'".
+        // "No prazo" geralmente significa hoje ou futuro próximo. 
+        // Se o diretor quer ver TODAS as atividades de TODOS os participantes na aba "A fazer", 
+        // vamos ajustar as que seriam "fora" ou "proxima" para aparecerem como "hoje" para o Diretor.
+
+        if (isAdmin && !occ.completed) {
+          if (occ.status === "fora" || occ.status === "proxima") {
+            occ.status = "hoje";
+          }
+        }
+
+        if (occ.status !== "fora" || (isAdmin && !occ.completed)) {
+          list.push(occ);
+        }
       }
     }
 
