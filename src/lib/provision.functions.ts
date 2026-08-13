@@ -66,7 +66,7 @@ export const provisionUser = createServerFn({ method: "POST" })
           email: data.email.toLowerCase(),
           telefone: data.whatsapp || "",
           cargo_principal: isFirst ? "Diretor" : "Membro",
-          role: isFirst ? "Diretor" : "Membro"
+          role: isFirst ? "master" : "membro"
         });
 
       if (insertError) {
