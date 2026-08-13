@@ -260,7 +260,7 @@ export type Database = {
         Returns: undefined
       }
       delete_user_account: {
-        Args: { target_user_id: string }
+        Args: { target_member_id: string }
         Returns: undefined
       }
       is_master: { Args: never; Returns: boolean }

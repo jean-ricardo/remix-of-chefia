@@ -71,7 +71,7 @@ function EquipePage() {
   useRotinaRealtime();
   const currentUser = useCurrentUser();
   const roleStr = (currentUser.cargo || currentUser.role || "").toLowerCase();
-  const isAdmin = ["diretor", "admin", "adm", "master", "fundador"].includes(roleStr);
+  const isAdmin = ["diretor", "admin", "adm", "master", "fundador", "director"].includes(roleStr);
   const members = useTeamMembers();
   const activities = useActivities();
   const navigate = useNavigate();
@@ -778,7 +778,7 @@ function RoleSelect({
       ]);
     } catch (err) {
       console.error("Erro ao atualizar cargo:", err);
-      toast.error("Não foi possível atualizar o cargo.");
+      toast.error(err instanceof Error ? err.message : "Não foi possível atualizar o cargo.");
     } finally {
       setUpdating(false);
     }

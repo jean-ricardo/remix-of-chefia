@@ -11,12 +11,12 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { supabase } = await import("@/integrations/supabase/client");
     
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
     const callerId = authUser?.id;
 
-    if (!callerId) {
-      console.error("[team-admin.functions] No callerId found");
-      throw new Error("Não foi possível verificar sua sessão. Por favor, saia e entre novamente na plataforma.");
+    if (userError || !callerId) {
+      console.error("[team-admin.functions] No callerId found or auth error:", userError);
+      throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
     }
 
     // Verify admin permissions using supabaseAdmin
@@ -33,28 +33,26 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     const cargoStr = (caller?.cargo_principal || "").toLowerCase();
     const roleStr = (caller?.role || "").toLowerCase();
     
+    console.log(`[team-admin.functions] Caller ${callerId} attempting deletion. Cargo: ${cargoStr}, Role: ${roleStr}`);
+
     // Check if the user has any admin-level cargo or role
     const isAdmin = [
       'diretor', 'admin', 'adm', 'master', 'fundador', 'director'
     ].some(r => cargoStr === r || roleStr === r);
 
     if (!isAdmin) {
-      console.warn(`[team-admin.functions] Access denied for user ${callerId}. Cargo: ${cargoStr}, Role: ${roleStr}`);
-      throw new Error(`Acesso negado: apenas administradores podem realizar esta ação. (Cargo atual: ${caller?.cargo_principal || 'Membro'})`);
+      console.warn(`[team-admin.functions] Access denied for user ${callerId}.`);
+      throw new Error(`Acesso negado: apenas administradores podem remover membros. (Cargo atual: ${caller?.cargo_principal || 'Membro'})`);
     }
 
     const { error: rpcError } = await supabaseAdmin.rpc('delete_user_account', {
-      target_user_id: data.memberId
+      target_member_id: data.memberId
     });
 
     if (rpcError) {
-      console.error("[team-admin.functions] RPC error:", rpcError);
+      console.error("[team-admin.functions] RPC error during deletion:", rpcError);
+      throw new Error("Erro ao processar a remoção no banco de dados.");
     }
-
-    // We no longer delete the auth.users account by default to allow users to sign up again with the same email.
-    // The user's team_members profile is already deleted by the RPC above.
-    // If the admin really wants to clear an auth trace, they can use cleanupOrphanedAuthUser.
-
 
     return { success: true };
   });
@@ -103,11 +101,11 @@ export const updateMemberRole = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { supabase } = await import("@/integrations/supabase/client");
     
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
     const callerId = authUser?.id;
 
-    if (!callerId) {
-      throw new Error("Não foi possível verificar sua sessão. Por favor, saia e entre novamente na plataforma.");
+    if (userError || !callerId) {
+      throw new Error("Não foi possível verificar sua sessão. Por favor, faça login novamente.");
     }
 
     const { data: caller } = await supabaseAdmin
@@ -135,7 +133,10 @@ export const updateMemberRole = createServerFn({ method: "POST" })
       })
       .eq("id", data.memberId);
 
-    if (error) throw error;
+    if (error) {
+      console.error("[team-admin.functions] Error updating role:", error);
+      throw new Error("Erro ao atualizar o cargo no banco de dados.");
+    }
 
     return { success: true };
   });
