@@ -331,6 +331,19 @@ function EquipePage() {
             {isAdmin && (
               <>
                 <Button
+                  onClick={() => copyValue(signupUrl, "link")}
+                  variant="outline"
+                  className="h-10 border-navy/20 bg-white text-navy hover:bg-navy/5"
+                >
+                  {copied === "link" ? (
+                    <Check className="mr-2 h-4 w-4" />
+                  ) : (
+                    <Link2 className="mr-2 h-4 w-4" />
+                  )}
+                  Link de Cadastro
+                </Button>
+
+                <Button
                   onClick={() => setInviteOpen(true)}
                   className="h-10 rounded-lg bg-[#D85A30] px-4 font-medium text-white hover:bg-[#c14e28]"
                 >

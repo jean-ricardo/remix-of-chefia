@@ -118,37 +118,29 @@ function CadastrarPage() {
         .maybeSingle();
 
       if (existing?.id) {
-        if (String(existing.cargo_principal ?? "").toLowerCase() === "pendente" || !existing.cargo_principal) {
-          const { error: updErr } = await supabase
-            .from("team_members")
-            .update({ 
-              name: cleanName, 
-              role: `membro`,
-              cargo_principal: "Membro",
-              telefone: formattedWhatsapp,
-              team_id: teamId,
-              user_id: data.user?.id
-            })
-            .eq("id", existing.id);
-          if (updErr) throw updErr;
-        } else {
-          const { error: updErr } = await supabase
-            .from("team_members")
-            .update({ 
-              name: cleanName,
-              telefone: formattedWhatsapp,
-              user_id: data.user?.id
-            })
-            .eq("id", existing.id);
-          if (updErr) throw updErr;
-        }
+        // Se já existe e está pendente ou sem cargo, ativamos imediatamente
+        const isPending = String(existing.cargo_principal ?? "").toLowerCase() === "pendente" || !existing.cargo_principal;
+        
+        const { error: updErr } = await supabase
+          .from("team_members")
+          .update({ 
+            name: cleanName, 
+            role: isPending ? "Membro" : undefined, // Preserva role se já for admin
+            cargo_principal: isPending ? "Membro" : undefined,
+            telefone: formattedWhatsapp,
+            team_id: teamId,
+            user_id: data.user?.id
+          })
+          .eq("id", existing.id);
+        if (updErr) throw updErr;
       } else {
+        // Novo registro: cria como Membro ativo imediatamente
         const { error: insErr } = await supabase.from("team_members").insert({
           name: cleanName,
           email: cleanEmail,
           telefone: formattedWhatsapp,
           cargo_principal: "Membro",
-          role: `membro`,
+          role: "Membro",
           team_id: teamId,
           user_id: data.user?.id
         });

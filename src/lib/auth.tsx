@@ -146,7 +146,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
               email: email,
               telefone: whatsapp.startsWith("55") ? whatsapp : `55${whatsapp}`,
               cargo_principal: "Diretor",
-              role: "diretor",
+              role: "Diretor",
             })
             .select()
             .single();
@@ -173,7 +173,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         role: (data.role as any) === "master" ? "admin" : mapCargoToRole(data.cargo_principal),
         cargo: data.cargo_principal ?? null,
         mapped: true,
-        pending: isPendingCargo(data.cargo_principal),
+        pending: false, // Single-tenant: sempre ativo se mapeado
         team_id: data.team_id ?? null,
       };
     }
@@ -199,7 +199,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         name: fallbackName,
         email: email,
         cargo_principal: isFirstUser ? "Diretor" : "Membro",
-        role: isFirstUser ? "diretor" : "membro",
+        role: isFirstUser ? "Diretor" : "Membro",
       })
       .select()
       .single();
