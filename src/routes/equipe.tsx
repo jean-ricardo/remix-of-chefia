@@ -257,7 +257,7 @@ function EquipePage() {
       await logActivity({
         actorName: currentUser?.name || "Usuário",
         actionType: "delete",
-        details: `${currentUser?.name || "Usuário"} excluiu permanentemente a conta e o perfil do membro ${memberToDelete.name} da plataforma.`,
+        details: `${currentUser?.name || "Usuário"} removeu o membro ${memberToDelete.name} da equipe.`,
       });
 
       const member = (members.data || []).find(m => m.id === memberToDelete.id);
@@ -269,7 +269,7 @@ function EquipePage() {
         }
       });
 
-      toast.success("Membro e conta de acesso removidos com sucesso.");
+      toast.success("Membro removido da equipe com sucesso.");
       
       await queryClient.invalidateQueries({ queryKey: ["team_members"] });
       await queryClient.invalidateQueries({ queryKey: ["activity_logs"] });
@@ -657,9 +657,9 @@ function EquipePage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir membro da equipe?</AlertDialogTitle>
+            <AlertDialogTitle>Remover membro da equipe?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover este membro? Todas as atividades e dados vinculados a ele serão permanentemente apagados da plataforma. Esta ação não pode ser desfeita.
+              Tem certeza que deseja remover este membro? Ele perderá o acesso imediato à plataforma. Para retornar, ele precisará se cadastrar novamente usando o link de cadastro da equipe.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -672,7 +672,7 @@ function EquipePage() {
               }}
               className="bg-danger text-white hover:bg-danger/90"
             >
-              {isDeleting ? "Excluindo..." : "Sim, excluir"}
+              {isDeleting ? "Removendo..." : "Sim, remover"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
