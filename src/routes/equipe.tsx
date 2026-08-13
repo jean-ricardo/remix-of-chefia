@@ -38,7 +38,7 @@ import { useActivities, useRotinaRealtime, useTeamMembers } from "@/lib/useRotin
 import { hasGlobalScope, useCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { logActivity } from "@/lib/activityLog";
-import { deleteUserAccount, cleanupOrphanedAuthUser } from "@/lib/team-admin.functions";
+import { deleteUserAccount, cleanupOrphanedAuthUser, updateMemberRole } from "@/lib/team-admin.functions";
 import { sendInviteEmail } from "@/lib/invite.functions";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -718,6 +718,7 @@ function RoleSelect({
   const qc = useQueryClient();
   const currentUser = useCurrentUser();
   const [updating, setUpdating] = useState(false);
+  const serverUpdateRole = useServerFn(updateMemberRole);
 
   // Normalize current value to match select options
   const normalizedValue = useMemo(() => {
@@ -755,13 +756,12 @@ function RoleSelect({
         }
       }
 
-      const { error } = await supabase
-        .from("team_members")
-        .update({ 
-          cargo_principal: newCargo,
-          role: newCargo.charAt(0).toUpperCase() + newCargo.slice(1) 
-        })
-        .eq("id", memberId);
+      await serverUpdateRole({
+        data: {
+          memberId,
+          newCargo,
+        }
+      });
 
       if (error) throw error;
 
