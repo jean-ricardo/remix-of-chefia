@@ -161,7 +161,12 @@ export function buildOccurrence(
 ): OccurrenceView | null {
   const base = startOfDay(today);
   let occ = currentOccurrenceDate(activity, base);
-  if (!occ) return null;
+  if (!occ && activity.recurrence_type !== "unica") return null;
+  
+  // Se for uma atividade única e não tiver data de vencimento, ela deve aparecer como "hoje" (inbox)
+  if (!occ && activity.recurrence_type === "unica") {
+    occ = base;
+  }
 
   // For "unica", due_date already reflects reschedule (per spec). No reschedule row expected.
   const originalKey = ymd(occ);
