@@ -186,13 +186,6 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
   try {
     console.log(`[resolveCurrentUser] Auto-provisioning user ${email}`);
     
-    // Check if this is the first user in the system to make them Director
-    const { count } = await supabase
-      .from("team_members")
-      .select("id", { count: "exact", head: true });
-
-    const isFirstUser = (count ?? 0) === 0;
-
     // Use the server function to provision the user if client-side mapping failed
     // We import it dynamically to avoid circular dependencies if any
     const { provisionUser } = await import("./provision.functions");
@@ -204,7 +197,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         name: fallbackName,
         whatsapp: (authUser.user_metadata?.whatsapp as string) || ""
       }
-    });
+    }).catch(e => console.warn("[resolveCurrentUser] Auto-provisioning failed or already in progress:", e));
 
     // Try fetching again after server-side provisioning
     const { data: retryData } = await supabase
@@ -215,12 +208,18 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
       .maybeSingle();
 
     if (retryData) {
+      const role = (retryData.role as any) === "master" || 
+                   (retryData.cargo_principal as string)?.toLowerCase() === "fundador" ||
+                   (retryData.cargo_principal as string)?.toLowerCase() === "diretor" ||
+                   (retryData.cargo_principal as string)?.toLowerCase() === "master"
+                   ? "admin" : mapCargoToRole(retryData.cargo_principal);
+
       return {
         id: retryData.id,
         name: retryData.name || fallbackName,
         email,
         telefone: retryData.telefone ?? undefined,
-        role: (retryData.role as any) === "master" ? "admin" : mapCargoToRole(retryData.cargo_principal),
+        role,
         cargo: retryData.cargo_principal ?? null,
         mapped: true,
         pending: false,
