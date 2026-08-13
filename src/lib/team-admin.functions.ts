@@ -35,13 +35,10 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
       console.error("[team-admin.functions] RPC error:", rpcError);
     }
 
-    if (data.authUserId) {
-      try {
-        await deleteAuthUser(data.authUserId);
-      } catch (err) {
-        console.error("[team-admin.functions] Server auth deletion failed:", err);
-      }
-    }
+    // We no longer delete the auth.users account by default to allow users to sign up again with the same email.
+    // The user's team_members profile is already deleted by the RPC above.
+    // If the admin really wants to clear an auth trace, they can use cleanupOrphanedAuthUser.
+
 
     return { success: true };
   });
