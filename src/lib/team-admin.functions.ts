@@ -16,7 +16,7 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     const { data: caller, error: callerError } = await supabase
       .from('team_members')
       .select('role, cargo_principal, user_id')
-      .ilike('email', session?.user?.email || '')
+      .eq('user_id', session?.user?.id)
       .maybeSingle();
 
     const roleStr = (caller?.cargo_principal || caller?.role || "").toLowerCase();
