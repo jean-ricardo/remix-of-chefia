@@ -478,12 +478,9 @@ function EquipePage() {
                     </div>
 
                     <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
-                      <RoleSelect 
-                        memberId={m.id} 
-                        memberName={name} 
-                        currentCargo={m.role || "Membro"} 
-                        canEdit={isAdmin} 
-                      />
+                      <span className="inline-flex h-6 items-center rounded-full border border-navy/15 bg-navy/5 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-navy">
+                        {m.role || "Membro"}
+                      </span>
                       <StatusBadge status={status} />
                       <span className="text-xs text-muted-foreground">
                         <span className="font-bold tabular-nums text-navy">
