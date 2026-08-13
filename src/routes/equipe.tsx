@@ -763,8 +763,6 @@ function RoleSelect({
         }
       });
 
-      if (error) throw error;
-
       await logActivity({
         actorName: currentUser.name || "Gestor",
         actionType: "role_change",
