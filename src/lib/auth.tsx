@@ -170,7 +170,7 @@ async function resolveCurrentUser(authUser: User): Promise<CurrentUser> {
         name: data.name || fallbackName,
         email,
         telefone: data.telefone ?? undefined,
-        role: (data.role as any) === "master" || (data.cargo_principal as string)?.toLowerCase() === "fundador" ? "admin" : mapCargoToRole(data.cargo_principal),
+        role: (data.role as any) === "master" || (data.cargo_principal as string)?.toLowerCase() === "fundador" || (data.cargo_principal as string)?.toLowerCase() === "diretor" ? "admin" : mapCargoToRole(data.cargo_principal),
         cargo: data.cargo_principal ?? null,
         mapped: true,
         pending: false, // Single-tenant: sempre ativo se mapeado
