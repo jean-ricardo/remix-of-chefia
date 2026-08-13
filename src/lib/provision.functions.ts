@@ -40,13 +40,13 @@ export const provisionUser = createServerFn({ method: "POST" })
           telefone: data.whatsapp || existing.telefone,
           team_id: MAIN_TEAM_ID,
           cargo_principal: isPending ? "Membro" : existing.cargo_principal,
-          role: isPending ? "Membro" : existing.role
+          role: isPending ? "membro" : (existing.role === "master" || existing.role === "Diretor" ? "master" : "membro")
         })
         .eq("id", existing.id);
 
       if (updateError) {
-        console.error("[provisionUser] Update error:", updateError);
-        throw new Error("Erro ao atualizar vínculo com a equipe.");
+        console.error("[provisionUser] Update error detail:", JSON.stringify(updateError));
+        throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
       }
     } else {
       console.log(`[provisionUser] Creating new member entry`);
@@ -66,12 +66,12 @@ export const provisionUser = createServerFn({ method: "POST" })
           email: data.email.toLowerCase(),
           telefone: data.whatsapp || "",
           cargo_principal: isFirst ? "Diretor" : "Membro",
-          role: isFirst ? "Diretor" : "Membro"
+          role: isFirst ? "master" : "membro"
         });
 
       if (insertError) {
-        console.error("[provisionUser] Insert error:", insertError);
-        throw new Error("Erro ao criar vínculo com a equipe.");
+        console.error("[provisionUser] Insert error detail:", JSON.stringify(insertError));
+        throw new Error(`Erro ao vincular perfil: ${insertError.message}`);
       }
     }
 
