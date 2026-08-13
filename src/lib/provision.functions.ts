@@ -19,7 +19,7 @@ export const provisionUser = createServerFn({ method: "POST" })
     // 1. Check if user already has a member entry (orphan or pending)
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from("team_members")
-      .select("id, cargo_principal, role")
+      .select("id, cargo_principal, role, user_id, name, telefone")
       .ilike("email", data.email)
       .maybeSingle();
 
