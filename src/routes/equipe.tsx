@@ -256,7 +256,7 @@ function EquipePage() {
     try {
       await logActivity({
         actorName: currentUser?.name || "Usuário",
-        actionType: "delete",
+        actionType: "member_removed",
         details: `${currentUser?.name || "Usuário"} removeu o membro ${memberToDelete.name} da equipe.`,
       });
 
@@ -766,7 +766,7 @@ function RoleSelect({
 
       await logActivity({
         actorName: currentUser.name || "Gestor",
-        actionType: "update",
+        actionType: "role_change",
         details: `${currentUser.cargo?.charAt(0).toUpperCase()}${currentUser.cargo?.slice(1)} ${currentUser.name} alterou o cargo de ${memberName} para ${newCargo.charAt(0).toUpperCase() + newCargo.slice(1)}.`,
       });
 
