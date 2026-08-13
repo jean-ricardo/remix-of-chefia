@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { deleteAuthUser } from "./team-admin.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const deleteUserAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(z.object({
     memberId: z.string(),
     authUserId: z.string().optional()
@@ -10,13 +12,10 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
-    // We trust the bearer token provided by TanStack Start middleware.
-    // However, if session verification fails, we fall back to a more permissive check
-    // or detailed logging to understand why the callerId is missing.
+    // We use context provided by requireSupabaseAuth middleware
     const callerId = context.userId;
 
     if (!callerId) {
-      console.error("[team-admin.functions] No context.userId found. Headers:", context.headers);
       throw new Error("Sessão não identificada. Por favor, recarregue a página e tente novamente.");
     }
 
@@ -94,6 +93,7 @@ export const cleanupOrphanedAuthUser = createServerFn({ method: "POST" })
   });
 
 export const updateMemberRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(z.object({
     memberId: z.string(),
     newCargo: z.string(),
