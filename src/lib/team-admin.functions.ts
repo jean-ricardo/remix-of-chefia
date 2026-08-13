@@ -11,7 +11,6 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { supabase } = await import("@/integrations/supabase/client");
     
-    // Use getUser() to get the authenticated user's ID
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const callerId = authUser?.id;
 
@@ -20,7 +19,7 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
       throw new Error("Não foi possível verificar sua sessão. Por favor, saia e entre novamente na plataforma.");
     }
 
-    // Verify admin permissions using supabaseAdmin to ensure we can see the caller's role regardless of RLS
+    // Verify admin permissions using supabaseAdmin
     const { data: caller, error: callerError } = await supabaseAdmin
       .from('team_members')
       .select('role, cargo_principal, user_id')
@@ -31,14 +30,17 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
       console.error("[team-admin.functions] Error fetching caller profile:", callerError);
     }
 
-    const roleStr = (caller?.cargo_principal || caller?.role || "").toLowerCase();
+    const cargoStr = (caller?.cargo_principal || "").toLowerCase();
+    const roleStr = (caller?.role || "").toLowerCase();
     
-    // Expanded list of admin roles
-    const isAdmin = ['diretor', 'admin', 'adm', 'master', 'fundador', 'director'].includes(roleStr);
+    // Check if the user has any admin-level cargo or role
+    const isAdmin = [
+      'diretor', 'admin', 'adm', 'master', 'fundador', 'director'
+    ].some(r => cargoStr === r || roleStr === r);
 
     if (!isAdmin) {
-      console.warn(`[team-admin.functions] Access denied for user ${callerId} with role: ${roleStr}`);
-      throw new Error(`Acesso negado: apenas administradores podem realizar esta ação. (Cargo detectado: ${roleStr || 'Membro'})`);
+      console.warn(`[team-admin.functions] Access denied for user ${callerId}. Cargo: ${cargoStr}, Role: ${roleStr}`);
+      throw new Error(`Acesso negado: apenas administradores podem realizar esta ação. (Cargo atual: ${caller?.cargo_principal || 'Membro'})`);
     }
 
     const { error: rpcError } = await supabaseAdmin.rpc('delete_user_account', {
@@ -114,11 +116,15 @@ export const updateMemberRole = createServerFn({ method: "POST" })
       .eq('user_id', callerId)
       .maybeSingle();
 
-    const roleStr = (caller?.cargo_principal || caller?.role || "").toLowerCase();
-    const isAdmin = ['diretor', 'admin', 'adm', 'master', 'fundador', 'director'].includes(roleStr);
+    const cargoStr = (caller?.cargo_principal || "").toLowerCase();
+    const roleStr = (caller?.role || "").toLowerCase();
+    
+    const isAdmin = [
+      'diretor', 'admin', 'adm', 'master', 'fundador', 'director'
+    ].some(r => cargoStr === r || roleStr === r);
 
     if (!isAdmin) {
-      throw new Error(`Acesso negado: apenas administradores podem alterar cargos. (Cargo detectado: ${roleStr || 'Membro'})`);
+      throw new Error(`Acesso negado: apenas administradores podem alterar cargos. (Cargo atual: ${caller?.cargo_principal || 'Membro'})`);
     }
 
     const { error } = await supabaseAdmin
