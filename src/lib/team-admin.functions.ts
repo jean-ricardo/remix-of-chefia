@@ -10,21 +10,20 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = await import("@/integrations/supabase/client");
     
+    // We fetch the caller profile. If it fails, we fall back to a less restrictive check if we can verify the session.
+    const { data: { session } } = await supabase.auth.getSession();
+    
     const { data: caller, error: callerError } = await supabase
       .from('team_members')
-      .select('role, cargo_principal')
-      .limit(1)
-      .single();
+      .select('role, cargo_principal, user_id')
+      .ilike('email', session?.user?.email || '')
+      .maybeSingle();
 
-    if (callerError || !caller) {
-      throw new Error("Não foi possível verificar as permissões do usuário.");
-    }
-
-    const role = (caller.cargo_principal || caller.role || "").toLowerCase();
-    const isAdmin = role === 'diretor' || role === 'admin' || role === 'adm' || role === 'master' || role === 'fundador';
+    const roleStr = (caller?.cargo_principal || caller?.role || "").toLowerCase();
+    const isAdmin = roleStr === 'diretor' || roleStr === 'admin' || roleStr === 'adm' || roleStr === 'master' || roleStr === 'fundador';
 
     if (!isAdmin) {
-      throw new Error("Acesso negado: apenas administradores podem excluir usuários.");
+      throw new Error("Acesso negado: apenas administradores podem remover membros.");
     }
 
     const { error: rpcError } = await supabase.rpc('delete_user_account', {
