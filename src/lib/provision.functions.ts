@@ -40,7 +40,7 @@ export const provisionUser = createServerFn({ method: "POST" })
           telefone: data.whatsapp || existing.telefone,
           team_id: MAIN_TEAM_ID,
           cargo_principal: isPending ? "Membro" : existing.cargo_principal,
-          role: isPending ? "membro" : (existing.role === "master" ? "master" : "membro")
+          role: isPending ? "membro" : (existing.role === "master" || existing.role === "Diretor" ? "master" : "membro")
         })
         .eq("id", existing.id);
 
