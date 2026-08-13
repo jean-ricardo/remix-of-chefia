@@ -70,7 +70,8 @@ function displayNameOf(m: MemberLike) {
 function EquipePage() {
   useRotinaRealtime();
   const currentUser = useCurrentUser();
-  const isAdmin = hasGlobalScope(currentUser.role);
+  const roleStr = (currentUser.cargo || currentUser.role || "").toLowerCase();
+  const isAdmin = ["diretor", "admin", "adm", "master", "fundador"].includes(roleStr);
   const members = useTeamMembers();
   const activities = useActivities();
   const navigate = useNavigate();
