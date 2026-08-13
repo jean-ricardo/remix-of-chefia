@@ -23,7 +23,7 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     const isAdmin = roleStr === 'diretor' || roleStr === 'admin' || roleStr === 'adm' || roleStr === 'master' || roleStr === 'fundador';
 
     if (!isAdmin) {
-      throw new Error("Acesso negado: apenas administradores podem remover membros.");
+      throw new Error(`Acesso negado: apenas administradores podem remover membros. (Seu cargo atual: ${roleStr})`);
     }
 
     const { error: rpcError } = await supabase.rpc('delete_user_account', {
